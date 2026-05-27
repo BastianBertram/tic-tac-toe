@@ -21,12 +21,17 @@ Everything lives in `tictactoe.html` in three inline sections:
 
 ## Git workflow
 
-After every change: commit with a descriptive message and push to `origin main`.
+**After every change, no exceptions:** stage the affected files, commit with a clean descriptive message, and push to `origin main`. Never leave work uncommitted — every saved state must exist on GitHub so progress is never lost and any change can be reverted.
 
 ```bash
 git add <file>
-git commit -m "..."
+git commit -m "Short imperative summary of what changed"
 git push
 ```
+
+Commit message rules:
+- Imperative mood, present tense ("Add", "Fix", "Update", not "Added" or "Adding")
+- First line ≤ 72 characters, describes *what* changed
+- No vague messages like "update" or "fix stuff"
 
 Remote: https://github.com/BastianBertram/tic-tac-toe
