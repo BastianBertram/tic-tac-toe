@@ -1,0 +1,58 @@
+{
+  "expo": {
+    "name": "EssKlasse",
+    "slug": "essklasse",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "essklasse",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#1a1a2e"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "de.hwk-hannover.essklasse",
+      "infoPlist": {
+        "NSCameraUsageDescription": "EssKlasse benötigt Kamerazugriff zum Fotografieren von Bewirtungsbelegen.",
+        "NSPhotoLibraryUsageDescription": "EssKlasse benötigt Zugriff auf die Fotobibliothek.",
+        "NSPhotoLibraryAddUsageDescription": "EssKlasse speichert Fotos von Bewirtungsbelegen."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#1a1a2e"
+      },
+      "package": "de.hwk_hannover.essklasse",
+      "permissions": [
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "ACCESS_NETWORK_STATE",
+        "INTERNET"
+      ]
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-camera",
+      "expo-media-library",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "EssKlasse benötigt Zugriff auf Fotos für Bewirtungsbelege.",
+          "cameraPermission": "EssKlasse benötigt Kamerazugriff für Bewirtungsbelege."
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
