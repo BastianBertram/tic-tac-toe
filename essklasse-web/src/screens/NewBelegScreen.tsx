@@ -1,0 +1,264 @@
+import { useState } from 'react';
+import { format } from 'date-fns';
+import { useBelegStore } from '../store/belegStore';
+import { useObjektStore } from '../store/objektStore';
+import { PhotoCapture } from '../components/PhotoCapture';
+import { PositionEditor } from '../components/PositionEditor';
+import type { BelegPosition } from '../types';
+import type { ExtractedBeleg } from '../services/ocrService';
+import s from './NewBelegScreen.module.css';
+
+interface Props { onClose: () => void; }
+
+const today = format(new Date(), 'yyyy-MM-dd');
+
+const INIT = {
+  besteller: '', cateringDatumVon: today, cateringDatumBis: today,
+  uhrzeitVon: '', uhrzeitBis: '', veranstaltung: '', ort: '', raum: '',
+  personenzahl: '', konto: '', kostenstelle: '', kostentraeger: '',
+  positionen: [] as BelegPosition[], fotoDataUrls: [] as string[],
+  wuensche: '', interneNotiz: '',
+};
+
+export function NewBelegScreen({ onClose }: Props) {
+  const aktivesObjekt = useObjektStore(st => st.getAktivesObjekt());
+  const objekte       = useObjektStore(st => st.objekte);
+
+  const [f, setF] = useState(INIT);
+  const [saving, setSaving] = useState(false);
+  const [savedOrderNr, setSavedOrderNr] = useState<string | null>(null);
+  const [selectedObjektId, setSelectedObjektId] = useState<string>(aktivesObjekt?.id ?? '');
+  const addBeleg = useBelegStore(s => s.addBeleg);
+  const setSyncStatus = useBelegStore(s => s.setSyncStatus);
+
+  function set<K extends keyof typeof INIT>(key: K, val: (typeof INIT)[K]) {
+    setF(prev => ({ ...prev, [key]: val }));
+  }
+
+  function applyExtracted(data: ExtractedBeleg) {
+    setF(prev => ({
+      ...prev,
+      ...(data.besteller       && { besteller:       data.besteller }),
+      ...(data.cateringDatumVon && { cateringDatumVon: data.cateringDatumVon }),
+      ...(data.cateringDatumBis && { cateringDatumBis: data.cateringDatumBis }),
+      ...(data.uhrzeitVon      && { uhrzeitVon:      data.uhrzeitVon }),
+      ...(data.uhrzeitBis      && { uhrzeitBis:      data.uhrzeitBis }),
+      ...(data.veranstaltung   && { veranstaltung:   data.veranstaltung }),
+      ...(data.ort             && { ort:             data.ort }),
+      ...(data.raum            && { raum:            data.raum }),
+      ...(data.personenzahl    && { personenzahl:    String(data.personenzahl) }),
+      ...(data.konto           && { konto:           data.konto }),
+      ...(data.kostenstelle    && { kostenstelle:    data.kostenstelle }),
+      ...(data.kostentraeger   && { kostentraeger:   data.kostentraeger }),
+      ...(data.wuensche        && { wuensche:        data.wuensche }),
+    }));
+  }
+
+  async function handleSave() {
+    if (!selectedObjektId) return alert('Bitte ein Objekt auswählen.');
+    if (!f.besteller.trim()) return alert('Besteller/Auftraggeber fehlt.');
+    if (!f.veranstaltung.trim()) return alert('Veranstaltung/Anlass fehlt.');
+    const gewaehltes = objekte.find(o => o.id === selectedObjektId) ?? aktivesObjekt;
+    setSaving(true);
+
+    const id = addBeleg({
+      objektId:   gewaehltes?.id   ?? '',
+      objektName: gewaehltes?.name ?? '',
+      besteller: f.besteller,
+      cateringDatumVon: f.cateringDatumVon,
+      cateringDatumBis: f.cateringDatumBis,
+      uhrzeitVon: f.uhrzeitVon,
+      uhrzeitBis: f.uhrzeitBis,
+      veranstaltung: f.veranstaltung,
+      ort: f.ort,
+      raum: f.raum,
+      personenzahl: parseInt(f.personenzahl) || 0,
+      konto: f.konto,
+      kostenstelle: f.kostenstelle,
+      kostentraeger: f.kostentraeger,
+      positionen: f.positionen,
+      fotoDataUrls: f.fotoDataUrls,
+      wuensche: f.wuensche,
+      interneNotiz: f.interneNotiz,
+    });
+
+    // Try BC sync (will be skipped if not configured)
+    try {
+      const { createSalesOrder } = await import('../services/bcService');
+      const beleg = useBelegStore.getState().belege.find(b => b.id === id)!;
+      setSyncStatus(id, 'syncing');
+      // Access token would come from MSAL in production:
+      const token = (window as any).__bcToken ?? '';
+      if (token) {
+        const result = await createSalesOrder(beleg, token);
+        useBelegStore.getState().setBcAuftragsnummer(id, result.auftragsnummer);
+        setSavedOrderNr(result.auftragsnummer);
+      } else {
+        setSyncStatus(id, 'local');
+      }
+    } catch (e: any) {
+      setSyncStatus(id, 'error', e?.message ?? 'Fehler');
+    }
+
+    setSaving(false);
+    if (!savedOrderNr) onClose();
+  }
+
+  if (savedOrderNr) {
+    return (
+      <div className={s.successScreen}>
+        <div className={s.successIcon}>✅</div>
+        <h2>Beleg übertragen!</h2>
+        <p className={s.successLabel}>BC-Auftragsnummer</p>
+        <div className={s.orderNr}>{savedOrderNr}</div>
+        <button className={s.doneBtn} onClick={onClose}>Fertig</button>
+        <button className={s.newBtn} onClick={() => { setF(INIT); setSavedOrderNr(null); }}>
+          Weiteren Beleg anlegen
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className={s.screen}>
+      <div className={s.header}>
+        <button className={s.closeBtn} onClick={onClose} type="button">✕</button>
+        <img src="/logo.webp" alt="EssKlasse" className={s.headerLogo} />
+        <button className={s.saveHdrBtn} onClick={handleSave} disabled={saving} type="button">
+          {saving ? '…' : 'Speichern'}
+        </button>
+      </div>
+
+      <div className={s.scroll}>
+        {/* ── FOTOS (prominent oben) ── */}
+        <div className={s.section}>
+          <PhotoCapture
+            dataUrls={f.fotoDataUrls}
+            onChange={v => set('fotoDataUrls', v)}
+            onExtracted={applyExtracted}
+          />
+        </div>
+
+        {/* ── OBJEKT-AUSWAHL ── */}
+        {objekte.length > 1 && (
+          <div className={s.section}>
+            <div className={s.sectionTitle}>Objekt *</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {objekte.map(o => (
+                <button
+                  key={o.id}
+                  type="button"
+                  onClick={() => setSelectedObjektId(o.id)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    padding: '12px 14px', borderRadius: 12,
+                    border: `1.5px solid ${o.id === selectedObjektId ? 'var(--ek-red)' : 'var(--ek-border)'}`,
+                    background: o.id === selectedObjektId ? '#fdf5f5' : 'var(--ek-surface2)',
+                    textAlign: 'left', width: '100%', cursor: 'pointer',
+                  }}
+                >
+                  <span style={{
+                    fontSize: 11, fontWeight: 800, color: '#fff',
+                    background: o.id === selectedObjektId ? 'var(--ek-red)' : 'var(--ek-muted)',
+                    borderRadius: 8, padding: '2px 7px', flexShrink: 0,
+                  }}>{o.kuerzel ?? '🏢'}</span>
+                  <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--ek-charcoal)', flex: 1 }}>{o.name}</span>
+                  {o.id === selectedObjektId && <span style={{ color: 'var(--ek-red)', fontWeight: 900 }}>✓</span>}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── KOPFDATEN ── */}
+        <div className={s.section}>
+          <div className={s.sectionTitle}>Kopfdaten</div>
+
+          <Field label="Besteller / Auftraggeber *">
+            <input value={f.besteller} onChange={e => set('besteller', e.target.value)} placeholder="Name des Bestellers" />
+          </Field>
+          <Field label="Veranstaltung / Anlass *">
+            <input value={f.veranstaltung} onChange={e => set('veranstaltung', e.target.value)} placeholder="z.B. Vorstandssitzung, Schulung …" />
+          </Field>
+          <div className={s.twoCol}>
+            <Field label="Datum von">
+              <input type="date" value={f.cateringDatumVon} onChange={e => set('cateringDatumVon', e.target.value)} />
+            </Field>
+            <Field label="Datum bis">
+              <input type="date" value={f.cateringDatumBis} onChange={e => set('cateringDatumBis', e.target.value)} />
+            </Field>
+          </div>
+          <div className={s.twoCol}>
+            <Field label="Uhrzeit von">
+              <input type="time" value={f.uhrzeitVon} onChange={e => set('uhrzeitVon', e.target.value)} />
+            </Field>
+            <Field label="Uhrzeit bis">
+              <input type="time" value={f.uhrzeitBis} onChange={e => set('uhrzeitBis', e.target.value)} />
+            </Field>
+          </div>
+          <div className={s.twoCol}>
+            <Field label="Ort">
+              <input value={f.ort} onChange={e => set('ort', e.target.value)} placeholder="Standort" />
+            </Field>
+            <Field label="Raum">
+              <input value={f.raum} onChange={e => set('raum', e.target.value)} placeholder="Raum / Bereich" />
+            </Field>
+          </div>
+          <Field label="Personenzahl">
+            <input type="number" min="0" value={f.personenzahl} onChange={e => set('personenzahl', e.target.value)} placeholder="0" />
+          </Field>
+        </div>
+
+        {/* ── KOSTENZUORDNUNG ── */}
+        <div className={s.section}>
+          <div className={s.sectionTitle}>Kostenzuordnung</div>
+          <Field label="Konto">
+            <input value={f.konto} onChange={e => set('konto', e.target.value)} placeholder="Kundennummer / Konto" />
+          </Field>
+          <div className={s.twoCol}>
+            <Field label="Kostenstelle">
+              <input value={f.kostenstelle} onChange={e => set('kostenstelle', e.target.value)} placeholder="KST" />
+            </Field>
+            <Field label="Kostenträger">
+              <input value={f.kostentraeger} onChange={e => set('kostentraeger', e.target.value)} placeholder="KTR" />
+            </Field>
+          </div>
+        </div>
+
+        {/* ── POSITIONEN ── */}
+        <div className={s.section}>
+          <PositionEditor positionen={f.positionen} onChange={v => set('positionen', v)} />
+        </div>
+
+        {/* ── WÜNSCHE & NOTIZEN ── */}
+        <div className={s.section}>
+          <div className={s.sectionTitle}>Wünsche & Notizen</div>
+          <Field label="Wünsche / Sonstige Informationen">
+            <textarea value={f.wuensche} onChange={e => set('wuensche', e.target.value)}
+              placeholder="Allergien, Sonderwünsche …" rows={3} />
+          </Field>
+          <Field label="Interne Notiz">
+            <textarea value={f.interneNotiz} onChange={e => set('interneNotiz', e.target.value)}
+              placeholder="Nur intern sichtbar …" rows={3} />
+          </Field>
+        </div>
+
+        {/* Bottom save button */}
+        <button className={s.saveBtn} onClick={handleSave} disabled={saving} type="button">
+          {saving ? '⏳ Wird gespeichert …' : '☁️ Beleg speichern & übertragen'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div style={{ marginBottom: 14 }}>
+      <div style={{ color: 'var(--muted)', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.4px', marginBottom: 6 }}>
+        {label}
+      </div>
+      {children}
+    </div>
+  );
+}

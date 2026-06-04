@@ -1,0 +1,66 @@
+.screen { display: flex; flex-direction: column; height: 100%; background: var(--ek-bg); }
+
+/* ── Header ──────────────────────────────────────────────────── */
+.header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 14px 10px;
+  background: var(--ek-surface);
+  border-bottom: 1px solid var(--ek-border);
+  box-shadow: 0 1px 4px rgba(0,0,0,.06);
+  gap: 10px;
+}
+.logo { height: 36px; width: auto; object-fit: contain; flex-shrink: 0; }
+.headerRight { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.syncBadge {
+  background: var(--ek-red); color: #fff;
+  border-radius: 12px; padding: 4px 9px;
+  font-size: 11px; font-weight: 700;
+}
+
+/* ── Datum ───────────────────────────────────────────────────── */
+.dateRow {
+  font-size: 12px; color: var(--ek-muted);
+  padding: 8px 14px 0;
+}
+
+/* ── Zähler ──────────────────────────────────────────────────── */
+.counters { display: flex; gap: 10px; margin: 10px 14px 8px; }
+
+.counterBtn {
+  flex: 1; border-radius: 14px; padding: 14px 10px;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  border: none; transition: transform .12s; cursor: pointer;
+}
+.counterBtn:active { transform: scale(.97); }
+
+.counterActive {
+  background: var(--ek-red);
+  box-shadow: 0 4px 14px rgba(139,26,26,.25);
+}
+.counterActive .counterNum   { color: #fff; }
+.counterActive .counterLabel { color: rgba(255,255,255,.85); }
+
+.counterInactive {
+  background: var(--ek-surface);
+  border: 1.5px solid var(--ek-border);
+  box-shadow: 0 2px 6px rgba(0,0,0,.05);
+}
+.counterInactive .counterNum   { color: var(--ek-charcoal); }
+.counterInactive .counterLabel { color: var(--ek-muted); }
+
+.counterNum   { font-size: 26px; font-weight: 900; line-height: 1; }
+.counterLabel { font-size: 13px; font-weight: 700; }
+
+/* ── Section header ───────────────────────────────────────────── */
+.sectionHeader { display: flex; align-items: center; gap: 8px; padding: 4px 14px 8px; }
+.sectionLine   { flex: 1; height: 1px; background: var(--ek-border); }
+.sectionLabel  { color: var(--ek-muted); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .8px; white-space: nowrap; }
+
+/* ── Liste ────────────────────────────────────────────────────── */
+.list { flex: 1; overflow-y: auto; padding: 0 14px 110px; }
+
+/* ── Leerzustand ──────────────────────────────────────────────── */
+.empty { text-align: center; padding: 60px 24px; }
+.emptyIcon { font-size: 56px; margin-bottom: 16px; }
+.empty h3 { color: var(--ek-charcoal); font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+.empty p  { color: var(--ek-muted); font-size: 14px; line-height: 1.5; }

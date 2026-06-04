@@ -11,7 +11,8 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { BelegPosition, Kategorie, KATEGORIEN, EINHEITEN } from '../types';
-import uuid from 'react-native-uuid';
+import uuidModule from 'react-native-uuid';
+const uuid = (uuidModule as any).default ?? uuidModule;
 
 interface Props {
   positionen: BelegPosition[];

@@ -1,10 +1,7 @@
-import NetInfo from '@react-native-community/netinfo';
 import { useBelegStore } from '../store/belegStore';
 import { createSalesOrder } from './bcService';
 
 export async function syncPendingBelege(): Promise<{ synced: number; failed: number }> {
-  const netState = await NetInfo.fetch();
-  if (!netState.isConnected) return { synced: 0, failed: 0 };
 
   const store = useBelegStore.getState();
   const pending = store.getPendingBelege();

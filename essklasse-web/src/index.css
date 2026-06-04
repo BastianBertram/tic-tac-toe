@@ -1,0 +1,81 @@
+/* ── EssKlasse Brand Colors (aus Logo extrahiert) ───────────────── */
+:root {
+  /* Primäre Brand-Farben */
+  --ek-red:      #8B1A1A;   /* Tomatenrot (Primär) */
+  --ek-red-dark: #6a1212;   /* Hover/Dunkel */
+  --ek-red-soft: #b52525;   /* heller Rot-Akzent */
+  --ek-green:    #4a7c59;   /* Paprikagrün */
+  --ek-green-dark: #365c42;
+
+  /* Neutrals */
+  --ek-charcoal: #2e2e2e;   /* Text dunkel */
+  --ek-gray:     #5a5a5a;   /* Text mittel */
+  --ek-muted:    #8a8a8a;   /* Text hell */
+  --ek-border:   #e0ddd8;   /* Border */
+  --ek-divider:  #d5d1cb;
+
+  /* Hintergründe */
+  --ek-bg:       #f5f3f0;   /* Seiten-Hintergrund (warmes Off-White) */
+  --ek-surface:  #ffffff;   /* Karten-Hintergrund */
+  --ek-surface2: #faf8f5;   /* Leicht getönte Surface */
+
+  /* Legacy-Aliase für bestehende Komponenten */
+  --bg:      var(--ek-bg);
+  --surface: var(--ek-surface);
+  --card:    var(--ek-surface2);
+  --accent:  var(--ek-red);
+  --light:   var(--ek-green);
+  --blue:    var(--ek-red);       /* war Facebook-blau → jetzt EK-Rot */
+  --text:    var(--ek-charcoal);
+  --muted:   var(--ek-muted);
+  --divider: var(--ek-divider);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--ek-bg);
+  color: var(--ek-charcoal);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100dvh;
+}
+
+#root { min-height: 100dvh; display: flex; flex-direction: column; }
+
+input, textarea, select {
+  background: var(--ek-surface);
+  color: var(--ek-charcoal);
+  border: 1.5px solid var(--ek-border);
+  border-radius: 10px;
+  padding: 11px 14px;
+  font-size: 15px;
+  width: 100%;
+  outline: none;
+  font-family: inherit;
+  transition: border-color .15s;
+}
+input:focus, textarea:focus, select:focus {
+  border-color: var(--ek-red);
+  box-shadow: 0 0 0 3px rgba(139,26,26,.1);
+}
+textarea { resize: vertical; min-height: 72px; }
+select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238a8a8a' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 36px; }
+
+button {
+  cursor: pointer;
+  font-family: inherit;
+  border: none;
+  border-radius: 10px;
+  font-weight: 700;
+  transition: opacity .15s, transform .1s;
+}
+button:active { opacity: .8; transform: scale(.98); }
+
+h1, h2, h3 { line-height: 1.2; }
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--ek-border); border-radius: 4px; }

@@ -1,0 +1,88 @@
+/* ── Trigger-Button im Header ──────────────────────────────── */
+.trigger {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--ek-surface2);
+  border: 1.5px solid var(--ek-border);
+  border-radius: 20px;
+  padding: 6px 12px 6px 8px;
+  max-width: 180px;
+  cursor: pointer;
+  transition: background .12s, border-color .12s;
+}
+.trigger:hover { background: #ede9e3; border-color: var(--ek-red); }
+
+.triggerKuerzel {
+  font-size: 11px; font-weight: 800; color: #fff;
+  background: var(--ek-red); border-radius: 10px;
+  padding: 2px 6px; white-space: nowrap; flex-shrink: 0;
+}
+.triggerName {
+  font-size: 12px; font-weight: 700; color: var(--ek-charcoal);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.triggerChevron {
+  font-size: 14px; color: var(--ek-muted); flex-shrink: 0; line-height: 1;
+}
+
+/* ── Overlay & Sheet ───────────────────────────────────────── */
+.overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.35);
+  display: flex; align-items: flex-end; justify-content: center;
+  z-index: 200;
+  animation: fadeIn .15s ease;
+}
+@keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
+
+.sheet {
+  background: var(--ek-surface);
+  border-radius: 20px 20px 0 0;
+  padding: 12px 20px 32px;
+  width: 100%; max-width: 480px;
+  box-shadow: 0 -4px 28px rgba(0,0,0,.12);
+  animation: slideUp .2s ease;
+}
+@keyframes slideUp { from { transform: translateY(40px); opacity: 0 } to { transform: none; opacity: 1 } }
+
+.sheetHandle {
+  width: 36px; height: 4px; border-radius: 2px;
+  background: var(--ek-border); margin: 0 auto 16px;
+}
+.sheetTitle { font-size: 17px; font-weight: 900; color: var(--ek-charcoal); margin-bottom: 4px; }
+.sheetSub   { font-size: 13px; color: var(--ek-muted); margin-bottom: 16px; }
+
+/* ── Objekt-Liste ──────────────────────────────────────────── */
+.list { display: flex; flex-direction: column; gap: 8px; }
+
+.item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 12px;
+  border-radius: 14px; border: 1.5px solid var(--ek-border);
+  background: var(--ek-surface2);
+  transition: background .1s, border-color .1s;
+  text-align: left; width: 100%;
+}
+.item:hover:not(.itemActive) { background: #f0ede8; }
+
+.itemActive {
+  border-color: var(--ek-red);
+  background: #fdf5f5;
+}
+
+.itemIcon {
+  width: 44px; height: 44px; border-radius: 12px;
+  background: var(--ek-surface);
+  border: 1px solid var(--ek-border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 800; color: var(--ek-muted);
+  flex-shrink: 0;
+}
+.itemIconActive {
+  background: var(--ek-red); color: #fff; border-color: var(--ek-red);
+}
+
+.itemInfo { flex: 1; min-width: 0; }
+.itemName { font-weight: 700; font-size: 14px; color: var(--ek-charcoal); }
+.itemAddr { font-size: 12px; color: var(--ek-muted); margin-top: 2px; }
+
+.checkmark { color: var(--ek-red); font-weight: 900; font-size: 18px; }

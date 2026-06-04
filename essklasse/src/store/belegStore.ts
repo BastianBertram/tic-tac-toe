@@ -2,7 +2,8 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Bewirtungsbeleg, BelegPosition, SyncStatus } from '../types';
-import uuid from 'react-native-uuid';
+import uuidModule from 'react-native-uuid';
+const uuid = (uuidModule as any).default ?? uuidModule;
 import { format } from 'date-fns';
 
 interface BelegStore {

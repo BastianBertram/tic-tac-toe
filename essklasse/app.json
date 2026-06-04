@@ -40,7 +40,6 @@
       "output": "static"
     },
     "plugins": [
-      "expo-router",
       "expo-camera",
       "expo-media-library",
       [
@@ -51,8 +50,7 @@
         }
       ]
     ],
-    "experiments": {
-      "typedRoutes": true
-    }
+    "experiments": {}
+
   }
 }

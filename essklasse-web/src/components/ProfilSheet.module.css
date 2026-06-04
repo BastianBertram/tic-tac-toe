@@ -1,0 +1,101 @@
+/* ── Avatar-Button ─────────────────────────────────────────── */
+.avatarBtn {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: var(--ek-red);
+  color: #fff; font-size: 12px; font-weight: 800;
+  display: flex; align-items: center; justify-content: center;
+  border: 2px solid rgba(139,26,26,.2);
+  flex-shrink: 0;
+  transition: opacity .12s;
+}
+.avatarBtn:hover { opacity: .85; }
+.avatarText { line-height: 1; }
+
+/* ── Overlay & Sheet ───────────────────────────────────────── */
+.overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.35);
+  display: flex; align-items: flex-end; justify-content: center;
+  z-index: 200;
+  animation: fadeIn .15s ease;
+}
+@keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
+
+.sheet {
+  background: var(--ek-surface);
+  border-radius: 20px 20px 0 0;
+  padding: 12px 20px 36px;
+  width: 100%; max-width: 480px;
+  box-shadow: 0 -4px 28px rgba(0,0,0,.12);
+  animation: slideUp .2s ease;
+}
+@keyframes slideUp { from { transform: translateY(40px); opacity: 0 } to { transform: none; opacity: 1 } }
+
+.sheetHandle {
+  width: 36px; height: 4px; border-radius: 2px;
+  background: var(--ek-border); margin: 0 auto 20px;
+}
+
+/* ── Profil-Kopf ───────────────────────────────────────────── */
+.profileHead { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; }
+
+.avatarLarge {
+  width: 56px; height: 56px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--ek-red), var(--ek-red-soft));
+  color: #fff; font-size: 20px; font-weight: 800;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(139,26,26,.3);
+}
+.profileName  { font-size: 17px; font-weight: 800; color: var(--ek-charcoal); }
+.profileEmail { font-size: 13px; color: var(--ek-muted); margin-top: 2px; }
+.adminBadge {
+  display: inline-block; margin-top: 6px;
+  background: #fff3cd; color: #7a5010;
+  border: 1px solid #fcd99a; border-radius: 8px;
+  padding: 2px 8px; font-size: 11px; font-weight: 700;
+}
+
+.divider { height: 1px; background: var(--ek-border); margin: 16px 0; }
+
+/* ── Objekte-Info ──────────────────────────────────────────── */
+.objekteInfo { margin-bottom: 4px; }
+.objekteLabel {
+  font-size: 11px; font-weight: 700; color: var(--ek-muted);
+  text-transform: uppercase; letter-spacing: .6px; margin-bottom: 10px;
+}
+.objektItem {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; border-radius: 10px;
+  background: var(--ek-surface2); margin-bottom: 6px;
+  border: 1px solid var(--ek-border);
+}
+.objektActive { border-color: var(--ek-red); background: #fdf5f5; }
+.objektKuerzel {
+  font-size: 11px; font-weight: 800; color: #fff;
+  background: var(--ek-red); border-radius: 8px;
+  padding: 2px 7px; flex-shrink: 0;
+}
+.objektName { flex: 1; font-size: 13px; font-weight: 600; color: var(--ek-charcoal); }
+.objektAktivLabel {
+  font-size: 11px; font-weight: 700; color: var(--ek-red);
+}
+
+/* ── Buttons ───────────────────────────────────────────────── */
+.logoutBtn {
+  width: 100%; padding: 14px;
+  background: #fdf0f0; color: var(--ek-red);
+  border: 1.5px solid #f5c6c6;
+  border-radius: 12px; font-size: 15px; font-weight: 700;
+  margin-bottom: 10px;
+  transition: background .12s;
+}
+.logoutBtn:hover:not(:disabled) { background: #fae0e0; }
+.logoutBtn:disabled { opacity: .6; cursor: not-allowed; }
+
+.cancelBtn {
+  width: 100%; padding: 13px;
+  background: var(--ek-surface2); color: var(--ek-muted);
+  border: 1px solid var(--ek-border);
+  border-radius: 12px; font-size: 14px;
+}
