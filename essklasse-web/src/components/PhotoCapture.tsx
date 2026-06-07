@@ -76,7 +76,7 @@ export function PhotoCapture({ dataUrls, onChange, onExtracted }: Props) {
 
   return (
     <div className={s.wrapper}>
-      <div className={s.label}>📷 Belegfotos</div>
+      <div className={s.label}>📷 Bewirtungsbeleg *</div>
 
       {/* Primärer Kamera-Button */}
       <button
