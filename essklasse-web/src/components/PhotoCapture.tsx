@@ -20,6 +20,7 @@ function fileToDataUrl(file: File): Promise<string> {
 export function PhotoCapture({ dataUrls, onChange, onExtracted }: Props) {
   const cameraRef  = useRef<HTMLInputElement>(null);
   const galleryRef = useRef<HTMLInputElement>(null);
+  const pdfRef     = useRef<HTMLInputElement>(null);
   const [scanning, setScanning] = useState(false);
   const [scanMsg, setScanMsg] = useState('');
   const [showKeyModal, setShowKeyModal] = useState(false);
@@ -120,6 +121,21 @@ export function PhotoCapture({ dataUrls, onChange, onExtracted }: Props) {
         onChange={e => handleFiles(e.target.files)}
       />
 
+      {/* PDF-Button */}
+      <button
+        className={s.galleryBtn}
+        onClick={() => pdfRef.current?.click()}
+        type="button"
+        disabled={scanning}
+      >
+        📄 PDF hochladen
+      </button>
+      <input
+        ref={pdfRef} type="file" accept="application/pdf"
+        style={{ display: 'none' }} multiple
+        onChange={e => handleFiles(e.target.files)}
+      />
+
       {/* Scan-Status */}
       {scanMsg && (
         <div className={`${s.scanMsg} ${scanMsg.startsWith('✅') ? s.scanOk : scanMsg.startsWith('⚠️') ? s.scanErr : s.scanInfo}`}>
@@ -130,18 +146,24 @@ export function PhotoCapture({ dataUrls, onChange, onExtracted }: Props) {
       {/* Vorschau-Thumbnails */}
       {dataUrls.length > 0 ? (
         <div className={s.thumbRow}>
-          {dataUrls.map((url, i) => (
-            <div key={i} className={s.thumbWrap}>
-              <img src={url} className={s.thumb} alt={`Foto ${i + 1}`} />
-              <button className={s.removeBtn} onClick={() => remove(i)} type="button" title="Löschen">✕</button>
-              {/* Nochmal OCR auf dieses Foto */}
-              {onExtracted && i > 0 && (
-                <button className={s.rescanBtn} onClick={() => runOcr(url)} type="button" title="Felder aus diesem Foto lesen">
-                  🔍
-                </button>
-              )}
-            </div>
-          ))}
+          {dataUrls.map((url, i) => {
+            const isPdf = url.startsWith('data:application/pdf');
+            return (
+              <div key={i} className={s.thumbWrap}>
+                {isPdf ? (
+                  <div className={s.pdfThumb}>📄</div>
+                ) : (
+                  <img src={url} className={s.thumb} alt={`Foto ${i + 1}`} />
+                )}
+                <button className={s.removeBtn} onClick={() => remove(i)} type="button" title="Löschen">✕</button>
+                {onExtracted && i > 0 && !isPdf && (
+                  <button className={s.rescanBtn} onClick={() => runOcr(url)} type="button" title="Felder aus diesem Foto lesen">
+                    🔍
+                  </button>
+                )}
+              </div>
+            );
+          })}
         </div>
       ) : (
         <p className={s.hint}>Noch keine Fotos – Felder werden nach dem Fotografieren automatisch ausgefüllt.</p>
