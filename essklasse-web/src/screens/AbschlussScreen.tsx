@@ -88,6 +88,11 @@ export function AbschlussScreen({ beleg, onClose, onDone }: Props) {
           </div>
         ) : (
           <div className={s.posListe}>
+            <div className={s.posHeader}>
+              <div className={s.posHeaderName}>Positionen</div>
+              <div className={s.posHeaderCol}>Bestellte Anzahl</div>
+              <div className={s.posHeaderCol}>Tatsächlich</div>
+            </div>
             {Object.entries(
               beleg.positionen.reduce<Record<string, typeof beleg.positionen>>((acc, p) => {
                 (acc[p.kategorie] ??= []).push(p);
@@ -102,12 +107,9 @@ export function AbschlussScreen({ beleg, onClose, onDone }: Props) {
                   const abweichend = tatsaechlich !== geplant;
                   return (
                     <div key={p.id} className={`${s.posRow} ${abweichend ? s.posRowAbweichend : ''}`}>
-                      <div className={s.posTop}>
-                        <div className={s.posName}>{p.bezeichnung}</div>
-                        <div className={s.posName}>{geplant} {p.einheit}</div>
-                      </div>
-                      <div className={s.posAct}>
-                        <span className={s.posActLabel}>Tatsächlich</span>
+                      <div className={s.posName}>{p.bezeichnung}</div>
+                      <div className={s.posQty}>{geplant} {p.einheit}</div>
+                      <div className={s.posActCell}>
                         <input
                           type="number"
                           min="0"

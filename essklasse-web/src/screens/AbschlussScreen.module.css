@@ -48,23 +48,30 @@
   overflow: hidden; margin-bottom: 14px;
 }
 
-.posGruppe { margin-bottom: 14px; padding: 0 14px; }
+.posHeader {
+  display: grid; grid-template-columns: 1fr 100px 90px;
+  padding: 10px 14px 8px;
+  border-bottom: 2px solid var(--ek-border);
+}
+.posHeaderName { color: var(--ek-red); font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .5px; }
+.posHeaderCol  { color: var(--ek-red); font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .4px; text-align: right; line-height: 1.3; }
+
+.posGruppe { padding: 0 14px; margin-bottom: 10px; }
 .posGruppe:last-child { margin-bottom: 0; }
-.posGruppeTitle { font-size: 12px; font-weight: 700; color: var(--ek-muted); text-transform: uppercase; letter-spacing: .4px; margin: 12px 0 4px; }
+.posGruppeTitle { font-size: 12px; font-weight: 700; color: var(--ek-muted); text-transform: uppercase; letter-spacing: .4px; margin: 10px 0 4px; }
 
 .posRow {
-  padding: 8px 0;
+  display: grid; grid-template-columns: 1fr 100px 90px;
+  align-items: center; padding: 7px 0;
   border-bottom: 1px solid var(--ek-border);
-  transition: background .1s;
 }
 .posRow:last-child { border-bottom: none; }
-.posRowAbweichend { background: #fffdf0; border-radius: 8px; padding: 8px 6px; }
+.posRowAbweichend { background: #fffdf0; border-radius: 8px; padding: 7px 4px; }
 
-.posTop { display: flex; justify-content: space-between; align-items: baseline; }
 .posName { font-weight: 700; font-size: 14px; color: var(--ek-charcoal); }
+.posQty  { font-weight: 700; font-size: 14px; color: var(--ek-charcoal); text-align: right; padding-right: 8px; }
 
-.posAct { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
-.posActLabel { font-size: 12px; color: var(--ek-muted); font-weight: 600; min-width: 80px; }
+.posActCell { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
 
 .mengeInput {
   width: 72px; text-align: center;
