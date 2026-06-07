@@ -56,6 +56,7 @@ export function NewBelegScreen({ onClose }: Props) {
 
   async function handleSave() {
     if (!selectedObjektId) return alert('Bitte ein Objekt auswählen.');
+    if (f.fotoDataUrls.length === 0) return alert('Bitte ein Foto aufnehmen oder eine Datei hochladen.');
     if (!f.besteller.trim()) return alert('Besteller/Auftraggeber fehlt.');
     if (!f.veranstaltung.trim()) return alert('Veranstaltung/Anlass fehlt.');
     const gewaehltes = objekte.find(o => o.id === selectedObjektId) ?? aktivesObjekt;
