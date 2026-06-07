@@ -16,7 +16,7 @@ export function AbgeschlossenScreen({ onClose, onOpenBeleg }: Props) {
   const yesterday = format(subDays(new Date(), 1), 'yyyy-MM-dd');
 
   const abgeschlossen = belege
-    .filter(b => b.abgeschlossen && (b.cateringDatumVon === today || b.cateringDatumVon === yesterday))
+    .filter(b => !b.deleted && b.abgeschlossen && (b.cateringDatumVon === today || b.cateringDatumVon === yesterday))
     .sort((a, b) => b.cateringDatumVon.localeCompare(a.cateringDatumVon));
 
   const todayList     = abgeschlossen.filter(b => b.cateringDatumVon === today);

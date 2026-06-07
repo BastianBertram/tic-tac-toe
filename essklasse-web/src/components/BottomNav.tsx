@@ -12,14 +12,14 @@ export function BottomNav({ active, onTab, onNew, onAbgeschlossene }: Props) {
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   const pending = useMemo(
-    () => belege.filter(b => b.syncStatus === 'local' || b.syncStatus === 'error').length,
+    () => belege.filter(b => !b.deleted && (b.syncStatus === 'local' || b.syncStatus === 'error')).length,
     [belege]
   );
   const offene = useMemo(() => {
     const now   = format(new Date(), 'HH:mm');
     const today = format(new Date(), 'yyyy-MM-dd');
     return belege.filter(b => {
-      if (b.abgeschlossen) return false;
+      if (b.deleted || b.abgeschlossen) return false;
       if (b.cateringDatumVon < today) return true;
       if (b.cateringDatumVon === today && b.uhrzeitBis && b.uhrzeitBis < now) return true;
       return false;

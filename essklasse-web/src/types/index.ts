@@ -71,6 +71,7 @@ export interface Bewirtungsbeleg {
   interneNotiz: string;
   erstelltAm: string;
   syncStatus: SyncStatus;
+  deleted?: boolean;
   bcAuftragsnummer?: string;
   bcFehler?: string;
 }

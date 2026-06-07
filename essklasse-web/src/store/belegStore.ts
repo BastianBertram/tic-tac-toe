@@ -41,7 +41,7 @@ export const useBelegStore = create<BelegStore>()(
         set(s => ({ belege: s.belege.map(b => b.id === id ? { ...b, ...partial } : b) })),
 
       deleteBeleg: (id) =>
-        set(s => ({ belege: s.belege.filter(b => b.id !== id) })),
+        set(s => ({ belege: s.belege.map(b => b.id === id ? { ...b, deleted: true } : b) })),
 
       setSyncStatus: (id, status, fehler) =>
         set(s => ({ belege: s.belege.map(b => b.id === id ? { ...b, syncStatus: status, bcFehler: fehler } : b) })),
@@ -61,22 +61,20 @@ export const useBelegStore = create<BelegStore>()(
           } : b),
         })),
 
-      getBelegeByDate: (date) => get().belege.filter(b => b.cateringDatumVon === date),
+      getBelegeByDate: (date) => get().belege.filter(b => !b.deleted && b.cateringDatumVon === date),
 
       getTodaysBelege: () => get().getBelegeByDate(format(new Date(), 'yyyy-MM-dd')),
 
-      getDatesWithBelege: () => [...new Set(get().belege.map(b => b.cateringDatumVon))],
+      getDatesWithBelege: () => [...new Set(get().belege.filter(b => !b.deleted).map(b => b.cateringDatumVon))],
 
-      getPendingBelege: () => get().belege.filter(b => b.syncStatus === 'local' || b.syncStatus === 'error'),
+      getPendingBelege: () => get().belege.filter(b => !b.deleted && (b.syncStatus === 'local' || b.syncStatus === 'error')),
 
       getOffeneBelege: () => {
         const now = format(new Date(), 'HH:mm');
         const today = format(new Date(), 'yyyy-MM-dd');
         return get().belege.filter(b => {
-          if (b.abgeschlossen) return false;
-          // Vergangener Tag
+          if (b.deleted || b.abgeschlossen) return false;
           if (b.cateringDatumVon < today) return true;
-          // Heute und Uhrzeit bereits abgelaufen
           if (b.cateringDatumVon === today && b.uhrzeitBis && b.uhrzeitBis < now) return true;
           return false;
         });
