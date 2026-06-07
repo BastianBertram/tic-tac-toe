@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useBelegStore } from '../store/belegStore';
 import { format } from 'date-fns';
 import s from './BottomNav.module.css';
@@ -36,16 +36,16 @@ export function BottomNav({ active, onTab, onNew, onAbgeschlossene }: Props) {
           </span>
           <span className={s.tabLabel}>Menü</span>
         </button>
-        <TabBtn icon="📅" label="Kalender" active={active === 'calendar'} onClick={() => onTab('calendar')} badge={pending} />
+        <TabBtn icon="📋" label="Heute" active={active === 'today'} onClick={() => onTab('today')} />
 
         {/* Mitte: FAB */}
         <button className={s.fab} onClick={onNew} type="button" aria-label="Neuer Beleg">
           <span className={s.fabPlus}>+</span>
         </button>
 
-        {/* Rechts: Abschließen + Heute */}
-        <TabBtn icon="✓" label="Abschließen" active={active === 'abschluss'} onClick={() => onTab('abschluss')} badge={offene} urgent={offene > 0} />
-        <TabBtn icon="📋" label="Heute" active={active === 'today'} onClick={() => onTab('today')} />
+        {/* Rechts: Kalender + Abschließen */}
+        <TabBtn icon="📅" label="Kalender" active={active === 'calendar'} onClick={() => onTab('calendar')} badge={pending} />
+        <TabBtn icon="✓" label={<>Bewirtung<br />Abschließen</>} active={active === 'abschluss'} onClick={() => onTab('abschluss')} badge={offene} urgent={offene > 0} />
       </nav>
 
       {drawerOpen && (
@@ -59,7 +59,7 @@ export function BottomNav({ active, onTab, onNew, onAbgeschlossene }: Props) {
 }
 
 function TabBtn({ icon, label, active, onClick, badge = 0, urgent = false }: {
-  icon: string; label: string; active: boolean;
+  icon: string; label: React.ReactNode; active: boolean;
   onClick: () => void; badge?: number; urgent?: boolean;
 }) {
   return (
