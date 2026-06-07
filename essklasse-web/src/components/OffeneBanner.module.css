@@ -1,0 +1,9 @@
+.banner {
+  display: flex; align-items: center; gap: 10px;
+  width: 100%; background: #fff8e1;
+  border-top: 1px solid #fce08a; border-bottom: 1px solid #fce08a;
+  padding: 12px 16px; text-align: left;
+  color: #7a5010; font-size: 14px;
+}
+.icon { font-size: 18px; flex-shrink: 0; }
+.arrow { margin-left: auto; font-size: 20px; color: #c17f24; flex-shrink: 0; }

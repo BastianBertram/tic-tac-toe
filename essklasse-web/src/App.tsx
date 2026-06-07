@@ -89,8 +89,8 @@ export default function App() {
     <AuthGuard>
       <div className={s.app}>
         <div className={s.content}>
-          {tab === 'today'     && <TodayScreen     onOpenBeleg={openBeleg} onAbschliessen={openAbschluss} />}
-          {tab === 'calendar'  && <CalendarScreen  onOpenBeleg={openBeleg} />}
+          {tab === 'today'     && <TodayScreen     onOpenBeleg={openBeleg} onAbschliessen={openAbschluss} onTabAbschluss={() => setTab('abschluss')} />}
+          {tab === 'calendar'  && <CalendarScreen  onOpenBeleg={openBeleg} onTabAbschluss={() => setTab('abschluss')} />}
           {tab === 'abschluss' && <AbschlussListScreen onOpenBeleg={openBeleg} />}
         </div>
         <BottomNav active={tab} onTab={setTab} onNew={() => setView({ type: 'new' })} onAbgeschlossene={() => setView({ type: 'abgeschlossen' })} />

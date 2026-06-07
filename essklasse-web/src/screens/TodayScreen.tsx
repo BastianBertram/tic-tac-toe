@@ -5,13 +5,14 @@ import { useBelegStore } from '../store/belegStore';
 import { useObjektStore } from '../store/objektStore';
 import { BelegCard, type BelegHighlight } from '../components/BelegCard';
 import { ObjektSwitcherButton } from '../components/ObjektSwitcher';
-import { ProfilButton } from '../components/ProfilSheet';
+import { OffeneBanner } from '../components/OffeneBanner';
 import type { Bewirtungsbeleg } from '../types';
 import s from './TodayScreen.module.css';
 
 interface Props {
   onOpenBeleg: (b: Bewirtungsbeleg) => void;
   onAbschliessen: (b: Bewirtungsbeleg) => void;
+  onTabAbschluss: () => void;
 }
 
 /** Sortierung: aufsteigend nach uhrzeitVon, leere Uhrzeiten ans Ende */
@@ -31,7 +32,7 @@ function isFuture(beleg: Bewirtungsbeleg, now: string): boolean {
   return beleg.uhrzeitVon > now;
 }
 
-export function TodayScreen({ onOpenBeleg, onAbschliessen }: Props) {
+export function TodayScreen({ onOpenBeleg, onAbschliessen, onTabAbschluss }: Props) {
   const belege        = useBelegStore(st => st.belege);
   const aktivesObjekt = useObjektStore(st => st.getAktivesObjekt());
   const [view, setView] = useState<'today' | 'tomorrow'>('today');
@@ -75,9 +76,10 @@ export function TodayScreen({ onOpenBeleg, onAbschliessen }: Props) {
         <div className={s.headerRight}>
           <ObjektSwitcherButton />
           {pendingCount > 0 && <div className={s.syncBadge}>☁️ {pendingCount}</div>}
-          <ProfilButton />
         </div>
       </div>
+
+      <OffeneBanner onTabSwitch={onTabAbschluss} />
 
       <div className={s.dateRow}>{todayStr}</div>
 

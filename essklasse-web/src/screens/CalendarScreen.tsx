@@ -8,7 +8,7 @@ import { useBelegStore } from '../store/belegStore';
 import { useObjektStore } from '../store/objektStore';
 import { BelegCard } from '../components/BelegCard';
 import { ObjektSwitcherButton } from '../components/ObjektSwitcher';
-import { ProfilButton } from '../components/ProfilSheet';
+import { OffeneBanner } from '../components/OffeneBanner';
 import type { Bewirtungsbeleg } from '../types';
 
 function byUhrzeit(a: Bewirtungsbeleg, b: Bewirtungsbeleg): number {
@@ -18,11 +18,11 @@ function byUhrzeit(a: Bewirtungsbeleg, b: Bewirtungsbeleg): number {
 }
 import s from './CalendarScreen.module.css';
 
-interface Props { onOpenBeleg: (b: Bewirtungsbeleg) => void; }
+interface Props { onOpenBeleg: (b: Bewirtungsbeleg) => void; onTabAbschluss: () => void; }
 
 const WEEKDAYS = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
 
-export function CalendarScreen({ onOpenBeleg }: Props) {
+export function CalendarScreen({ onOpenBeleg, onTabAbschluss }: Props) {
   const [viewDate, setViewDate] = useState(new Date());
   const [selected, setSelected] = useState(format(new Date(), 'yyyy-MM-dd'));
   const belege        = useBelegStore(st => st.belege);
@@ -56,9 +56,10 @@ export function CalendarScreen({ onOpenBeleg }: Props) {
         <img src="/logo.webp" alt="EssKlasse" className={s.logo} />
         <div className={s.headerRight}>
           <ObjektSwitcherButton />
-          <ProfilButton />
         </div>
       </div>
+
+      <OffeneBanner onTabSwitch={onTabAbschluss} />
 
       {/* Monatsnavigation */}
       <div className={s.monthNav}>
