@@ -69,7 +69,7 @@ export function BelegCard({ beleg, onClick, highlight = null, onAbschliessen }: 
         <button
           className={s.abschlussBtn}
           type="button"
-          onClick={e => { e.stopPropagation(); onAbschliessen(); }}
+          onClick={e => { e.stopPropagation(); onClick(); }}
         >
           Bewirtung ansehen
         </button>
