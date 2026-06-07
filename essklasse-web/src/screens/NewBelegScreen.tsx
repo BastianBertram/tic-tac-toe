@@ -4,11 +4,11 @@ import { useBelegStore } from '../store/belegStore';
 import { useObjektStore } from '../store/objektStore';
 import { PhotoCapture } from '../components/PhotoCapture';
 import { PositionEditor } from '../components/PositionEditor';
-import type { BelegPosition } from '../types';
+import type { BelegPosition, Bewirtungsbeleg } from '../types';
 import type { ExtractedBeleg } from '../services/ocrService';
 import s from './NewBelegScreen.module.css';
 
-interface Props { onClose: () => void; }
+interface Props { onClose: () => void; editBeleg?: Bewirtungsbeleg; }
 
 const today = format(new Date(), 'yyyy-MM-dd');
 
@@ -20,15 +20,27 @@ const INIT = {
   wuensche: '', interneNotiz: '',
 };
 
-export function NewBelegScreen({ onClose }: Props) {
+function initFromBeleg(b: Bewirtungsbeleg) {
+  return {
+    besteller: b.besteller, cateringDatumVon: b.cateringDatumVon, cateringDatumBis: b.cateringDatumBis,
+    uhrzeitVon: b.uhrzeitVon, uhrzeitBis: b.uhrzeitBis, veranstaltung: b.veranstaltung,
+    ort: b.ort, raum: b.raum, personenzahl: String(b.personenzahl),
+    konto: b.konto, kostenstelle: b.kostenstelle, kostentraeger: b.kostentraeger,
+    positionen: b.positionen, fotoDataUrls: b.fotoDataUrls,
+    wuensche: b.wuensche, interneNotiz: b.interneNotiz,
+  };
+}
+
+export function NewBelegScreen({ onClose, editBeleg }: Props) {
   const aktivesObjekt = useObjektStore(st => st.getAktivesObjekt());
   const objekte       = useObjektStore(st => st.objekte);
 
-  const [f, setF] = useState(INIT);
+  const [f, setF] = useState(editBeleg ? initFromBeleg(editBeleg) : INIT);
   const [saving, setSaving] = useState(false);
   const [savedOrderNr, setSavedOrderNr] = useState<string | null>(null);
-  const [selectedObjektId, setSelectedObjektId] = useState<string>(aktivesObjekt?.id ?? '');
+  const [selectedObjektId, setSelectedObjektId] = useState<string>(editBeleg?.objektId ?? aktivesObjekt?.id ?? '');
   const addBeleg = useBelegStore(s => s.addBeleg);
+  const updateBeleg = useBelegStore(s => s.updateBeleg);
   const setSyncStatus = useBelegStore(s => s.setSyncStatus);
 
   function set<K extends keyof typeof INIT>(key: K, val: (typeof INIT)[K]) {
@@ -61,6 +73,21 @@ export function NewBelegScreen({ onClose }: Props) {
     if (!f.veranstaltung.trim()) return alert('Veranstaltung/Anlass fehlt.');
     const gewaehltes = objekte.find(o => o.id === selectedObjektId) ?? aktivesObjekt;
     setSaving(true);
+
+    if (editBeleg) {
+      updateBeleg(editBeleg.id, {
+        objektId: gewaehltes?.id ?? '', objektName: gewaehltes?.name ?? '',
+        besteller: f.besteller, cateringDatumVon: f.cateringDatumVon, cateringDatumBis: f.cateringDatumBis,
+        uhrzeitVon: f.uhrzeitVon, uhrzeitBis: f.uhrzeitBis, veranstaltung: f.veranstaltung,
+        ort: f.ort, raum: f.raum, personenzahl: parseInt(f.personenzahl) || 0,
+        konto: f.konto, kostenstelle: f.kostenstelle, kostentraeger: f.kostentraeger,
+        positionen: f.positionen, fotoDataUrls: f.fotoDataUrls,
+        wuensche: f.wuensche, interneNotiz: f.interneNotiz,
+      });
+      setSaving(false);
+      onClose();
+      return;
+    }
 
     const id = addBeleg({
       objektId:   gewaehltes?.id   ?? '',
@@ -126,7 +153,7 @@ export function NewBelegScreen({ onClose }: Props) {
         <button className={s.closeBtn} onClick={onClose} type="button">✕</button>
         <img src="/logo.webp" alt="EssKlasse" className={s.headerLogo} />
         <button className={s.saveHdrBtn} onClick={handleSave} disabled={saving} type="button">
-          {saving ? '…' : 'Speichern'}
+          {saving ? '…' : editBeleg ? 'Speichern' : 'Speichern'}
         </button>
       </div>
 

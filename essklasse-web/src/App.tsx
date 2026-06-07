@@ -17,7 +17,8 @@ type View =
   | { type: 'new' }
   | { type: 'detail';        beleg: Bewirtungsbeleg }
   | { type: 'abschluss';     beleg: Bewirtungsbeleg }
-  | { type: 'abgeschlossen' };
+  | { type: 'abgeschlossen' }
+  | { type: 'edit'; beleg: Bewirtungsbeleg };
 
 export default function App() {
   const [tab, setTab]   = useState<Tab>('today');
@@ -26,6 +27,19 @@ export default function App() {
   function openBeleg(b: Bewirtungsbeleg) { setView({ type: 'detail', beleg: b }); }
   function openAbschluss(b: Bewirtungsbeleg) { setView({ type: 'abschluss', beleg: b }); }
   function closeView() { setView({ type: 'main' }); }
+
+  if (view.type === 'edit') {
+    return (
+      <AuthGuard>
+        <div className={s.app}>
+          <NewBelegScreen
+            editBeleg={view.beleg}
+            onClose={() => setView({ type: 'detail', beleg: view.beleg })}
+          />
+        </div>
+      </AuthGuard>
+    );
+  }
 
   if (view.type === 'abgeschlossen') {
     return (
@@ -51,6 +65,7 @@ export default function App() {
             beleg={view.beleg}
             onClose={closeView}
             onAbschliessen={() => openAbschluss(view.beleg)}
+            onBearbeiten={() => setView({ type: 'edit', beleg: view.beleg })}
           />
         </div>
       </AuthGuard>

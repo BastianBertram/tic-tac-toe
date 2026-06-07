@@ -6,9 +6,9 @@ import { StatusBadge } from '../components/StatusBadge';
 import { useBelegStore } from '../store/belegStore';
 import s from './DetailScreen.module.css';
 
-interface Props { beleg: Bewirtungsbeleg; onClose: () => void; onAbschliessen?: () => void; }
+interface Props { beleg: Bewirtungsbeleg; onClose: () => void; onAbschliessen?: () => void; onBearbeiten?: () => void; }
 
-export function DetailScreen({ beleg: init, onClose, onAbschliessen }: Props) {
+export function DetailScreen({ beleg: init, onClose, onAbschliessen, onBearbeiten }: Props) {
   const store = useBelegStore();
   const beleg = store.belege.find(b => b.id === init.id) ?? init;
   const [retrying, setRetrying] = useState(false);
@@ -126,6 +126,21 @@ export function DetailScreen({ beleg: init, onClose, onAbschliessen }: Props) {
       </div>
 
       {/* Abschließen-Button */}
+      {onBearbeiten && !beleg.abgeschlossen && (
+        <div style={{ padding: '0 16px 8px' }}>
+          <button
+            type="button"
+            onClick={onBearbeiten}
+            style={{
+              width: '100%', padding: 14, fontSize: 15, fontWeight: 700,
+              background: 'var(--ek-surface2)', color: 'var(--ek-charcoal)',
+              borderRadius: 12, border: '1.5px solid var(--ek-border)', cursor: 'pointer',
+            }}
+          >
+            ✏️ Bewirtung bearbeiten
+          </button>
+        </div>
+      )}
       {onAbschliessen && !beleg.abgeschlossen && (
         <div style={{ padding: '0 16px 16px' }}>
           <button
