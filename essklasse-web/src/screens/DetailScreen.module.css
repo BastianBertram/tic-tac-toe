@@ -42,12 +42,13 @@
   padding-bottom: 6px; border-bottom: 2px solid var(--ek-border);
 }
 
-.posRow { display: flex; justify-content: space-between; align-items: flex-start; padding: 8px 0; border-bottom: 1px solid var(--ek-border); }
+.posGruppe { margin-bottom: 14px; }
+.posGruppe:last-child { margin-bottom: 0; }
+.posGruppeTitle { font-size: 12px; font-weight: 700; color: var(--ek-muted); text-transform: uppercase; letter-spacing: .4px; margin-bottom: 4px; }
+.posRow { display: flex; justify-content: space-between; align-items: baseline; padding: 6px 0; border-bottom: 1px solid var(--ek-border); }
+.posRow:last-child { border-bottom: none; }
 .posName { font-weight: 700; font-size: 14px; color: var(--ek-charcoal); }
 .posMeta { color: var(--ek-muted); font-size: 12px; margin-top: 2px; }
-.posTotal { color: var(--ek-red); font-weight: 800; font-size: 14px; }
-.totalRow { display: flex; justify-content: space-between; padding-top: 10px; color: var(--ek-muted); font-size: 14px; }
-.totalVal { color: var(--ek-red); font-size: 18px; font-weight: 800; }
 
 .photoGrid { display: flex; flex-wrap: wrap; gap: 8px; }
 .photo {

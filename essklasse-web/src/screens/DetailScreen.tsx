@@ -15,7 +15,6 @@ export function DetailScreen({ beleg: init, onClose, onAbschliessen }: Props) {
   const [lightbox, setLightbox] = useState<string | null>(null);
 
   const datum = format(parseISO(beleg.cateringDatumVon), 'dd.MM.yyyy', { locale: de });
-  const total = beleg.positionen.reduce((a, p) => a + p.preis * p.menge, 0);
 
   async function retrySync() {
     setRetrying(true);
@@ -75,24 +74,28 @@ export function DetailScreen({ beleg: init, onClose, onAbschliessen }: Props) {
         </div>
 
         {/* Positionen */}
-        {beleg.positionen.length > 0 && (
-          <div className={s.section}>
-            <div className={s.sectionTitle}>Positionen</div>
-            {beleg.positionen.map(p => (
-              <div key={p.id} className={s.posRow}>
-                <div>
-                  <div className={s.posName}>{p.bezeichnung}</div>
-                  <div className={s.posMeta}>{p.kategorie} · {p.menge} {p.einheit}</div>
+        {beleg.positionen.length > 0 && (() => {
+          const gruppen = beleg.positionen.reduce<Record<string, typeof beleg.positionen>>((acc, p) => {
+            (acc[p.kategorie] ??= []).push(p);
+            return acc;
+          }, {});
+          return (
+            <div className={s.section}>
+              <div className={s.sectionTitle}>Positionen</div>
+              {Object.entries(gruppen).map(([kategorie, positionen]) => (
+                <div key={kategorie} className={s.posGruppe}>
+                  <div className={s.posGruppeTitle}>{kategorie}</div>
+                  {positionen.map(p => (
+                    <div key={p.id} className={s.posRow}>
+                      <div className={s.posName}>{p.bezeichnung}</div>
+                      <div className={s.posName}>{p.menge} {p.einheit}</div>
+                    </div>
+                  ))}
                 </div>
-                <div className={s.posTotal}>{(p.preis * p.menge).toFixed(2)} €</div>
-              </div>
-            ))}
-            <div className={s.totalRow}>
-              <span>Gesamt</span>
-              <span className={s.totalVal}>{total.toFixed(2)} €</span>
+              ))}
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* Fotos */}
         {beleg.fotoDataUrls.length > 0 && (
