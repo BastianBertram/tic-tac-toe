@@ -8,14 +8,16 @@ import { NewBelegScreen } from './screens/NewBelegScreen';
 import { DetailScreen } from './screens/DetailScreen';
 import { AbschlussScreen } from './screens/AbschlussScreen';
 import { AbschlussListScreen } from './screens/AbschlussListScreen';
+import { AbgeschlossenScreen } from './screens/AbgeschlossenScreen';
 import type { Bewirtungsbeleg } from './types';
 import s from './App.module.css';
 
 type View =
   | { type: 'main' }
   | { type: 'new' }
-  | { type: 'detail';     beleg: Bewirtungsbeleg }
-  | { type: 'abschluss';  beleg: Bewirtungsbeleg };
+  | { type: 'detail';        beleg: Bewirtungsbeleg }
+  | { type: 'abschluss';     beleg: Bewirtungsbeleg }
+  | { type: 'abgeschlossen' };
 
 export default function App() {
   const [tab, setTab]   = useState<Tab>('today');
@@ -24,6 +26,19 @@ export default function App() {
   function openBeleg(b: Bewirtungsbeleg) { setView({ type: 'detail', beleg: b }); }
   function openAbschluss(b: Bewirtungsbeleg) { setView({ type: 'abschluss', beleg: b }); }
   function closeView() { setView({ type: 'main' }); }
+
+  if (view.type === 'abgeschlossen') {
+    return (
+      <AuthGuard>
+        <div className={s.app}>
+          <AbgeschlossenScreen
+            onClose={closeView}
+            onOpenBeleg={beleg => setView({ type: 'detail', beleg })}
+          />
+        </div>
+      </AuthGuard>
+    );
+  }
 
   if (view.type === 'new') {
     return <AuthGuard><div className={s.app}><NewBelegScreen onClose={closeView} /></div></AuthGuard>;
@@ -63,7 +78,7 @@ export default function App() {
           {tab === 'calendar'  && <CalendarScreen  onOpenBeleg={openBeleg} />}
           {tab === 'abschluss' && <AbschlussListScreen onOpenBeleg={openBeleg} />}
         </div>
-        <BottomNav active={tab} onTab={setTab} onNew={() => setView({ type: 'new' })} />
+        <BottomNav active={tab} onTab={setTab} onNew={() => setView({ type: 'new' })} onAbgeschlossene={() => setView({ type: 'abgeschlossen' })} />
       </div>
     </AuthGuard>
   );
