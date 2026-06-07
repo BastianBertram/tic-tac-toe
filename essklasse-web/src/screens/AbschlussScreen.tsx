@@ -16,20 +16,30 @@ export function AbschlussScreen({ beleg, onClose, onDone }: Props) {
   const schliesseBeleg = useBelegStore(st => st.schliesseBeleg);
   const user = useAuthStore(st => st.user);
 
-  // Mengen: initial = geplante Menge
-  const [mengen, setMengen] = useState<Record<string, string>>(
-    Object.fromEntries(beleg.positionen.map(p => [p.id, String(p.menge)]))
-  );
+  const [mengen,       setMengen]       = useState<Record<string, string>>(Object.fromEntries(beleg.positionen.map(p => [p.id, String(p.menge)])));
+  const [zurueckVoll,  setZurueckVoll]  = useState<Record<string, string>>(Object.fromEntries(beleg.positionen.map(p => [p.id, ''])));
+  const [zurueckLeer,  setZurueckLeer]  = useState<Record<string, string>>(Object.fromEntries(beleg.positionen.map(p => [p.id, ''])));
+  const [pfand,        setPfand]        = useState<Record<string, string>>(Object.fromEntries(beleg.positionen.map(p => [p.id, ''])));
   const [done, setDone] = useState(false);
 
-  function setMenge(id: string, val: string) {
-    setMengen(prev => ({ ...prev, [id]: val }));
+  function setMenge(id: string, val: string) { setMengen(prev => ({ ...prev, [id]: val })); }
+
+  function berechnen(id: string): string {
+    const tats = parseFloat(mengen[id] ?? '0') || 0;
+    const voll = parseFloat(zurueckVoll[id] ?? '0') || 0;
+    const leer = parseFloat(zurueckLeer[id] ?? '0') || 0;
+    const result = tats - voll - leer;
+    return result > 0 ? String(result) : '0';
   }
 
   function handleAbschliessen() {
     const positionen: AbschlussPosition[] = beleg.positionen.map(p => ({
       positionId: p.id,
       tatsaechlicheMenge: parseFloat(mengen[p.id] ?? String(p.menge)) || 0,
+      zurueckVoll:  parseFloat(zurueckVoll[p.id] ?? '0') || 0,
+      zurueckLeer:  parseFloat(zurueckLeer[p.id] ?? '0') || 0,
+      berechnen:    parseFloat(berechnen(p.id)) || 0,
+      pfand:        parseFloat(pfand[p.id] ?? '0') || 0,
     }));
     schliesseBeleg(beleg.id, positionen, user?.name ?? user?.email);
     setDone(true);
@@ -90,8 +100,16 @@ export function AbschlussScreen({ beleg, onClose, onDone }: Props) {
           <div className={s.posListe}>
             <div className={s.posHeader}>
               <div className={s.posHeaderName}>Positionen</div>
-              <div className={s.posHeaderCol}>Bestellte Anzahl</div>
-              <div className={s.posHeaderCol}>Tatsächlich</div>
+              <div className={s.posHeaderCol}>Bestellt</div>
+              <div className={s.posHeaderCol}>Ausgeliefert</div>
+              <div className={s.posHeaderGroup}>
+                <div className={s.posHeaderGroupLabel}>Zurück</div>
+                <div className={s.posHeaderGroupCols}>
+                  <span>Voll</span><span>Leer</span>
+                </div>
+              </div>
+              <div className={s.posHeaderCol}>Berechnen</div>
+              <div className={s.posHeaderCol}>Pfand</div>
             </div>
             {Object.entries(
               beleg.positionen.reduce<Record<string, typeof beleg.positionen>>((acc, p) => {
@@ -109,20 +127,33 @@ export function AbschlussScreen({ beleg, onClose, onDone }: Props) {
                     <div key={p.id} className={`${s.posRow} ${abweichend ? s.posRowAbweichend : ''}`}>
                       <div className={s.posName}>{p.bezeichnung}</div>
                       <div className={s.posQty}>{geplant} {p.einheit}</div>
-                      <div className={s.posActCell}>
-                        <input
-                          type="number"
-                          min="0"
-                          step="0.5"
+                      <div className={s.posCell}>
+                        <input type="number" min="0" step="0.5"
                           className={`${s.mengeInput} ${abweichend ? s.mengeInputAbweichend : ''}`}
                           value={mengen[p.id] ?? String(p.menge)}
                           onChange={e => setMenge(p.id, e.target.value)}
                         />
-                        {abweichend && (
-                          <span className={s.diffBadge}>
-                            {tatsaechlich > geplant ? `+${(tatsaechlich - geplant).toFixed(1)}` : `${(tatsaechlich - geplant).toFixed(1)}`}
-                          </span>
-                        )}
+                      </div>
+                      <div className={s.posCell}>
+                        <input type="number" min="0" step="1" className={s.mengeInput}
+                          value={zurueckVoll[p.id]} placeholder="0"
+                          onChange={e => setZurueckVoll(prev => ({ ...prev, [p.id]: e.target.value }))}
+                        />
+                      </div>
+                      <div className={s.posCell}>
+                        <input type="number" min="0" step="1" className={s.mengeInput}
+                          value={zurueckLeer[p.id]} placeholder="0"
+                          onChange={e => setZurueckLeer(prev => ({ ...prev, [p.id]: e.target.value }))}
+                        />
+                      </div>
+                      <div className={s.posCell}>
+                        <div className={s.berechnenVal}>{berechnen(p.id)}</div>
+                      </div>
+                      <div className={s.posCell}>
+                        <input type="number" min="0" step="0.01" className={s.mengeInput}
+                          value={pfand[p.id]} placeholder="0"
+                          onChange={e => setPfand(prev => ({ ...prev, [p.id]: e.target.value }))}
+                        />
                       </div>
                     </div>
                   );

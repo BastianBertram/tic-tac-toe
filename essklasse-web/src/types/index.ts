@@ -37,6 +37,10 @@ export interface Objekt {
 export interface AbschlussPosition {
   positionId: string;
   tatsaechlicheMenge: number;
+  zurueckVoll?: number;
+  zurueckLeer?: number;
+  berechnen?: number;
+  pfand?: number;
 }
 
 export interface Bewirtungsbeleg {

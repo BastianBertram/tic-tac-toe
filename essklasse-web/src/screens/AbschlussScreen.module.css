@@ -49,35 +49,39 @@
 }
 
 .posHeader {
-  display: grid; grid-template-columns: 1fr 100px 90px;
-  padding: 10px 14px 8px;
+  display: grid; grid-template-columns: 1fr 56px 56px 112px 56px 52px;
+  padding: 10px 14px 8px; gap: 4px;
   border-bottom: 2px solid var(--ek-border);
 }
-.posHeaderName { color: var(--ek-red); font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .5px; }
-.posHeaderCol  { color: var(--ek-red); font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .4px; text-align: right; line-height: 1.3; }
+.posHeaderName { color: var(--ek-red); font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .4px; }
+.posHeaderCol  { color: var(--ek-red); font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: .3px; text-align: center; line-height: 1.3; }
+.posHeaderGroup { display: flex; flex-direction: column; align-items: center; }
+.posHeaderGroupLabel { color: var(--ek-red); font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: .3px; border-bottom: 1px solid var(--ek-border); width: 100%; text-align: center; padding-bottom: 2px; margin-bottom: 2px; }
+.posHeaderGroupCols { display: grid; grid-template-columns: 1fr 1fr; width: 100%; color: var(--ek-red); font-size: 9px; font-weight: 800; text-transform: uppercase; text-align: center; }
 
-.posGruppe { padding: 0 14px; margin-bottom: 10px; }
+.posGruppe { margin-bottom: 10px; }
 .posGruppe:last-child { margin-bottom: 0; }
 .posGruppeTitle { font-size: 12px; font-weight: 700; color: var(--ek-muted); text-transform: uppercase; letter-spacing: .4px; margin: 10px 0 4px; }
 
 .posRow {
-  display: grid; grid-template-columns: 1fr 100px 90px;
-  align-items: center; padding: 7px 0;
+  display: grid; grid-template-columns: 1fr 56px 56px 56px 56px 56px 52px;
+  align-items: center; padding: 6px 14px; gap: 4px;
   border-bottom: 1px solid var(--ek-border);
 }
 .posRow:last-child { border-bottom: none; }
-.posRowAbweichend { background: #fffdf0; border-radius: 8px; padding: 7px 4px; }
+.posRowAbweichend { background: #fffdf0; }
 
-.posName { font-weight: 700; font-size: 14px; color: var(--ek-charcoal); }
-.posQty  { font-weight: 700; font-size: 14px; color: var(--ek-charcoal); text-align: right; padding-right: 8px; }
+.posName { font-weight: 700; font-size: 13px; color: var(--ek-charcoal); }
+.posQty  { font-weight: 700; font-size: 13px; color: var(--ek-charcoal); text-align: center; }
 
-.posActCell { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
+.posCell { display: flex; justify-content: center; }
+.berechnenVal { font-weight: 800; font-size: 14px; color: var(--ek-charcoal); text-align: center; width: 100%; }
 
 .mengeInput {
-  width: 72px; text-align: center;
-  padding: 8px 6px; font-size: 16px; font-weight: 800;
+  width: 100%; max-width: 52px; text-align: center;
+  padding: 5px 2px; font-size: 13px; font-weight: 700;
   border: 2px solid var(--ek-border);
-  border-radius: 10px; background: var(--ek-surface2);
+  border-radius: 8px; background: var(--ek-surface2);
   color: var(--ek-charcoal);
 }
 .mengeInput:focus { border-color: var(--ek-red); outline: none; }
