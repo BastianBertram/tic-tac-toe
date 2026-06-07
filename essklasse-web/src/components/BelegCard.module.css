@@ -7,9 +7,72 @@
   border: 1px solid var(--ek-border);
   transition: transform .12s, box-shadow .12s;
   box-shadow: 0 2px 8px rgba(0,0,0,.06);
+  overflow: hidden;
 }
-.card:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(0,0,0,.1); }
+.card:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(0,0,0,.10); }
 
+/* ── Highlight-Varianten ────────────────────────────────── */
+/* Abgeschlossen */
+.cardDone {
+  opacity: .7;
+  border-color: #c3dfc9;
+}
+.bannerDone {
+  background: #e8f5ee; color: #1a5c30;
+  font-size: 12px; font-weight: 800;
+  padding: 6px 14px; margin: -14px -14px 12px;
+  border-bottom: 1px solid #c3dfc9;
+}
+
+/* Abschließen-Button auf der Card */
+.abschlussBtn {
+  width: 100%; margin-top: 10px;
+  padding: 12px; font-size: 14px; font-weight: 800;
+  background: linear-gradient(135deg, #2d8a4e, #3aab62);
+  color: #fff; border-radius: 10px;
+  box-shadow: 0 3px 10px rgba(45,138,78,.25);
+  transition: opacity .12s;
+}
+.abschlussBtn:hover { opacity: .9; }
+
+.cardRunning {
+  border-color: #2d8a4e;
+  box-shadow: 0 0 0 2px rgba(45,138,78,.2), 0 2px 8px rgba(0,0,0,.06);
+}
+.cardNext {
+  border-color: #c17f24;
+  box-shadow: 0 0 0 2px rgba(193,127,36,.2), 0 2px 8px rgba(0,0,0,.06);
+}
+
+/* ── Banner ─────────────────────────────────────────────── */
+.bannerRunning {
+  display: flex; align-items: center; gap: 8px;
+  background: #d4edda; color: #1a5c30;
+  font-size: 12px; font-weight: 800;
+  padding: 6px 14px; margin: -14px -14px 12px;
+  border-bottom: 1px solid #b7dfbf;
+  letter-spacing: .3px;
+}
+.bannerNext {
+  background: #fff3cd; color: #856404;
+  font-size: 12px; font-weight: 800;
+  padding: 6px 14px; margin: -14px -14px 12px;
+  border-bottom: 1px solid #fce08a;
+  letter-spacing: .3px;
+}
+
+/* Animierter grüner Punkt */
+.pulseDot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: #2d8a4e; flex-shrink: 0;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: .5; transform: scale(1.4); }
+}
+
+/* ── Card-Inhalt ────────────────────────────────────────── */
 .top { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
 .icon {
   width: 42px; height: 42px; border-radius: 50%;
@@ -19,7 +82,7 @@
 }
 .info { flex: 1; min-width: 0; }
 .title { font-weight: 700; font-size: 15px; color: var(--ek-charcoal); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.sub { color: var(--ek-muted); font-size: 12px; margin-top: 2px; }
+.sub   { color: var(--ek-muted); font-size: 12px; margin-top: 2px; }
 
 .meta { display: flex; gap: 14px; font-size: 12px; color: var(--ek-muted); flex-wrap: wrap; margin-bottom: 8px; }
 
@@ -36,4 +99,4 @@
   border-top: 1px solid var(--ek-border); padding-top: 8px;
 }
 .posCnt { flex: 1; color: var(--ek-muted); font-size: 12px; }
-.total { color: var(--ek-red); font-size: 15px; font-weight: 800; }
+.total  { color: var(--ek-red); font-size: 15px; font-weight: 800; }

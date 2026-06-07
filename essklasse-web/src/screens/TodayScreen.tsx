@@ -3,31 +3,44 @@ import { format, addDays } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { useBelegStore } from '../store/belegStore';
 import { useObjektStore } from '../store/objektStore';
-import { BelegCard } from '../components/BelegCard';
+import { BelegCard, type BelegHighlight } from '../components/BelegCard';
 import { ObjektSwitcherButton } from '../components/ObjektSwitcher';
 import { ProfilButton } from '../components/ProfilSheet';
 import type { Bewirtungsbeleg } from '../types';
-
-/** Sortierung: aufsteigend nach Uhrzeit (HH:MM), leere Uhrzeiten ans Ende */
-function byUhrzeit(a: Bewirtungsbeleg, b: Bewirtungsbeleg): number {
-  const ta = a.uhrzeitVon || '99:99';
-  const tb = b.uhrzeitVon || '99:99';
-  return ta.localeCompare(tb);
-}
 import s from './TodayScreen.module.css';
 
-interface Props { onOpenBeleg: (b: Bewirtungsbeleg) => void; }
+interface Props {
+  onOpenBeleg: (b: Bewirtungsbeleg) => void;
+  onAbschliessen: (b: Bewirtungsbeleg) => void;
+}
 
-export function TodayScreen({ onOpenBeleg }: Props) {
-  const belege         = useBelegStore(st => st.belege);
-  const aktivesObjekt  = useObjektStore(st => st.getAktivesObjekt());
+/** Sortierung: aufsteigend nach uhrzeitVon, leere Uhrzeiten ans Ende */
+function byUhrzeit(a: Bewirtungsbeleg, b: Bewirtungsbeleg): number {
+  return (a.uhrzeitVon || '99:99').localeCompare(b.uhrzeitVon || '99:99');
+}
+
+/** Aktuell laufend: jetzt liegt zwischen uhrzeitVon und uhrzeitBis */
+function isRunning(beleg: Bewirtungsbeleg, now: string): boolean {
+  if (!beleg.uhrzeitVon || !beleg.uhrzeitBis) return false;
+  return beleg.uhrzeitVon <= now && now < beleg.uhrzeitBis;
+}
+
+/** Als nächstes: uhrzeitVon liegt in der Zukunft */
+function isFuture(beleg: Bewirtungsbeleg, now: string): boolean {
+  if (!beleg.uhrzeitVon) return false;
+  return beleg.uhrzeitVon > now;
+}
+
+export function TodayScreen({ onOpenBeleg, onAbschliessen }: Props) {
+  const belege        = useBelegStore(st => st.belege);
+  const aktivesObjekt = useObjektStore(st => st.getAktivesObjekt());
   const [view, setView] = useState<'today' | 'tomorrow'>('today');
 
   const today    = format(new Date(), 'yyyy-MM-dd');
   const tomorrow = format(addDays(new Date(), 1), 'yyyy-MM-dd');
   const todayStr = format(new Date(), "EEE, d. MMM yyyy", { locale: de });
+  const nowTime  = format(new Date(), 'HH:mm');   // z.B. "09:35"
 
-  // Filter nach aktivem Objekt
   const belegeForObjekt = useMemo(
     () => belege.filter(b => !aktivesObjekt || b.objektId === aktivesObjekt.id),
     [belege, aktivesObjekt]
@@ -36,6 +49,19 @@ export function TodayScreen({ onOpenBeleg }: Props) {
   const todaysBelege    = useMemo(() => belegeForObjekt.filter(b => b.cateringDatumVon === today).sort(byUhrzeit),    [belegeForObjekt, today]);
   const tomorrowsBelege = useMemo(() => belegeForObjekt.filter(b => b.cateringDatumVon === tomorrow).sort(byUhrzeit), [belegeForObjekt, tomorrow]);
   const pendingCount    = useMemo(() => belege.filter(b => b.syncStatus === 'local' || b.syncStatus === 'error').length, [belege]);
+
+  // Highlight-Logik: nur für Heute
+  const nextBelegId = useMemo(() => {
+    const future = todaysBelege.filter(b => isFuture(b, nowTime));
+    return future[0]?.id ?? null;   // erster in der Zukunft (bereits nach Uhrzeit sortiert)
+  }, [todaysBelege, nowTime]);
+
+  function getHighlight(beleg: Bewirtungsbeleg): BelegHighlight {
+    if (view !== 'today') return null;
+    if (isRunning(beleg, nowTime)) return 'running';
+    if (beleg.id === nextBelegId)  return 'next';
+    return null;
+  }
 
   const activeBelege = view === 'today' ? todaysBelege : tomorrowsBelege;
   const activeLabel  = view === 'today' ? 'Heutige Bewirtungen' : 'Bewirtungen morgen';
@@ -53,7 +79,6 @@ export function TodayScreen({ onOpenBeleg }: Props) {
         </div>
       </div>
 
-      {/* Datum */}
       <div className={s.dateRow}>{todayStr}</div>
 
       {/* ── Zähler-Buttons ── */}
@@ -88,7 +113,15 @@ export function TodayScreen({ onOpenBeleg }: Props) {
             <p>Tippe unten auf + um einen Bewirtungsbeleg anzulegen.</p>
           </div>
         ) : (
-          activeBelege.map(b => <BelegCard key={b.id} beleg={b} onClick={() => onOpenBeleg(b)} />)
+          activeBelege.map(b => (
+            <BelegCard
+              key={b.id}
+              beleg={b}
+              onClick={() => onOpenBeleg(b)}
+              highlight={getHighlight(b)}
+              onAbschliessen={!b.abgeschlossen ? () => onAbschliessen(b) : undefined}
+            />
+          ))
         )}
       </div>
     </div>

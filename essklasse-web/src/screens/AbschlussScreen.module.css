@@ -1,0 +1,142 @@
+.screen { display: flex; flex-direction: column; height: 100%; background: var(--ek-bg); }
+
+/* ── Header ──────────────────────────────────────────────── */
+.header {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 16px;
+  background: var(--ek-surface);
+  border-bottom: 2px solid var(--ek-red);
+  box-shadow: 0 2px 8px rgba(139,26,26,.1);
+  position: sticky; top: 0; z-index: 10;
+}
+.backBtn {
+  background: var(--ek-surface2); color: var(--ek-muted);
+  width: 34px; height: 34px; border-radius: 50%;
+  border: 1px solid var(--ek-border); font-size: 14px; flex-shrink: 0;
+}
+.headerCenter { flex: 1; }
+.headerTitle { font-size: 16px; font-weight: 900; color: var(--ek-charcoal); }
+.headerSub   { font-size: 12px; color: var(--ek-muted); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ── Scroll ──────────────────────────────────────────────── */
+.scroll { flex: 1; overflow-y: auto; padding: 16px; padding-bottom: 40px; }
+
+/* ── Info Banner ─────────────────────────────────────────── */
+.infoBanner {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--ek-red); color: #fff;
+  border-radius: 14px; padding: 14px 16px;
+  margin-bottom: 12px;
+  box-shadow: 0 4px 14px rgba(139,26,26,.25);
+}
+.infoBannerIcon  { font-size: 28px; flex-shrink: 0; }
+.infoBannerTitle { font-size: 15px; font-weight: 800; }
+.infoBannerMeta  { font-size: 12px; opacity: .85; margin-top: 2px; }
+
+/* ── Hinweis ─────────────────────────────────────────────── */
+.hinweis {
+  background: #fff8e1; border: 1px solid #fce08a;
+  border-radius: 10px; padding: 12px 14px;
+  font-size: 13px; color: #7a5010; line-height: 1.5;
+  margin-bottom: 16px;
+}
+
+/* ── Positionen-Liste ────────────────────────────────────── */
+.posListe {
+  background: var(--ek-surface);
+  border-radius: 14px; border: 1px solid var(--ek-border);
+  overflow: hidden; margin-bottom: 14px;
+}
+
+.posHeader {
+  display: grid; grid-template-columns: 1fr 80px 100px;
+  padding: 10px 14px;
+  background: var(--ek-surface2);
+  border-bottom: 1px solid var(--ek-border);
+  font-size: 11px; font-weight: 700; color: var(--ek-muted);
+  text-transform: uppercase; letter-spacing: .5px;
+}
+.posHeaderName { }
+.posHeaderPlan { text-align: center; }
+.posHeaderAct  { text-align: center; }
+
+.posRow {
+  display: grid; grid-template-columns: 1fr 80px 100px;
+  padding: 12px 14px; align-items: center;
+  border-bottom: 1px solid var(--ek-border);
+  transition: background .1s;
+}
+.posRow:last-child { border-bottom: none; }
+.posRowAbweichend { background: #fffdf0; }
+
+.posInfo { min-width: 0; }
+.posName { font-weight: 700; font-size: 14px; color: var(--ek-charcoal); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.posMeta { font-size: 11px; color: var(--ek-muted); margin-top: 2px; }
+
+.posGeplant { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.geplantVal { font-size: 16px; font-weight: 800; color: var(--ek-charcoal); }
+.geplantEinheit { font-size: 10px; color: var(--ek-muted); }
+
+.posAct { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+
+.mengeInput {
+  width: 72px; text-align: center;
+  padding: 8px 6px; font-size: 16px; font-weight: 800;
+  border: 2px solid var(--ek-border);
+  border-radius: 10px; background: var(--ek-surface2);
+  color: var(--ek-charcoal);
+}
+.mengeInput:focus { border-color: var(--ek-red); outline: none; }
+.mengeInputAbweichend { border-color: #c17f24; background: #fffdf0; color: #7a5010; }
+
+.diffBadge {
+  font-size: 11px; font-weight: 800; color: #7a5010;
+  background: #fce08a; border-radius: 6px; padding: 1px 6px;
+}
+
+/* ── Abweichungs-Box ─────────────────────────────────────── */
+.abweichungBox {
+  background: #fff8e1; border: 1px solid #fce08a;
+  border-radius: 12px; padding: 14px; margin-bottom: 14px;
+}
+.abweichungTitle { font-weight: 800; font-size: 14px; color: #7a5010; margin-bottom: 10px; }
+.abweichungRow {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 6px 0; border-bottom: 1px solid #fce08a; font-size: 13px; color: var(--ek-charcoal);
+}
+.abweichungRow:last-child { border-bottom: none; }
+.diffPos { color: #c0392b; font-weight: 700; }
+.diffNeg { color: #2d8a4e; font-weight: 700; }
+
+/* ── Keine Positionen ────────────────────────────────────── */
+.noPosBox {
+  background: var(--ek-surface); border-radius: 12px; border: 1px solid var(--ek-border);
+  padding: 20px; text-align: center; color: var(--ek-muted); font-size: 14px;
+  margin-bottom: 14px;
+}
+
+/* ── Buttons ─────────────────────────────────────────────── */
+.abschlussBtn {
+  width: 100%; padding: 18px; font-size: 17px; font-weight: 800;
+  background: linear-gradient(135deg, #2d8a4e, #3aab62);
+  color: #fff; border-radius: 16px; margin-bottom: 10px;
+  box-shadow: 0 6px 20px rgba(45,138,78,.35);
+}
+.cancelBtn {
+  width: 100%; padding: 13px; font-size: 14px;
+  background: var(--ek-surface2); color: var(--ek-muted);
+  border: 1px solid var(--ek-border); border-radius: 12px;
+}
+
+/* ── Success ─────────────────────────────────────────────── */
+.successBox {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; padding: 40px;
+}
+.successIcon  { font-size: 72px; margin-bottom: 20px; }
+.successTitle { font-size: 26px; font-weight: 900; color: var(--ek-charcoal); margin-bottom: 12px; }
+.successText  { font-size: 14px; color: var(--ek-muted); line-height: 1.7; text-align: center; margin-bottom: 32px; }
+.doneBtn {
+  width: 100%; padding: 16px; font-size: 17px; font-weight: 700;
+  background: var(--ek-red); color: #fff; border-radius: 14px;
+}

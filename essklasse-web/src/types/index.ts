@@ -34,10 +34,20 @@ export interface Objekt {
   kuerzel?: string;   // z.B. "HWK-01" – erscheint im Switcher-Button
 }
 
+export interface AbschlussPosition {
+  positionId: string;
+  tatsaechlicheMenge: number;
+}
+
 export interface Bewirtungsbeleg {
   id: string;
-  objektId: string;       // Pflichtfeld – welchem Objekt gehört dieser Beleg
-  objektName: string;     // Denormalisiert für Offline-Anzeige
+  objektId: string;
+  objektName: string;
+  // Abschluss
+  abgeschlossen: boolean;
+  abgeschlossenAm?: string;
+  abgeschlossenVon?: string;
+  abschlussPositionen?: AbschlussPosition[];  // tatsächliche Mengen
   besteller: string;
   cateringDatumVon: string;
   cateringDatumBis: string;

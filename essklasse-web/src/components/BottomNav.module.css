@@ -2,32 +2,31 @@
   position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
   width: 100%; max-width: 480px;
   display: flex; align-items: center;
-  background: var(--ek-surface);
-  border-top: 1px solid var(--ek-border);
-  padding: 10px 20px 24px;
-  z-index: 100;
+  background: var(--ek-surface); border-top: 1px solid var(--ek-border);
+  padding: 10px 12px 24px; z-index: 100;
   box-shadow: 0 -2px 12px rgba(0,0,0,.08);
 }
 
 .tab {
   flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px;
-  background: transparent; color: var(--ek-muted); position: relative;
-  padding: 4px 0; border-radius: 0;
+  background: transparent; color: var(--ek-muted); position: relative; padding: 4px 2px;
 }
-.tabActive { color: var(--ek-red); }
-.tabIcon { font-size: 22px; }
-.tabLabel { font-size: 11px; font-weight: 700; }
+.tabActive  { color: var(--ek-red); }
+.tabUrgent  { color: #2d8a4e; }
+.tabIcon    { font-size: 20px; }
+.tabLabel   { font-size: 10px; font-weight: 700; white-space: nowrap; }
 
 .badge {
-  position: absolute; top: -2px; right: 10px;
+  position: absolute; top: -2px; right: 4px;
   background: var(--ek-red); color: #fff;
-  border-radius: 10px; min-width: 18px; height: 18px;
+  border-radius: 10px; min-width: 17px; height: 17px;
   font-size: 10px; font-weight: 800;
   display: flex; align-items: center; justify-content: center; padding: 0 4px;
 }
+.badgeUrgent { background: #2d8a4e; }
 
 .fab {
-  width: 60px; height: 60px; border-radius: 50%;
+  width: 58px; height: 58px; border-radius: 50%;
   background: linear-gradient(135deg, var(--ek-red), var(--ek-red-soft));
   color: #fff;
   box-shadow: 0 4px 16px rgba(139,26,26,.45);
@@ -35,4 +34,4 @@
   margin-bottom: 12px; flex-shrink: 0;
   border: 3px solid #fff;
 }
-.fabPlus { font-size: 34px; line-height: 1; font-weight: 300; }
+.fabPlus { font-size: 32px; line-height: 1; font-weight: 300; }

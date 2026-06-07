@@ -6,9 +6,9 @@ import { StatusBadge } from '../components/StatusBadge';
 import { useBelegStore } from '../store/belegStore';
 import s from './DetailScreen.module.css';
 
-interface Props { beleg: Bewirtungsbeleg; onClose: () => void; }
+interface Props { beleg: Bewirtungsbeleg; onClose: () => void; onAbschliessen?: () => void; }
 
-export function DetailScreen({ beleg: init, onClose }: Props) {
+export function DetailScreen({ beleg: init, onClose, onAbschliessen }: Props) {
   const store = useBelegStore();
   const beleg = store.belege.find(b => b.id === init.id) ?? init;
   const [retrying, setRetrying] = useState(false);
@@ -116,6 +116,34 @@ export function DetailScreen({ beleg: init, onClose }: Props) {
           </div>
         )}
       </div>
+
+      {/* Abschließen-Button */}
+      {onAbschliessen && !beleg.abgeschlossen && (
+        <div style={{ padding: '0 16px 16px' }}>
+          <button
+            type="button"
+            onClick={onAbschliessen}
+            style={{
+              width: '100%', padding: 16, fontSize: 16, fontWeight: 800,
+              background: 'linear-gradient(135deg, #2d8a4e, #3aab62)',
+              color: '#fff', borderRadius: 14, border: 'none', cursor: 'pointer',
+              boxShadow: '0 4px 16px rgba(45,138,78,.3)',
+            }}
+          >
+            ✓ Bewirtung abschließen
+          </button>
+        </div>
+      )}
+      {beleg.abgeschlossen && (
+        <div style={{
+          margin: '0 16px 16px', padding: '12px 16px',
+          background: '#e8f5ee', borderRadius: 12,
+          border: '1px solid #c3dfc9', color: '#1a5c30',
+          fontSize: 13, fontWeight: 700, textAlign: 'center',
+        }}>
+          ✓ Abgeschlossen {beleg.abgeschlossenVon ? `von ${beleg.abgeschlossenVon}` : ''}
+        </div>
+      )}
 
       {/* Lightbox */}
       {lightbox && (

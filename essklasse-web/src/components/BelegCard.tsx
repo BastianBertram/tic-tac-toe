@@ -4,15 +4,43 @@ import { format, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
 import s from './BelegCard.module.css';
 
-interface Props { beleg: Bewirtungsbeleg; onClick: () => void; }
+export type BelegHighlight = 'running' | 'next' | null;
 
-export function BelegCard({ beleg, onClick }: Props) {
+interface Props {
+  beleg: Bewirtungsbeleg;
+  onClick: () => void;
+  highlight?: BelegHighlight;
+  onAbschliessen?: () => void;   // wenn gesetzt → Button anzeigen
+}
+
+export function BelegCard({ beleg, onClick, highlight = null, onAbschliessen }: Props) {
   const datum = format(parseISO(beleg.cateringDatumVon), 'dd.MM.yyyy', { locale: de });
   const total = beleg.positionen.reduce((acc, p) => acc + p.preis * p.menge, 0);
 
   return (
-    <div className={s.card} onClick={onClick} role="button" tabIndex={0}
-      onKeyDown={e => e.key === 'Enter' && onClick()}>
+    <div
+      className={[
+        s.card,
+        highlight === 'running' ? s.cardRunning : '',
+        highlight === 'next'    ? s.cardNext    : '',
+        beleg.abgeschlossen     ? s.cardDone    : '',
+      ].join(' ')}
+      onClick={onClick} role="button" tabIndex={0}
+      onKeyDown={e => e.key === 'Enter' && onClick()}
+    >
+      {/* Status-Banner */}
+      {beleg.abgeschlossen && (
+        <div className={s.bannerDone}>✓ Abgeschlossen</div>
+      )}
+      {!beleg.abgeschlossen && highlight === 'running' && (
+        <div className={s.bannerRunning}>
+          <span className={s.pulseDot} />Läuft gerade
+        </div>
+      )}
+      {!beleg.abgeschlossen && highlight === 'next' && (
+        <div className={s.bannerNext}>⏰ Als nächstes</div>
+      )}
+
       <div className={s.top}>
         <div className={s.icon}>🍽️</div>
         <div className={s.info}>
@@ -37,6 +65,17 @@ export function BelegCard({ beleg, onClick }: Props) {
         {beleg.fotoDataUrls.length > 0 && <span>📷 {beleg.fotoDataUrls.length}</span>}
         <span className={s.total}>{total.toFixed(2)} €</span>
       </div>
+
+      {/* Abschließen-Button – nur wenn noch offen und Callback vorhanden */}
+      {onAbschliessen && !beleg.abgeschlossen && (
+        <button
+          className={s.abschlussBtn}
+          type="button"
+          onClick={e => { e.stopPropagation(); onAbschliessen(); }}
+        >
+          ✓ Bewirtung abschließen
+        </button>
+      )}
     </div>
   );
 }
