@@ -88,50 +88,45 @@ export function AbschlussScreen({ beleg, onClose, onDone }: Props) {
           </div>
         ) : (
           <div className={s.posListe}>
-            {/* Spaltenköpfe */}
-            <div className={s.posHeader}>
-              <span className={s.posHeaderName}>Position</span>
-              <span className={s.posHeaderPlan}>Geplant</span>
-              <span className={s.posHeaderAct}>Tatsächlich</span>
-            </div>
-
-            {beleg.positionen.map(p => {
-              const geplant = p.menge;
-              const tatsaechlich = parseFloat(mengen[p.id] ?? String(p.menge)) || 0;
-              const abweichend = tatsaechlich !== geplant;
-
-              return (
-                <div key={p.id} className={`${s.posRow} ${abweichend ? s.posRowAbweichend : ''}`}>
-                  <div className={s.posInfo}>
-                    <div className={s.posName}>{p.bezeichnung}</div>
-                    <div className={s.posMeta}>{p.kategorie} · {p.einheit}</div>
-                  </div>
-
-                  {/* Geplante Menge */}
-                  <div className={s.posGeplant}>
-                    <span className={s.geplantVal}>{geplant}</span>
-                    <span className={s.geplantEinheit}>{p.einheit}</span>
-                  </div>
-
-                  {/* Tatsächliche Menge (editierbar) */}
-                  <div className={s.posAct}>
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.5"
-                      className={`${s.mengeInput} ${abweichend ? s.mengeInputAbweichend : ''}`}
-                      value={mengen[p.id] ?? String(p.menge)}
-                      onChange={e => setMenge(p.id, e.target.value)}
-                    />
-                    {abweichend && (
-                      <span className={s.diffBadge}>
-                        {tatsaechlich > geplant ? `+${(tatsaechlich - geplant).toFixed(1)}` : `${(tatsaechlich - geplant).toFixed(1)}`}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
+            {Object.entries(
+              beleg.positionen.reduce<Record<string, typeof beleg.positionen>>((acc, p) => {
+                (acc[p.kategorie] ??= []).push(p);
+                return acc;
+              }, {})
+            ).map(([kategorie, positionen]) => (
+              <div key={kategorie} className={s.posGruppe}>
+                <div className={s.posGruppeTitle}>{kategorie}</div>
+                {positionen.map(p => {
+                  const geplant = p.menge;
+                  const tatsaechlich = parseFloat(mengen[p.id] ?? String(p.menge)) || 0;
+                  const abweichend = tatsaechlich !== geplant;
+                  return (
+                    <div key={p.id} className={`${s.posRow} ${abweichend ? s.posRowAbweichend : ''}`}>
+                      <div className={s.posTop}>
+                        <div className={s.posName}>{p.bezeichnung}</div>
+                        <div className={s.posName}>{geplant} {p.einheit}</div>
+                      </div>
+                      <div className={s.posAct}>
+                        <span className={s.posActLabel}>Tatsächlich</span>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.5"
+                          className={`${s.mengeInput} ${abweichend ? s.mengeInputAbweichend : ''}`}
+                          value={mengen[p.id] ?? String(p.menge)}
+                          onChange={e => setMenge(p.id, e.target.value)}
+                        />
+                        {abweichend && (
+                          <span className={s.diffBadge}>
+                            {tatsaechlich > geplant ? `+${(tatsaechlich - geplant).toFixed(1)}` : `${(tatsaechlich - geplant).toFixed(1)}`}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
           </div>
         )}
 
