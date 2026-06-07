@@ -123,7 +123,7 @@ export function AbschlussScreen({ beleg, onClose, onDone }: Props) {
                   return (
                     <div key={p.id} className={`${s.posRow} ${abweichend ? s.posRowAbweichend : ''}`}>
                       <div className={s.posName}>{p.bezeichnung}</div>
-                      <div className={s.posQty}>{geplant} {p.einheit}</div>
+                      <div className={s.posQty}>{geplant}</div>
                       <div className={s.posCell}>
                         <input type="number" min="0" step="0.5"
                           className={`${s.mengeInput} ${abweichend ? s.mengeInputAbweichend : ''}`}
@@ -147,7 +147,7 @@ export function AbschlussScreen({ beleg, onClose, onDone }: Props) {
                         <div className={s.berechnenVal}>{berechnen(p.id)}</div>
                       </div>
                       <div className={s.posCell}>
-                        <input type="number" min="0" step="0.01" className={s.mengeInput}
+                        <input type="number" min="0" step="1" className={s.mengeInput}
                           value={pfand[p.id]} placeholder="0"
                           onChange={e => setPfand(prev => ({ ...prev, [p.id]: e.target.value }))}
                         />
