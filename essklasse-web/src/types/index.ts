@@ -52,6 +52,7 @@ export interface Bewirtungsbeleg {
   abgeschlossenAm?: string;
   abgeschlossenVon?: string;
   abschlussPositionen?: AbschlussPosition[];  // tatsächliche Mengen
+  abschlussfotos?: string[];
   besteller: string;
   cateringDatumVon: string;
   cateringDatumBis: string;

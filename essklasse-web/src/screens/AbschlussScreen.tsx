@@ -3,6 +3,7 @@ import { format, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { useBelegStore } from '../store/belegStore';
 import { useAuthStore }  from '../store/authStore';
+import { PhotoCapture } from '../components/PhotoCapture';
 import type { Bewirtungsbeleg, AbschlussPosition } from '../types';
 import s from './AbschlussScreen.module.css';
 
@@ -16,6 +17,7 @@ export function AbschlussScreen({ beleg, onClose, onDone }: Props) {
   const schliesseBeleg = useBelegStore(st => st.schliesseBeleg);
   const user = useAuthStore(st => st.user);
 
+  const [fotos, setFotos] = useState<string[]>([]);
   const [mengen,       setMengen]       = useState<Record<string, string>>(Object.fromEntries(beleg.positionen.map(p => [p.id, String(p.menge)])));
   const [zurueckVoll,  setZurueckVoll]  = useState<Record<string, string>>(Object.fromEntries(beleg.positionen.map(p => [p.id, ''])));
   const [zurueckLeer,  setZurueckLeer]  = useState<Record<string, string>>(Object.fromEntries(beleg.positionen.map(p => [p.id, ''])));
@@ -41,7 +43,7 @@ export function AbschlussScreen({ beleg, onClose, onDone }: Props) {
       berechnen:    parseFloat(berechnen(p.id)) || 0,
       pfand:        parseFloat(pfand[p.id] ?? '0') || 0,
     }));
-    schliesseBeleg(beleg.id, positionen, user?.name ?? user?.email);
+    schliesseBeleg(beleg.id, positionen, user?.name ?? user?.email, fotos);
     setDone(true);
   }
 
@@ -74,6 +76,15 @@ export function AbschlussScreen({ beleg, onClose, onDone }: Props) {
       </div>
 
       <div className={s.scroll}>
+        {/* Bewirtungsbeleg-Foto */}
+        <div className={s.fotoSection}>
+          <PhotoCapture
+            dataUrls={fotos}
+            onChange={setFotos}
+            onExtracted={() => {}}
+          />
+        </div>
+
         {/* Info-Banner */}
         <div className={s.infoBanner}>
           <div className={s.infoBannerIcon}>📋</div>
