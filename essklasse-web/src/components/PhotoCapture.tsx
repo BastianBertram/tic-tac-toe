@@ -6,6 +6,7 @@ interface Props {
   dataUrls: string[];
   onChange: (urls: string[]) => void;
   onExtracted?: (data: ExtractedBeleg) => void;
+  label?: string;
 }
 
 function fileToDataUrl(file: File): Promise<string> {
@@ -17,7 +18,7 @@ function fileToDataUrl(file: File): Promise<string> {
   });
 }
 
-export function PhotoCapture({ dataUrls, onChange, onExtracted }: Props) {
+export function PhotoCapture({ dataUrls, onChange, onExtracted, label = '📷 Bewirtungsbeleg *' }: Props) {
   const cameraRef  = useRef<HTMLInputElement>(null);
   const galleryRef = useRef<HTMLInputElement>(null);
   const [scanning, setScanning] = useState(false);
@@ -76,7 +77,7 @@ export function PhotoCapture({ dataUrls, onChange, onExtracted }: Props) {
 
   return (
     <div className={s.wrapper}>
-      <div className={s.label}>📷 Bewirtungsbeleg *</div>
+      <div className={s.label}>{label}</div>
 
       {/* Primärer Kamera-Button */}
       <button

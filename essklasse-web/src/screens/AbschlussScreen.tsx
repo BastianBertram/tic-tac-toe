@@ -76,15 +76,6 @@ export function AbschlussScreen({ beleg, onClose, onDone }: Props) {
       </div>
 
       <div className={s.scroll}>
-        {/* Bewirtungsbeleg-Foto */}
-        <div className={s.fotoSection}>
-          <PhotoCapture
-            dataUrls={fotos}
-            onChange={setFotos}
-            onExtracted={() => {}}
-          />
-        </div>
-
         {/* Info-Banner */}
         <div className={s.infoBanner}>
           <div className={s.infoBannerIcon}>📋</div>
@@ -94,6 +85,16 @@ export function AbschlussScreen({ beleg, onClose, onDone }: Props) {
               {datum} · {beleg.uhrzeitVon}–{beleg.uhrzeitBis} · {beleg.raum || beleg.ort}
             </div>
           </div>
+        </div>
+
+        {/* Finaler Bewirtungsbeleg-Foto */}
+        <div className={s.fotoSection}>
+          <PhotoCapture
+            dataUrls={fotos}
+            onChange={setFotos}
+            onExtracted={() => {}}
+            label="📷 Finaler Bewirtungsbeleg *"
+          />
         </div>
 
         {/* Hinweis */}
