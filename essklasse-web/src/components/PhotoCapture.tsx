@@ -20,7 +20,6 @@ function fileToDataUrl(file: File): Promise<string> {
 export function PhotoCapture({ dataUrls, onChange, onExtracted }: Props) {
   const cameraRef  = useRef<HTMLInputElement>(null);
   const galleryRef = useRef<HTMLInputElement>(null);
-  const pdfRef     = useRef<HTMLInputElement>(null);
   const [scanning, setScanning] = useState(false);
   const [scanMsg, setScanMsg] = useState('');
   const [showKeyModal, setShowKeyModal] = useState(false);
@@ -106,32 +105,17 @@ export function PhotoCapture({ dataUrls, onChange, onExtracted }: Props) {
         onChange={e => handleFiles(e.target.files)}
       />
 
-      {/* Galerie-Button */}
+      {/* Galerie + PDF Button */}
       <button
         className={s.galleryBtn}
         onClick={() => galleryRef.current?.click()}
         type="button"
         disabled={scanning}
       >
-        🖼️ Aus Galerie wählen
+        🖼️ Aus Galerie oder PDF wählen
       </button>
       <input
-        ref={galleryRef} type="file" accept="image/*"
-        style={{ display: 'none' }} multiple
-        onChange={e => handleFiles(e.target.files)}
-      />
-
-      {/* PDF-Button */}
-      <button
-        className={s.galleryBtn}
-        onClick={() => pdfRef.current?.click()}
-        type="button"
-        disabled={scanning}
-      >
-        📄 PDF hochladen
-      </button>
-      <input
-        ref={pdfRef} type="file" accept="application/pdf"
+        ref={galleryRef} type="file" accept="image/*,application/pdf"
         style={{ display: 'none' }} multiple
         onChange={e => handleFiles(e.target.files)}
       />
