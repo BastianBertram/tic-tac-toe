@@ -81,7 +81,10 @@ export function DetailScreen({ beleg: init, onClose, onAbschliessen }: Props) {
           }, {});
           return (
             <div className={s.section}>
-              <div className={s.sectionTitle}>Positionen</div>
+              <div className={s.posHeader}>
+                <div className={s.sectionTitle}>Positionen</div>
+                <div className={s.posHeaderAnzahl}>Bestellte Anzahl</div>
+              </div>
               {Object.entries(gruppen).map(([kategorie, positionen]) => (
                 <div key={kategorie} className={s.posGruppe}>
                   <div className={s.posGruppeTitle}>{kategorie}</div>

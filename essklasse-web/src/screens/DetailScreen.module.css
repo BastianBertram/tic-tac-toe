@@ -42,6 +42,9 @@
   padding-bottom: 6px; border-bottom: 2px solid var(--ek-border);
 }
 
+.posHeader { display: flex; justify-content: space-between; align-items: flex-end; }
+.posHeaderAnzahl { color: var(--ek-muted); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 2px solid var(--ek-border); }
+
 .posGruppe { margin-bottom: 14px; }
 .posGruppe:last-child { margin-bottom: 0; }
 .posGruppeTitle { font-size: 12px; font-weight: 700; color: var(--ek-muted); text-transform: uppercase; letter-spacing: .4px; margin-bottom: 4px; }
