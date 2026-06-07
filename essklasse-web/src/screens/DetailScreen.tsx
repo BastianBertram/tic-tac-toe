@@ -41,7 +41,9 @@ export function DetailScreen({ beleg: init, onClose, onAbschliessen }: Props) {
       <div className={s.header}>
         <button className={s.backBtn} onClick={onClose} type="button">← Zurück</button>
         <span className={s.title}>{beleg.veranstaltung || 'Bewirtungsbeleg'}</span>
-        <button className={s.delBtn} onClick={del} type="button">🗑</button>
+        {!beleg.abgeschlossen && (
+          <button className={s.delBtn} onClick={del} type="button">🗑</button>
+        )}
       </div>
 
       <div className={s.scroll}>
