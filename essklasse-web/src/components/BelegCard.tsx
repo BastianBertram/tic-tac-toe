@@ -15,7 +15,6 @@ interface Props {
 
 export function BelegCard({ beleg, onClick, highlight = null, onAbschliessen }: Props) {
   const datum = format(parseISO(beleg.cateringDatumVon), 'dd.MM.yyyy', { locale: de });
-  const total = beleg.positionen.reduce((acc, p) => acc + p.preis * p.menge, 0);
 
   return (
     <div
@@ -63,7 +62,6 @@ export function BelegCard({ beleg, onClick, highlight = null, onAbschliessen }: 
       <div className={s.footer}>
         <span className={s.posCnt}>{beleg.positionen.length} Position(en)</span>
         {beleg.fotoDataUrls.length > 0 && <span>📷 {beleg.fotoDataUrls.length}</span>}
-        <span className={s.total}>{total.toFixed(2)} €</span>
       </div>
 
       {/* Abschließen-Button – nur wenn noch offen und Callback vorhanden */}
@@ -73,7 +71,7 @@ export function BelegCard({ beleg, onClick, highlight = null, onAbschliessen }: 
           type="button"
           onClick={e => { e.stopPropagation(); onAbschliessen(); }}
         >
-          ✓ Bewirtung abschließen
+          Bewirtung ansehen
         </button>
       )}
     </div>
