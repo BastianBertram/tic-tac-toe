@@ -100,16 +100,13 @@ export function AbschlussScreen({ beleg, onClose, onDone }: Props) {
           <div className={s.posListe}>
             <div className={s.posHeader}>
               <div className={s.posHeaderName}>Positionen</div>
-              <div className={s.posHeaderCol}>Bestellt</div>
-              <div className={s.posHeaderCol}>Ausgeliefert</div>
-              <div className={s.posHeaderGroup}>
-                <div className={s.posHeaderGroupLabel}>Zurück</div>
-                <div className={s.posHeaderGroupCols}>
-                  <span>Voll</span><span>Leer</span>
-                </div>
-              </div>
-              <div className={s.posHeaderCol}>Berechnen</div>
-              <div className={s.posHeaderCol}>Pfand</div>
+              <div className={s.posHeaderBestellt}>Bestellt</div>
+              <div className={s.posHeaderAusgeliefert}>Ausgeliefert</div>
+              <div className={s.posHeaderZurueck}>Zurück</div>
+              <div className={s.posHeaderVoll}>Voll</div>
+              <div className={s.posHeaderLeer}>Leer</div>
+              <div className={s.posHeaderBerechnen}>Berechnen</div>
+              <div className={s.posHeaderPfand}>Pfand</div>
             </div>
             {Object.entries(
               beleg.positionen.reduce<Record<string, typeof beleg.positionen>>((acc, p) => {
