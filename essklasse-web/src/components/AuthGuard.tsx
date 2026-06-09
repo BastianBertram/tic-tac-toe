@@ -54,7 +54,17 @@ export function AuthGuard({ children }: Props) {
     );
   }
 
-  if (!user) return <LoginScreen />;
+  if (!user) {
+    // Im Dev-Modus: Login überspringen, direkt als Demo-User einloggen
+    if (import.meta.env.DEV) {
+      setAuth(
+        { id: 'demo-user', name: 'Anna Schmidt', email: 'anna@hwk.de', rolle: 'user', objektIds: ['demo-1'] },
+        'dev-token'
+      );
+      return null;
+    }
+    return <LoginScreen />;
+  }
 
   return <>{children}</>;
 }
