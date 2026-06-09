@@ -19,34 +19,49 @@
 
 /* ── Datums-Navigator ────────────────────────────────────────── */
 .navigator {
-  display: flex; align-items: center; gap: 8px;
+  display: flex; align-items: center; gap: 6px;
   margin: 10px 14px 4px;
-  background: var(--ek-red);
-  border-radius: 16px;
-  padding: 14px 10px;
-  box-shadow: 0 4px 14px rgba(139,26,26,.25);
 }
 
 .navArrow {
-  flex-shrink: 0; width: 40px; height: 40px;
+  flex-shrink: 0; width: 36px; height: 36px;
   display: flex; align-items: center; justify-content: center;
-  background: rgba(255,255,255,.18); border: none; border-radius: 10px;
-  color: #fff; font-size: 26px; font-weight: 700; line-height: 1;
+  background: var(--ek-surface); border: 1.5px solid var(--ek-border);
+  border-radius: 10px; color: var(--ek-charcoal);
+  font-size: 22px; font-weight: 700; line-height: 1;
   cursor: pointer; transition: background .15s, transform .1s;
 }
 .navArrow:active { transform: scale(.92); }
-.navArrow:disabled {
-  opacity: .3; cursor: default;
-  background: rgba(255,255,255,.08);
-}
+.navArrow:disabled { opacity: .3; cursor: default; }
 
-.navCenter {
-  flex: 1; display: flex; flex-direction: column;
-  align-items: center; gap: 2px;
+/* ── Zähler-Buttons ──────────────────────────────────────────── */
+.counterBtn {
+  flex: 1; border-radius: 14px; padding: 12px 8px;
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  border: none; transition: transform .12s; cursor: pointer;
 }
-.navDayLabel  { font-size: 13px; font-weight: 700; color: rgba(255,255,255,.85); text-transform: uppercase; letter-spacing: .6px; }
-.navCount     { font-size: 34px; font-weight: 900; color: #fff; line-height: 1.1; }
-.navDateLabel { font-size: 12px; font-weight: 600; color: rgba(255,255,255,.75); }
+.counterBtn:active { transform: scale(.97); }
+
+.counterActive {
+  background: var(--ek-red);
+  box-shadow: 0 4px 14px rgba(139,26,26,.25);
+}
+.counterActive .counterNum   { color: #fff; }
+.counterActive .counterLabel { color: rgba(255,255,255,.85); }
+.counterActive .counterDate  { color: rgba(255,255,255,.7); }
+
+.counterInactive {
+  background: var(--ek-surface);
+  border: 1.5px solid var(--ek-border);
+  box-shadow: 0 2px 6px rgba(0,0,0,.05);
+}
+.counterInactive .counterNum   { color: var(--ek-charcoal); }
+.counterInactive .counterLabel { color: var(--ek-muted); }
+.counterInactive .counterDate  { color: var(--ek-muted); }
+
+.counterLabel { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; }
+.counterNum   { font-size: 28px; font-weight: 900; line-height: 1; }
+.counterDate  { font-size: 11px; font-weight: 600; }
 
 /* Zurück-zu-Heute Button */
 .backToToday {

@@ -35,40 +35,49 @@ function isFuture(beleg: Bewirtungsbeleg, now: string): boolean {
 export function TodayScreen({ onOpenBeleg, onAbschliessen, onTabAbschluss }: Props) {
   const belege        = useBelegStore(st => st.belege);
   const aktivesObjekt = useObjektStore(st => st.getAktivesObjekt());
-  // offset in Tagen ab heute (0 = heute, 1 = morgen, …); min = 0
-  const [offset, setOffset] = useState(0);
+  // offset: Basis-Tag (0 = heute ist linker Button, 1 = morgen ist linker Button, …)
+  const [offset, setOffset]   = useState(0);
+  const [selected, setSelected] = useState<0 | 1>(0); // 0 = linker Button, 1 = rechter Button
 
   const todayBase = new Date();
   todayBase.setHours(0, 0, 0, 0);
 
-  const selectedDate    = addDays(todayBase, offset);
-  const selectedDateStr = format(selectedDate, 'yyyy-MM-dd');
-  const nowTime         = format(new Date(), 'HH:mm');
+  const leftDate    = addDays(todayBase, offset);
+  const rightDate   = addDays(todayBase, offset + 1);
+  const leftDateStr  = format(leftDate,  'yyyy-MM-dd');
+  const rightDateStr = format(rightDate, 'yyyy-MM-dd');
+  const nowTime     = format(new Date(), 'HH:mm');
 
-  const isSelectedToday = isToday(selectedDate);
-  const dayLabel = isSelectedToday
-    ? 'Heute'
-    : offset === 1
-      ? 'Morgen'
-      : format(selectedDate, 'EEEE', { locale: de });
-  const dateLabel = format(selectedDate, 'EEE, d. MMMM yyyy', { locale: de });
+  const leftIsToday  = isToday(leftDate);
+  const rightIsToday = isToday(rightDate);
+
+  function dayTitle(date: Date, idx: number): string {
+    if (isToday(date)) return 'Heute';
+    if (idx === 1 && isToday(addDays(date, -1))) return 'Morgen';
+    return format(date, 'EEEE', { locale: de });
+  }
+  function dateShort(date: Date): string {
+    return format(date, 'EEE, d. MMM', { locale: de });
+  }
+
+  const selectedDate    = selected === 0 ? leftDate    : rightDate;
+  const selectedDateStr = selected === 0 ? leftDateStr : rightDateStr;
+  const isSelectedToday = selected === 0 ? leftIsToday : rightIsToday;
 
   const belegeForObjekt = useMemo(
     () => belege.filter(b => !b.deleted && (!aktivesObjekt || b.objektId === aktivesObjekt.id)),
     [belege, aktivesObjekt]
   );
 
-  const selectedBelege = useMemo(
-    () => belegeForObjekt.filter(b => b.cateringDatumVon === selectedDateStr).sort(byUhrzeit),
-    [belegeForObjekt, selectedDateStr]
-  );
+  const leftBelege  = useMemo(() => belegeForObjekt.filter(b => b.cateringDatumVon === leftDateStr).sort(byUhrzeit),  [belegeForObjekt, leftDateStr]);
+  const rightBelege = useMemo(() => belegeForObjekt.filter(b => b.cateringDatumVon === rightDateStr).sort(byUhrzeit), [belegeForObjekt, rightDateStr]);
+  const selectedBelege = selected === 0 ? leftBelege : rightBelege;
 
   const pendingCount = useMemo(
     () => belege.filter(b => b.syncStatus === 'local' || b.syncStatus === 'error').length,
     [belege]
   );
 
-  // Highlight-Logik: nur für heute
   const nextBelegId = useMemo(() => {
     if (!isSelectedToday) return null;
     const future = selectedBelege.filter(b => isFuture(b, nowTime));
@@ -82,12 +91,8 @@ export function TodayScreen({ onOpenBeleg, onAbschliessen, onTabAbschluss }: Pro
     return null;
   }
 
-  const sectionLabel = isSelectedToday
-    ? 'Heutige Bewirtungen'
-    : `Bewirtungen am ${format(selectedDate, 'd. MMM', { locale: de })}`;
-  const emptyText = isSelectedToday
-    ? 'Noch keine Bewirtungen heute'
-    : `Keine Bewirtungen am ${format(selectedDate, 'd. MMMM', { locale: de })}`;
+  const sectionLabel = `Bewirtungen – ${dayTitle(selectedDate, selected === 0 ? offset : offset + 1)}`;
+  const emptyText    = `Keine Bewirtungen am ${format(selectedDate, 'd. MMMM', { locale: de })}`;
 
   return (
     <div className={s.screen}>
@@ -106,33 +111,42 @@ export function TodayScreen({ onOpenBeleg, onAbschliessen, onTabAbschluss }: Pro
       <div className={s.navigator}>
         <button
           className={s.navArrow}
-          onClick={() => setOffset(o => Math.max(0, o - 1))}
+          onClick={() => { setOffset(o => Math.max(0, o - 1)); setSelected(0); }}
           disabled={offset === 0}
           type="button"
-          aria-label="Vorheriger Tag"
+          aria-label="Zurück"
+        >‹</button>
+
+        <button
+          className={`${s.counterBtn} ${selected === 0 ? s.counterActive : s.counterInactive}`}
+          onClick={() => setSelected(0)}
+          type="button"
         >
-          ‹
+          <span className={s.counterLabel}>{dayTitle(leftDate, offset)}</span>
+          <span className={s.counterNum}>{leftBelege.length}</span>
+          <span className={s.counterDate}>{dateShort(leftDate)}</span>
         </button>
 
-        <div className={s.navCenter}>
-          <div className={s.navDayLabel}>{dayLabel}</div>
-          <div className={s.navCount}>{selectedBelege.length}</div>
-          <div className={s.navDateLabel}>{dateLabel}</div>
-        </div>
+        <button
+          className={`${s.counterBtn} ${selected === 1 ? s.counterActive : s.counterInactive}`}
+          onClick={() => setSelected(1)}
+          type="button"
+        >
+          <span className={s.counterLabel}>{dayTitle(rightDate, offset + 1)}</span>
+          <span className={s.counterNum}>{rightBelege.length}</span>
+          <span className={s.counterDate}>{dateShort(rightDate)}</span>
+        </button>
 
         <button
           className={s.navArrow}
-          onClick={() => setOffset(o => o + 1)}
+          onClick={() => { setOffset(o => o + 1); setSelected(0); }}
           type="button"
-          aria-label="Nächster Tag"
-        >
-          ›
-        </button>
+          aria-label="Weiter"
+        >›</button>
       </div>
 
-      {/* Zurück zu Heute – nur sichtbar wenn nicht heute */}
       {offset > 0 && (
-        <button className={s.backToToday} onClick={() => setOffset(0)} type="button">
+        <button className={s.backToToday} onClick={() => { setOffset(0); setSelected(0); }} type="button">
           ↩ Zurück zu Heute
         </button>
       )}
