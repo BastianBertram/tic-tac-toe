@@ -8,6 +8,13 @@ import s from './DetailScreen.module.css';
 
 interface Props { beleg: Bewirtungsbeleg; onClose: () => void; onAbschliessen?: () => void; onBearbeiten?: () => void; onRechnungErstellen?: (b: Bewirtungsbeleg) => void; canDelete?: boolean; }
 
+function downloadDataUrl(url: string, filename: string) {
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+}
+
 export function DetailScreen({ beleg: init, onClose, onAbschliessen, onBearbeiten, onRechnungErstellen, canDelete = true }: Props) {
   const store = useBelegStore();
   const beleg = store.belege.find(b => b.id === init.id) ?? init;
@@ -111,10 +118,12 @@ export function DetailScreen({ beleg: init, onClose, onAbschliessen, onBearbeite
             <div className={s.sectionTitle}>📷 Bestellfotos ({beleg.fotoDataUrls.length})</div>
             <div className={s.photoGrid}>
               {beleg.fotoDataUrls.map((url, i) => (
-                url.startsWith('data:application/pdf')
-                  ? <div key={i} className={s.pdfThumb} onClick={() => {}} title={`PDF ${i + 1}`}>📄 PDF</div>
-                  : <img key={i} src={url} className={s.photo}
-                      onClick={() => setLightbox(url)} alt={`Bestellfoto ${i + 1}`} />
+                <FileThumb
+                  key={i}
+                  url={url}
+                  filename={`${beleg.bestellungsnummer ?? 'beleg'}-bestell-${i + 1}`}
+                  onOpen={() => setLightbox(url)}
+                />
               ))}
             </div>
           </div>
@@ -126,10 +135,12 @@ export function DetailScreen({ beleg: init, onClose, onAbschliessen, onBearbeite
             <div className={s.sectionTitle}>📋 Finaler Bewirtungsbeleg ({beleg.abschlussfotos.length})</div>
             <div className={s.photoGrid}>
               {beleg.abschlussfotos.map((url, i) => (
-                url.startsWith('data:application/pdf')
-                  ? <div key={i} className={s.pdfThumb} title={`PDF ${i + 1}`}>📄 PDF</div>
-                  : <img key={i} src={url} className={s.photo}
-                      onClick={() => setLightbox(url)} alt={`Abschlussbeleg ${i + 1}`} />
+                <FileThumb
+                  key={i}
+                  url={url}
+                  filename={`${beleg.bestellungsnummer ?? 'beleg'}-abschluss-${i + 1}`}
+                  onOpen={() => setLightbox(url)}
+                />
               ))}
             </div>
           </div>
@@ -222,10 +233,65 @@ export function DetailScreen({ beleg: init, onClose, onAbschliessen, onBearbeite
       {lightbox && (
         <div className={s.lightbox} onClick={() => setLightbox(null)}>
           <img src={lightbox} alt="Vollbild" />
+          <button
+            type="button"
+            className={s.lightboxDownload}
+            onClick={e => { e.stopPropagation(); downloadDataUrl(lightbox, 'bewirtungsbeleg.jpg'); }}
+            title="Herunterladen"
+          >
+            ⬇ Herunterladen
+          </button>
         </div>
       )}
     </div>
   );
+}
+
+function FileThumb({ url, filename, onOpen }: { url: string; filename: string; onOpen: () => void }) {
+  const isPdf = url.startsWith('data:application/pdf');
+  const ext   = isPdf ? 'pdf' : 'jpg';
+
+  function handleOpen(e: React.MouseEvent) {
+    e.stopPropagation();
+    if (isPdf) {
+      // PDF in neuem Tab öffnen
+      const blob = dataUrlToBlob(url);
+      const objUrl = URL.createObjectURL(blob);
+      window.open(objUrl, '_blank');
+    } else {
+      onOpen();
+    }
+  }
+
+  function handleDownload(e: React.MouseEvent) {
+    e.stopPropagation();
+    downloadDataUrl(url, `${filename}.${ext}`);
+  }
+
+  return (
+    <div className={s.thumbWrap}>
+      {isPdf ? (
+        <div className={s.pdfThumb} onClick={handleOpen}>
+          <span className={s.pdfIcon}>📄</span>
+          <span className={s.pdfLabel}>PDF öffnen</span>
+        </div>
+      ) : (
+        <img src={url} className={s.photo} onClick={handleOpen} alt={filename} />
+      )}
+      <button type="button" className={s.downloadBtn} onClick={handleDownload} title="Herunterladen">
+        ⬇
+      </button>
+    </div>
+  );
+}
+
+function dataUrlToBlob(dataUrl: string): Blob {
+  const [header, base64] = dataUrl.split(',');
+  const mime = header.match(/:(.*?);/)?.[1] ?? 'application/octet-stream';
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return new Blob([bytes], { type: mime });
 }
 
 function Row({ label, value }: { label: string; value: string }) {
