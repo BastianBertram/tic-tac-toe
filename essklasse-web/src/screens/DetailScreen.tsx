@@ -20,6 +20,7 @@ export function DetailScreen({ beleg: init, onClose, onAbschliessen, onBearbeite
   const beleg = store.belege.find(b => b.id === init.id) ?? init;
   const [retrying, setRetrying] = useState(false);
   const [lightbox, setLightbox] = useState<string | null>(null);
+  const [pdfViewer, setPdfViewer] = useState<{ blobUrl: string; dataUrl: string; name: string } | null>(null);
 
   const datum = format(parseISO(beleg.cateringDatumVon), 'dd.MM.yyyy', { locale: de });
 
@@ -122,7 +123,8 @@ export function DetailScreen({ beleg: init, onClose, onAbschliessen, onBearbeite
                   key={i}
                   url={url}
                   filename={`${beleg.bestellungsnummer ?? 'beleg'}-bestell-${i + 1}`}
-                  onOpen={() => setLightbox(url)}
+                  onOpenImage={() => setLightbox(url)}
+                  onOpenPdf={() => { const b = dataUrlToBlob(url); const n = `${beleg.bestellungsnummer ?? 'beleg'}-bestell-${i+1}.pdf`; setPdfViewer({ blobUrl: URL.createObjectURL(b), dataUrl: url, name: n }); }}
                 />
               ))}
             </div>
@@ -139,7 +141,8 @@ export function DetailScreen({ beleg: init, onClose, onAbschliessen, onBearbeite
                   key={i}
                   url={url}
                   filename={`${beleg.bestellungsnummer ?? 'beleg'}-abschluss-${i + 1}`}
-                  onOpen={() => setLightbox(url)}
+                  onOpenImage={() => setLightbox(url)}
+                  onOpenPdf={() => { const b = dataUrlToBlob(url); const n = `${beleg.bestellungsnummer ?? 'beleg'}-abschluss-${i+1}.pdf`; setPdfViewer({ blobUrl: URL.createObjectURL(b), dataUrl: url, name: n }); }}
                 />
               ))}
             </div>
@@ -229,6 +232,30 @@ export function DetailScreen({ beleg: init, onClose, onAbschliessen, onBearbeite
         </div>
       )}
 
+      {/* PDF-Viewer */}
+      {pdfViewer && (
+        <div className={s.lightbox} style={{ flexDirection: 'column', cursor: 'default' }}>
+          <div style={{ display: 'flex', width: '100%', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', flexShrink: 0 }}>
+            <span style={{ color: '#fff', fontWeight: 700, fontSize: 14 }}>📄 PDF-Dokument</span>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button type="button" className={s.lightboxDownload}
+                onClick={() => downloadDataUrl(pdfViewer.dataUrl, pdfViewer.name)}>
+                ⬇ Herunterladen
+              </button>
+              <button type="button" className={s.lightboxDownload}
+                onClick={() => { URL.revokeObjectURL(pdfViewer.blobUrl); setPdfViewer(null); }}>
+                ✕ Schließen
+              </button>
+            </div>
+          </div>
+          <iframe
+            src={pdfViewer.blobUrl}
+            style={{ flex: 1, width: '100%', border: 'none', borderRadius: 0 }}
+            title="PDF Vorschau"
+          />
+        </div>
+      )}
+
       {/* Lightbox */}
       {lightbox && (
         <div className={s.lightbox} onClick={() => setLightbox(null)}>
@@ -247,25 +274,13 @@ export function DetailScreen({ beleg: init, onClose, onAbschliessen, onBearbeite
   );
 }
 
-function FileThumb({ url, filename, onOpen }: { url: string; filename: string; onOpen: () => void }) {
+function FileThumb({ url, filename, onOpenImage, onOpenPdf }: {
+  url: string; filename: string;
+  onOpenImage: () => void;
+  onOpenPdf: () => void;
+}) {
   const isPdf = url.startsWith('data:application/pdf');
   const ext   = isPdf ? 'pdf' : 'jpg';
-
-  function handleOpen(e: React.MouseEvent) {
-    e.stopPropagation();
-    if (isPdf) {
-      const blob = dataUrlToBlob(url);
-      const objUrl = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = objUrl;
-      a.target = '_blank';
-      a.rel = 'noopener';
-      a.click();
-      setTimeout(() => URL.revokeObjectURL(objUrl), 2000);
-    } else {
-      onOpen();
-    }
-  }
 
   function handleDownload(e: React.MouseEvent) {
     e.stopPropagation();
@@ -275,12 +290,12 @@ function FileThumb({ url, filename, onOpen }: { url: string; filename: string; o
   return (
     <div className={s.thumbWrap}>
       {isPdf ? (
-        <div className={s.pdfThumb} onClick={handleOpen}>
+        <div className={s.pdfThumb} onClick={onOpenPdf}>
           <span className={s.pdfIcon}>📄</span>
-          <span className={s.pdfLabel}>PDF öffnen</span>
+          <span className={s.pdfLabel}>PDF anzeigen</span>
         </div>
       ) : (
-        <img src={url} className={s.photo} onClick={handleOpen} alt={filename} />
+        <img src={url} className={s.photo} onClick={onOpenImage} alt={filename} />
       )}
       <button type="button" className={s.downloadBtn} onClick={handleDownload} title="Herunterladen">
         ⬇
