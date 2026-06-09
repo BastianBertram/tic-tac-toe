@@ -7,6 +7,7 @@ import type { UserRolle } from '../types';
 import s from './AdminScreen.module.css';
 
 type AdminTab = 'user' | 'objekte';
+type FilterStatus = 'aktiv' | 'inaktiv' | 'alle';
 
 const ROLLE_LABELS: Record<UserRolle, string> = {
   user: 'User',
@@ -41,7 +42,6 @@ export function AdminScreen() {
       {tab === 'user'    && <UserTab />}
       {tab === 'objekte' && <ObjekteTab />}
 
-      {/* Bottom Nav */}
       <nav className={s.nav}>
         <button type="button" className={s.hamburgerBtn} onClick={() => setDrawerOpen(true)}>
           <span className={s.hamburger}><span /><span /><span /></span>
@@ -58,11 +58,13 @@ export function AdminScreen() {
 
 /* ─── User Tab ─── */
 function UserTab() {
-  const { users, addUser, updateUser, deleteUser, toggleAktiv } = useUserStore();
+  const { users, addUser, updateUser, toggleAktiv } = useUserStore();
   const objekte = useObjektStore(st => st.objekte);
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState({ name: '', email: '', rolle: 'user' as UserRolle, objektIds: [] as string[] });
+  const [search, setSearch] = useState('');
+  const [filter, setFilter] = useState<FilterStatus>('aktiv');
 
   function openNew() {
     setForm({ name: '', email: '', rolle: 'user', objektIds: [] });
@@ -87,11 +89,41 @@ function UserTab() {
     }));
   }
 
+  const q = search.toLowerCase();
+  const filtered = users.filter(u => {
+    const matchSearch = !q || u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q);
+    const matchFilter = filter === 'alle' || (filter === 'aktiv' ? u.aktiv : !u.aktiv);
+    return matchSearch && matchFilter;
+  });
+
+  const countAktiv   = users.filter(u => u.aktiv).length;
+  const countInaktiv = users.filter(u => !u.aktiv).length;
+
   return (
     <div className={s.tabContent}>
+      <div className={s.searchRow}>
+        <input
+          className={s.searchInput}
+          type="text"
+          placeholder="Name oder E-Mail suchen …"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+        />
+        {search && <button type="button" className={s.searchClear} onClick={() => setSearch('')}>✕</button>}
+      </div>
+
       <div className={s.listHeader}>
-        <span className={s.listCount}>{users.length} Benutzer</span>
-        <button type="button" className={s.addBtn} onClick={openNew}>+ Neuer Benutzer</button>
+        <div className={s.filterChips}>
+          {(['aktiv', 'inaktiv', 'alle'] as FilterStatus[]).map(f => (
+            <button key={f} type="button"
+              className={`${s.filterChip} ${filter === f ? s.filterChipActive : ''}`}
+              onClick={() => setFilter(f)}
+            >
+              {f === 'aktiv' ? `Aktiv (${countAktiv})` : f === 'inaktiv' ? `Inaktiv (${countInaktiv})` : 'Alle'}
+            </button>
+          ))}
+        </div>
+        <button type="button" className={s.addBtn} onClick={openNew}>+ Neu</button>
       </div>
 
       {showForm && (
@@ -111,7 +143,7 @@ function UserTab() {
             <>
               <label className={s.label}>Objekte zuordnen</label>
               <div className={s.objektCheckList}>
-                {objekte.map(o => (
+                {objekte.filter(o => o.aktiv !== false).map(o => (
                   <label key={o.id} className={s.checkRow}>
                     <input type="checkbox" checked={form.objektIds.includes(o.id)} onChange={() => toggleObjekt(o.id)} />
                     <span>{o.kuerzel ? `${o.kuerzel} – ` : ''}{o.name}</span>
@@ -128,7 +160,8 @@ function UserTab() {
       )}
 
       <div className={s.list}>
-        {users.map(u => (
+        {filtered.length === 0 && <div className={s.emptyState}>Keine Benutzer gefunden</div>}
+        {filtered.map(u => (
           <div key={u.id} className={`${s.userRow} ${!u.aktiv ? s.userRowInaktiv : ''}`}>
             <div className={s.userAvatar} style={{ background: ROLLE_COLORS[u.rolle] }}>
               {u.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
@@ -151,10 +184,14 @@ function UserTab() {
               </span>
               <div className={s.userActions}>
                 <button type="button" className={s.iconBtn} onClick={() => openEdit(u)} title="Bearbeiten">✏️</button>
-                <button type="button" className={s.iconBtn} onClick={() => toggleAktiv(u.id)} title={u.aktiv ? 'Deaktivieren' : 'Aktivieren'}>
+                <button
+                  type="button"
+                  className={`${s.iconBtn} ${!u.aktiv ? s.iconBtnWarning : ''}`}
+                  onClick={() => toggleAktiv(u.id)}
+                  title={u.aktiv ? 'Deaktivieren' : 'Aktivieren'}
+                >
                   {u.aktiv ? '🔒' : '🔓'}
                 </button>
-                <button type="button" className={s.iconBtn} onClick={() => { if (confirm(`${u.name} wirklich löschen?`)) deleteUser(u.id); }} title="Löschen">🗑</button>
               </div>
             </div>
           </div>
@@ -166,10 +203,12 @@ function UserTab() {
 
 /* ─── Objekte Tab ─── */
 function ObjekteTab() {
-  const { objekte, setObjekte } = useObjektStore();
+  const { objekte, setObjekte, updateObjekt, toggleAktiv } = useObjektStore();
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState({ name: '', adresse: '', kuerzel: '' });
+  const [search, setSearch] = useState('');
+  const [filter, setFilter] = useState<FilterStatus>('aktiv');
 
   function openNew() { setForm({ name: '', adresse: '', kuerzel: '' }); setEditId(null); setShowForm(true); }
   function openEdit(o: typeof objekte[0]) {
@@ -179,19 +218,50 @@ function ObjekteTab() {
   }
   function handleSave() {
     if (!form.name.trim()) return;
-    if (editId) setObjekte(objekte.map(o => o.id === editId ? { ...o, ...form } : o));
-    else        setObjekte([...objekte, { id: uuidv4(), name: form.name, adresse: form.adresse, kuerzel: form.kuerzel }]);
+    if (editId) {
+      updateObjekt(editId, { name: form.name, adresse: form.adresse, kuerzel: form.kuerzel });
+    } else {
+      setObjekte([...objekte, { id: uuidv4(), name: form.name, adresse: form.adresse, kuerzel: form.kuerzel, aktiv: true }]);
+    }
     setShowForm(false);
   }
-  function handleDelete(id: string) {
-    if (confirm('Objekt wirklich löschen?')) setObjekte(objekte.filter(o => o.id !== id));
-  }
+
+  const q = search.toLowerCase();
+  const filtered = objekte.filter(o => {
+    const matchSearch = !q || o.name.toLowerCase().includes(q) || (o.kuerzel ?? '').toLowerCase().includes(q);
+    const isAktiv = o.aktiv !== false;
+    const matchFilter = filter === 'alle' || (filter === 'aktiv' ? isAktiv : !isAktiv);
+    return matchSearch && matchFilter;
+  });
+
+  const countAktiv   = objekte.filter(o => o.aktiv !== false).length;
+  const countInaktiv = objekte.filter(o => o.aktiv === false).length;
 
   return (
     <div className={s.tabContent}>
+      <div className={s.searchRow}>
+        <input
+          className={s.searchInput}
+          type="text"
+          placeholder="Objekt suchen …"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+        />
+        {search && <button type="button" className={s.searchClear} onClick={() => setSearch('')}>✕</button>}
+      </div>
+
       <div className={s.listHeader}>
-        <span className={s.listCount}>{objekte.length} Objekte</span>
-        <button type="button" className={s.addBtn} onClick={openNew}>+ Neues Objekt</button>
+        <div className={s.filterChips}>
+          {(['aktiv', 'inaktiv', 'alle'] as FilterStatus[]).map(f => (
+            <button key={f} type="button"
+              className={`${s.filterChip} ${filter === f ? s.filterChipActive : ''}`}
+              onClick={() => setFilter(f)}
+            >
+              {f === 'aktiv' ? `Aktiv (${countAktiv})` : f === 'inaktiv' ? `Inaktiv (${countInaktiv})` : 'Alle'}
+            </button>
+          ))}
+        </div>
+        <button type="button" className={s.addBtn} onClick={openNew}>+ Neu</button>
       </div>
 
       {showForm && (
@@ -211,19 +281,30 @@ function ObjekteTab() {
       )}
 
       <div className={s.list}>
-        {objekte.map(o => (
-          <div key={o.id} className={s.objektRow}>
-            <div className={s.objektKuerzel}>{o.kuerzel ?? '—'}</div>
-            <div className={s.objektInfo}>
-              <div className={s.objektName}>{o.name}</div>
-              {o.adresse && <div className={s.objektAdresse}>📍 {o.adresse}</div>}
+        {filtered.length === 0 && <div className={s.emptyState}>Keine Objekte gefunden</div>}
+        {filtered.map(o => {
+          const isAktiv = o.aktiv !== false;
+          return (
+            <div key={o.id} className={`${s.objektRow} ${!isAktiv ? s.userRowInaktiv : ''}`}>
+              <div className={s.objektKuerzel}>{o.kuerzel ?? '—'}</div>
+              <div className={s.objektInfo}>
+                <div className={s.objektName}>{o.name}</div>
+                {o.adresse && <div className={s.objektAdresse}>📍 {o.adresse}</div>}
+              </div>
+              <div className={s.userActions}>
+                <button type="button" className={s.iconBtn} onClick={() => openEdit(o)} title="Bearbeiten">✏️</button>
+                <button
+                  type="button"
+                  className={`${s.iconBtn} ${!isAktiv ? s.iconBtnWarning : ''}`}
+                  onClick={() => toggleAktiv(o.id)}
+                  title={isAktiv ? 'Deaktivieren' : 'Aktivieren'}
+                >
+                  {isAktiv ? '🔒' : '🔓'}
+                </button>
+              </div>
             </div>
-            <div className={s.userActions}>
-              <button type="button" className={s.iconBtn} onClick={() => openEdit(o)}>✏️</button>
-              <button type="button" className={s.iconBtn} onClick={() => handleDelete(o.id)}>🗑</button>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

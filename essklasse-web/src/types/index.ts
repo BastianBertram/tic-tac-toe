@@ -32,6 +32,7 @@ export interface Objekt {
   name: string;
   adresse?: string;
   kuerzel?: string;   // z.B. "HWK-01" – erscheint im Switcher-Button
+  aktiv?: boolean;    // undefined = aktiv (rückwärtskompatibel)
 }
 
 export interface AbschlussPosition {

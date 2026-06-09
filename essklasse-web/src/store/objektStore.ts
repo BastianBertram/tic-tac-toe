@@ -9,6 +9,8 @@ interface ObjektStore {
   aktiveObjektId: string | null;
 
   setObjekte: (objekte: Objekt[]) => void;
+  updateObjekt: (id: string, partial: Partial<Objekt>) => void;
+  toggleAktiv: (id: string) => void;
   setAktiveObjektId: (id: string) => void;
   getAktivesObjekt: () => Objekt | null;
   reset: () => void;
@@ -29,6 +31,12 @@ export const useObjektStore = create<ObjektStore>()(
           aktiveObjektId: stillValid ? current : (objekte[0]?.id ?? null),
         });
       },
+
+      updateObjekt: (id, partial) =>
+        set(s => ({ objekte: s.objekte.map(o => o.id === id ? { ...o, ...partial } : o) })),
+
+      toggleAktiv: (id) =>
+        set(s => ({ objekte: s.objekte.map(o => o.id === id ? { ...o, aktiv: !(o.aktiv ?? true) } : o) })),
 
       setAktiveObjektId: (id) => set({ aktiveObjektId: id }),
 
