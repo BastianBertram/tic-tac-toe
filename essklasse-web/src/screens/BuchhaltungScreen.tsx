@@ -9,7 +9,7 @@ import type { Bewirtungsbeleg } from '../types';
 import s from './BuchhaltungScreen.module.css';
 
 type BuchTab = 'alle' | 'ueberfaellig' | 'bereit' | 'erledigt';
-type SortOpt = 'datum' | 'bestellnr';
+type SortOpt = 'datum' | 'bestellnr' | 'bestellnr-desc';
 
 interface Props { onOpenBeleg: (b: Bewirtungsbeleg) => void; }
 
@@ -49,7 +49,9 @@ function applyControls(
     });
   }
 
-  out.sort(opts.sort === 'datum' ? byDatumUhrzeit : byBestellungsnr);
+  if (opts.sort === 'datum') out.sort(byDatumUhrzeit);
+  else if (opts.sort === 'bestellnr-desc') out.sort((a, b) => byBestellungsnr(b, a));
+  else out.sort(byBestellungsnr);
   return out;
 }
 
@@ -163,8 +165,17 @@ export function BuchhaltungScreen({ onOpenBeleg }: Props) {
                 className={`${s.sortBtn} ${ctrl.sort === 'bestellnr' ? s.sortBtnActive : ''}`}
                 onClick={() => setCtrl(c => ({ ...c, sort: 'bestellnr' }))}
               >
-                # Bestellnummer
+                # Bestellnr. ↑
               </button>
+              {tab === 'erledigt' && (
+                <button
+                  type="button"
+                  className={`${s.sortBtn} ${ctrl.sort === 'bestellnr-desc' ? s.sortBtnActive : ''}`}
+                  onClick={() => setCtrl(c => ({ ...c, sort: 'bestellnr-desc' }))}
+                >
+                  # Bestellnr. ↓
+                </button>
+              )}
             </div>
           </div>
         )}
