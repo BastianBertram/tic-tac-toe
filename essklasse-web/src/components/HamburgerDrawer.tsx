@@ -17,7 +17,7 @@ export function HamburgerDrawer({ onClose, onAbgeschlossene }: Props) {
   const resetObjekte = useObjektStore(st => st.reset);
   const objekte      = useObjektStore(st => st.objekte);
   const aktiv        = useObjektStore(st => st.getAktivesObjekt());
-  const isBuchhaltung = user?.rolle === 'buchhaltung';
+  const isBuchhaltung = user?.rolle === 'buchhaltung' || user?.rolle === 'admin';
   const [loading, setLoading] = useState(false);
 
   async function handleLogout() {

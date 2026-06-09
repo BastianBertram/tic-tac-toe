@@ -52,7 +52,7 @@ export default function App() {
   function closeView() { setView({ type: 'main' }); }
 
   // ── Buchhaltung: eigener Zweig, BuchhaltungScreen bleibt immer gemountet ──
-  if (rolle === 'buchhaltung') {
+  if (rolle === 'buchhaltung' || rolle === 'admin') {
     return (
       <AuthGuard>
         <div className={s.app}>

@@ -32,7 +32,7 @@ export const useAuthStore = create<AuthStore>()(
       setToken:    (accessToken)       => set({ accessToken }),
       logout:      ()                  => set({ user: null, accessToken: null }),
       isAdmin:     ()                  => get().user?.rolle === 'admin',
-      isBuchhaltung: ()                => get().user?.rolle === 'buchhaltung',
+      isBuchhaltung: ()                => get().user?.rolle === 'buchhaltung' || get().user?.rolle === 'admin',
       isUser:      ()                  => get().user?.rolle === 'user',
     }),
     {
