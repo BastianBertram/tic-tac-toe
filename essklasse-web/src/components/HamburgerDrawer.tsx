@@ -18,6 +18,7 @@ export function HamburgerDrawer({ onClose, onAbgeschlossene }: Props) {
   const objekte      = useObjektStore(st => st.objekte);
   const aktiv        = useObjektStore(st => st.getAktivesObjekt());
   const isBuchhaltung = user?.rolle === 'buchhaltung';
+  const isAdmin       = user?.rolle === 'admin';
   const [loading, setLoading] = useState(false);
 
   async function handleLogout() {
@@ -54,8 +55,8 @@ export function HamburgerDrawer({ onClose, onAbgeschlossene }: Props) {
 
         <div className={s.divider} />
 
-        {/* Objekte — nur für Nicht-Buchhaltung */}
-        {!isBuchhaltung && objekte.length > 0 && (
+        {/* Objekte — nur für User (nicht Admin, nicht Buchhaltung) */}
+        {!isBuchhaltung && !isAdmin && objekte.length > 0 && (
           <>
             <div className={s.objekteInfo}>
               <div className={s.objekteLabel}>Zugeordnete Objekte</div>
@@ -71,8 +72,8 @@ export function HamburgerDrawer({ onClose, onAbgeschlossene }: Props) {
           </>
         )}
 
-        {/* Abgeschlossene Bewirtungen — nur für Nicht-Buchhaltung */}
-        {!isBuchhaltung && (
+        {/* Abgeschlossene Bewirtungen — nur für User */}
+        {!isBuchhaltung && !isAdmin && (
           <>
             <button
               className={d.abgeschlosseneBtn}
