@@ -51,6 +51,38 @@ export default function App() {
   function openAbschluss(b: Bewirtungsbeleg) { setView({ type: 'abschluss', beleg: b }); }
   function closeView() { setView({ type: 'main' }); }
 
+  // ── Buchhaltung: eigener Zweig, BuchhaltungScreen bleibt immer gemountet ──
+  if (rolle === 'buchhaltung') {
+    return (
+      <AuthGuard>
+        <div className={s.app}>
+          <BuchhaltungScreen onOpenBeleg={openBeleg} onRechnungErstellen={openRechnungModal} />
+          {view.type === 'detail' && (
+            <div style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'var(--ek-bg)', display: 'flex', flexDirection: 'column' }}>
+              <DetailScreen
+                beleg={view.beleg}
+                onClose={closeView}
+                onRechnungErstellen={openRechnungModal}
+                canDelete={false}
+              />
+            </div>
+          )}
+          <DevOverlay />
+          {rechnungModalBeleg && (
+            <RechnungNummerModal
+              beleg={rechnungModalBeleg}
+              value={rechnungsnummerInput}
+              onChange={setRechnungsnummerInput}
+              onConfirm={confirmRechnung}
+              onCancel={() => setRechnungModalBeleg(null)}
+            />
+          )}
+        </div>
+      </AuthGuard>
+    );
+  }
+
+  // ── User / Admin: view-basiertes Routing ──
   if (view.type === 'edit') {
     return (
       <AuthGuard>
@@ -88,10 +120,9 @@ export default function App() {
           <DetailScreen
             beleg={view.beleg}
             onClose={closeView}
-            onAbschliessen={rolle !== 'buchhaltung' ? () => openAbschluss(view.beleg) : undefined}
-            onBearbeiten={rolle !== 'buchhaltung' ? () => setView({ type: 'edit', beleg: view.beleg }) : undefined}
-            onRechnungErstellen={rolle === 'buchhaltung' ? openRechnungModal : undefined}
-            canDelete={rolle !== 'buchhaltung'}
+            onAbschliessen={() => openAbschluss(view.beleg)}
+            onBearbeiten={() => setView({ type: 'edit', beleg: view.beleg })}
+            canDelete
           />
           {rechnungModalBeleg && (
             <RechnungNummerModal
@@ -116,39 +147,6 @@ export default function App() {
             onClose={() => setView({ type: 'detail', beleg: view.beleg })}
             onDone={closeView}
           />
-        </div>
-      </AuthGuard>
-    );
-  }
-
-  // ── Buchhaltung ──
-  if (rolle === 'buchhaltung') {
-    return (
-      <AuthGuard>
-        <div className={s.app}>
-          {/* BuchhaltungScreen immer gemountet → Tab-State bleibt erhalten */}
-          <BuchhaltungScreen onOpenBeleg={openBeleg} onRechnungErstellen={openRechnungModal} />
-          {/* DetailScreen als Vollbild-Overlay */}
-          {view.type === 'detail' && (
-            <div style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'var(--ek-bg)', display: 'flex', flexDirection: 'column' }}>
-              <DetailScreen
-                beleg={view.beleg}
-                onClose={closeView}
-                onRechnungErstellen={openRechnungModal}
-                canDelete={false}
-              />
-            </div>
-          )}
-          <DevOverlay />
-          {rechnungModalBeleg && (
-            <RechnungNummerModal
-              beleg={rechnungModalBeleg}
-              value={rechnungsnummerInput}
-              onChange={setRechnungsnummerInput}
-              onConfirm={confirmRechnung}
-              onCancel={() => setRechnungModalBeleg(null)}
-            />
-          )}
         </div>
       </AuthGuard>
     );
