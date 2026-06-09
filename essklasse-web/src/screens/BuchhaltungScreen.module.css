@@ -31,6 +31,7 @@
   background: var(--ek-bg); font-size: 12px; font-weight: 700;
   color: var(--ek-muted); cursor: pointer;
 }
+.filterChipActiveAlle         { background: var(--ek-charcoal); color: #fff; border-color: var(--ek-charcoal); }
 .filterChipActiveOffen        { background: #fdecea; color: #e74c3c; border-color: #e74c3c; }
 .filterChipActiveAbgeschlossen { background: #eafaf1; color: #27ae60; border-color: #27ae60; }
 .filterChipActiveRechnung     { background: #d5f5e3; color: #1e8449; border-color: #1e8449; }

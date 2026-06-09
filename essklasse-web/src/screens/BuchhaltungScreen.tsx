@@ -62,20 +62,18 @@ function applyControls(
 function applyAlleControls(
   list: Bewirtungsbeleg[],
   objekte: ReturnType<typeof useObjektStore.getState>['objekte'],
-  opts: { search: string; statusFilter: StatusFilter[] }
+  opts: { search: string; statusFilter: StatusFilterOpt }
 ): Bewirtungsbeleg[] {
   let out = [...list];
 
-  // Status-Filter (OR-Logik: keiner aktiv = alle zeigen)
-  if (opts.statusFilter.length > 0) {
+  if (opts.statusFilter !== 'alle') {
     out = out.filter(b => {
-      return opts.statusFilter.some(f => {
-        if (f === 'geloescht')    return b.deleted;
-        if (f === 'rechnung')     return !b.deleted && b.rechnungErstellt;
-        if (f === 'abgeschlossen') return !b.deleted && b.abgeschlossen && !b.rechnungErstellt;
-        if (f === 'offen')        return !b.deleted && !b.abgeschlossen;
-        return false;
-      });
+      const f = opts.statusFilter;
+      if (f === 'geloescht')     return b.deleted;
+      if (f === 'rechnung')      return !b.deleted && b.rechnungErstellt;
+      if (f === 'abgeschlossen') return !b.deleted && b.abgeschlossen && !b.rechnungErstellt;
+      if (f === 'offen')         return !b.deleted && !b.abgeschlossen;
+      return true;
     });
   }
 
@@ -92,11 +90,13 @@ function applyAlleControls(
 interface TabControls { search: string; objekt: string; sort: SortOpt; }
 const INIT_CONTROLS: TabControls = { search: '', objekt: 'alle', sort: 'datum' };
 
-interface AlleControls { search: string; statusFilter: StatusFilter[]; }
-const INIT_ALLE: AlleControls = { search: '', statusFilter: [] };
+type StatusFilterOpt = 'alle' | StatusFilter;
+interface AlleControls { search: string; statusFilter: StatusFilterOpt; }
+const INIT_ALLE: AlleControls = { search: '', statusFilter: 'alle' };
 
-const STATUS_FILTER_CONFIG: { id: StatusFilter; label: string; activeClass: string }[] = [
-  { id: 'offen',         label: 'Offen',          activeClass: 'filterChipActiveOffen' },
+const STATUS_FILTER_CONFIG: { id: StatusFilterOpt; label: string; activeClass: string }[] = [
+  { id: 'alle',          label: 'Alle',            activeClass: 'filterChipActiveAlle' },
+  { id: 'offen',         label: 'Offen',           activeClass: 'filterChipActiveOffen' },
   { id: 'abgeschlossen', label: 'Abgeschlossen',   activeClass: 'filterChipActiveAbgeschlossen' },
   { id: 'rechnung',      label: '✅ Rechnung',     activeClass: 'filterChipActiveRechnung' },
   { id: 'geloescht',     label: 'Gelöscht',        activeClass: 'filterChipActiveGeloescht' },
@@ -155,13 +155,8 @@ export function BuchhaltungScreen({ onOpenBeleg, onRechnungErstellen }: Props) {
   const ctrl    = tab === 'ueberfaellig' ? ctrlUeber : tab === 'bereit' ? ctrlBereit : ctrlErl;
   const setCtrl = tab === 'ueberfaellig' ? setCtrlUeber : tab === 'bereit' ? setCtrlBereit : setCtrlErl;
 
-  function toggleStatusFilter(id: StatusFilter) {
-    setCtrlAlle(c => ({
-      ...c,
-      statusFilter: c.statusFilter.includes(id)
-        ? c.statusFilter.filter(f => f !== id)
-        : [...c.statusFilter, id],
-    }));
+  function setStatusFilter(id: StatusFilterOpt) {
+    setCtrlAlle(c => ({ ...c, statusFilter: id }));
   }
 
   return (
@@ -188,8 +183,8 @@ export function BuchhaltungScreen({ onOpenBeleg, onRechnungErstellen }: Props) {
                 <button
                   key={f.id}
                   type="button"
-                  className={`${s.filterChip} ${ctrlAlle.statusFilter.includes(f.id) ? s[f.activeClass] : ''}`}
-                  onClick={() => toggleStatusFilter(f.id)}
+                  className={`${s.filterChip} ${ctrlAlle.statusFilter === f.id ? s[f.activeClass] : ''}`}
+                  onClick={() => setStatusFilter(f.id)}
                 >
                   {f.label}
                 </button>
