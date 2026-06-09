@@ -145,14 +145,10 @@ function UserTab() {
   const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
   const emailTouched = form.email.length > 0;
   const emailFormatOk = EMAIL_REGEX.test(form.email.trim());
-  const emailDuplicate = emailTouched && emailFormatOk &&
-    users.some(u => u.email.toLowerCase() === form.email.trim().toLowerCase() && u.id !== editId);
   const emailError = emailTouched && !emailFormatOk
     ? 'Bitte eine gültige E-Mail-Adresse eingeben.'
-    : emailDuplicate
-    ? 'Diese E-Mail-Adresse ist bereits vergeben.'
     : null;
-  const canSave = form.vorname.trim() && form.nachname.trim() && emailFormatOk && !emailDuplicate;
+  const canSave = form.vorname.trim() && form.nachname.trim() && emailFormatOk;
   function handleSave() {
     if (!canSave) return;
     if (form.rolle === 'geschaeftsfuehrung') {
@@ -250,7 +246,7 @@ function UserTab() {
 
           <label className={s.label}>E-Mail *</label>
           <input
-            className={`${s.input} ${emailError ? s.inputError : emailTouched && emailFormatOk && !emailDuplicate ? s.inputOk : ''}`}
+            className={`${s.input} ${emailError ? s.inputError : emailTouched && emailFormatOk ? s.inputOk : ''}`}
             type="email"
             value={form.email}
             onChange={e => setForm(f => ({...f, email: e.target.value}))}
