@@ -69,6 +69,9 @@ export function AdminScreen() {
     <div className={s.screen}>
       <div className={s.header}>
         <img src="/logo.webp" alt="EssKlasse" className={s.logo} />
+        <span className={s.headerSection}>
+          {tab === 'user' ? '👤 Benutzer' : '🏢 Objekte'}
+        </span>
         <div className={s.headerRight}>
           <span className={s.rolleChip}>Admin</span>
         </div>
@@ -148,7 +151,6 @@ function UserTab() {
 
   return (
     <div className={s.tabContent}>
-      <div className={s.sectionTitle}>👤 Benutzer</div>
       <div className={s.searchRow}>
         <input
           className={s.searchInput}
@@ -328,7 +330,6 @@ function ObjekteTab() {
 
   return (
     <div className={s.tabContent}>
-      <div className={s.sectionTitle}>🏢 Objekte</div>
       <div className={s.searchRow}>
         <input
           className={s.searchInput}
