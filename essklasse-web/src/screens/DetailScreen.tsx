@@ -3,6 +3,7 @@ import { format, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
 import type { Bewirtungsbeleg } from '../types';
 import { StatusBadge } from '../components/StatusBadge';
+import { PdfViewer } from '../components/PdfViewer';
 import { useBelegStore } from '../store/belegStore';
 import s from './DetailScreen.module.css';
 
@@ -20,7 +21,7 @@ export function DetailScreen({ beleg: init, onClose, onAbschliessen, onBearbeite
   const beleg = store.belege.find(b => b.id === init.id) ?? init;
   const [retrying, setRetrying] = useState(false);
   const [lightbox, setLightbox] = useState<string | null>(null);
-  const [pdfViewer, setPdfViewer] = useState<{ blobUrl: string; dataUrl: string; name: string } | null>(null);
+  const [pdfViewer, setPdfViewer] = useState<{ dataUrl: string; name: string } | null>(null);
 
   const datum = format(parseISO(beleg.cateringDatumVon), 'dd.MM.yyyy', { locale: de });
 
@@ -124,7 +125,7 @@ export function DetailScreen({ beleg: init, onClose, onAbschliessen, onBearbeite
                   url={url}
                   filename={`${beleg.bestellungsnummer ?? 'beleg'}-bestell-${i + 1}`}
                   onOpenImage={() => setLightbox(url)}
-                  onOpenPdf={() => { const b = dataUrlToBlob(url); const n = `${beleg.bestellungsnummer ?? 'beleg'}-bestell-${i+1}.pdf`; setPdfViewer({ blobUrl: URL.createObjectURL(b), dataUrl: url, name: n }); }}
+                  onOpenPdf={() => setPdfViewer({ dataUrl: url, name: `${beleg.bestellungsnummer ?? 'beleg'}-bestell-${i+1}.pdf` })}
                 />
               ))}
             </div>
@@ -142,7 +143,7 @@ export function DetailScreen({ beleg: init, onClose, onAbschliessen, onBearbeite
                   url={url}
                   filename={`${beleg.bestellungsnummer ?? 'beleg'}-abschluss-${i + 1}`}
                   onOpenImage={() => setLightbox(url)}
-                  onOpenPdf={() => { const b = dataUrlToBlob(url); const n = `${beleg.bestellungsnummer ?? 'beleg'}-abschluss-${i+1}.pdf`; setPdfViewer({ blobUrl: URL.createObjectURL(b), dataUrl: url, name: n }); }}
+                  onOpenPdf={() => setPdfViewer({ dataUrl: url, name: `${beleg.bestellungsnummer ?? 'beleg'}-abschluss-${i+1}.pdf` })}
                 />
               ))}
             </div>
@@ -234,26 +235,12 @@ export function DetailScreen({ beleg: init, onClose, onAbschliessen, onBearbeite
 
       {/* PDF-Viewer */}
       {pdfViewer && (
-        <div className={s.lightbox} style={{ flexDirection: 'column', cursor: 'default' }}>
-          <div style={{ display: 'flex', width: '100%', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', flexShrink: 0 }}>
-            <span style={{ color: '#fff', fontWeight: 700, fontSize: 14 }}>📄 PDF-Dokument</span>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <button type="button" className={s.lightboxDownload}
-                onClick={() => downloadDataUrl(pdfViewer.dataUrl, pdfViewer.name)}>
-                ⬇ Herunterladen
-              </button>
-              <button type="button" className={s.lightboxDownload}
-                onClick={() => { URL.revokeObjectURL(pdfViewer.blobUrl); setPdfViewer(null); }}>
-                ✕ Schließen
-              </button>
-            </div>
-          </div>
-          <iframe
-            src={pdfViewer.blobUrl}
-            style={{ flex: 1, width: '100%', border: 'none', borderRadius: 0 }}
-            title="PDF Vorschau"
-          />
-        </div>
+        <PdfViewer
+          dataUrl={pdfViewer.dataUrl}
+          filename={pdfViewer.name}
+          onClose={() => setPdfViewer(null)}
+          onDownload={() => downloadDataUrl(pdfViewer.dataUrl, pdfViewer.name)}
+        />
       )}
 
       {/* Lightbox */}
