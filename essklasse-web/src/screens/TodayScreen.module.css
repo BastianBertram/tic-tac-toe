@@ -17,42 +17,46 @@
   font-size: 11px; font-weight: 700;
 }
 
-/* ── Datum ───────────────────────────────────────────────────── */
-.dateRow {
-  font-size: 12px; color: var(--ek-muted);
-  padding: 8px 14px 0;
-}
-
-/* ── Zähler ──────────────────────────────────────────────────── */
-.counters { display: flex; gap: 10px; margin: 10px 14px 8px; }
-
-.counterBtn {
-  flex: 1; border-radius: 14px; padding: 14px 10px;
-  display: flex; flex-direction: column; align-items: center; gap: 4px;
-  border: none; transition: transform .12s; cursor: pointer;
-}
-.counterBtn:active { transform: scale(.97); }
-
-.counterActive {
+/* ── Datums-Navigator ────────────────────────────────────────── */
+.navigator {
+  display: flex; align-items: center; gap: 8px;
+  margin: 10px 14px 4px;
   background: var(--ek-red);
+  border-radius: 16px;
+  padding: 14px 10px;
   box-shadow: 0 4px 14px rgba(139,26,26,.25);
 }
-.counterActive .counterNum   { color: #fff; }
-.counterActive .counterLabel { color: rgba(255,255,255,.85); }
 
-.counterInactive {
-  background: var(--ek-surface);
-  border: 1.5px solid var(--ek-border);
-  box-shadow: 0 2px 6px rgba(0,0,0,.05);
+.navArrow {
+  flex-shrink: 0; width: 40px; height: 40px;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(255,255,255,.18); border: none; border-radius: 10px;
+  color: #fff; font-size: 26px; font-weight: 700; line-height: 1;
+  cursor: pointer; transition: background .15s, transform .1s;
 }
-.counterInactive .counterNum   { color: var(--ek-charcoal); }
-.counterInactive .counterLabel { color: var(--ek-muted); }
+.navArrow:active { transform: scale(.92); }
+.navArrow:disabled {
+  opacity: .3; cursor: default;
+  background: rgba(255,255,255,.08);
+}
 
-.counterNum   { font-size: 26px; font-weight: 900; line-height: 1; }
-.counterLabel { font-size: 13px; font-weight: 700; }
-.counterDate  { font-size: 11px; font-weight: 600; opacity: .7; }
-.counterActive .counterDate   { color: rgba(255,255,255,.8); }
-.counterInactive .counterDate { color: var(--ek-muted); }
+.navCenter {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; gap: 2px;
+}
+.navDayLabel  { font-size: 13px; font-weight: 700; color: rgba(255,255,255,.85); text-transform: uppercase; letter-spacing: .6px; }
+.navCount     { font-size: 34px; font-weight: 900; color: #fff; line-height: 1.1; }
+.navDateLabel { font-size: 12px; font-weight: 600; color: rgba(255,255,255,.75); }
+
+/* Zurück-zu-Heute Button */
+.backToToday {
+  display: block; margin: 4px 14px 0; padding: 7px 14px;
+  background: var(--ek-surface); border: 1.5px solid var(--ek-border);
+  border-radius: 10px; font-size: 12px; font-weight: 700;
+  color: var(--ek-red); cursor: pointer;
+  text-align: center; transition: background .15s;
+}
+.backToToday:active { background: var(--ek-surface2); }
 
 /* ── Section header ───────────────────────────────────────────── */
 .sectionHeader { display: flex; align-items: center; gap: 8px; padding: 4px 14px 8px; }
