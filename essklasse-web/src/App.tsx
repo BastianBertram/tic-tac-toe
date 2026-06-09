@@ -174,6 +174,14 @@ function RechnungNummerModal({ beleg, value, onChange, onConfirm, onCancel }: {
   onConfirm: () => void;
   onCancel: () => void;
 }) {
+  const belege = useBelegStore(st => st.belege);
+
+  const trimmed = value.trim();
+  const isDuplicate = trimmed.length > 0 && belege.some(
+    b => b.id !== beleg.id && b.rechnungsnummer?.toLowerCase() === trimmed.toLowerCase()
+  );
+  const canSubmit = trimmed.length > 0 && !isDuplicate;
+
   return (
     <div style={{
       position: 'fixed', inset: 0, background: 'rgba(0,0,0,.55)',
@@ -200,16 +208,25 @@ function RechnungNummerModal({ beleg, value, onChange, onConfirm, onCancel }: {
           placeholder="z.B. R260001"
           value={value}
           onChange={e => onChange(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && value.trim() && onConfirm()}
+          onKeyDown={e => e.key === 'Enter' && canSubmit && onConfirm()}
           style={{
             width: '100%', boxSizing: 'border-box',
             padding: '12px 14px', borderRadius: 10,
             border: '1.5px solid var(--ek-border)',
             background: 'var(--ek-bg)', fontSize: 15,
-            color: 'var(--ek-charcoal)', marginBottom: 20,
-            outline: value.trim() ? 'none' : '1.5px solid #e74c3c',
+            color: 'var(--ek-charcoal)', marginBottom: isDuplicate ? 8 : 20,
+            outline: isDuplicate ? '1.5px solid #e74c3c' : !trimmed ? '1.5px solid #e74c3c' : 'none',
           }}
         />
+        {isDuplicate && (
+          <div style={{
+            marginBottom: 16, padding: '8px 12px', borderRadius: 8,
+            background: '#fdecea', color: '#e74c3c',
+            fontSize: 12, fontWeight: 600, border: '1px solid #f5c6c6',
+          }}>
+            ⚠️ Diese Rechnungsnummer ist bereits vergeben.
+          </div>
+        )}
         <div style={{ display: 'flex', gap: 10 }}>
           <button type="button" onClick={onCancel} style={{
             flex: 1, padding: 14, borderRadius: 12, border: '1.5px solid var(--ek-border)',
@@ -218,11 +235,11 @@ function RechnungNummerModal({ beleg, value, onChange, onConfirm, onCancel }: {
           }}>
             Abbrechen
           </button>
-          <button type="button" onClick={onConfirm} disabled={!value.trim()} style={{
+          <button type="button" onClick={canSubmit ? onConfirm : undefined} disabled={!canSubmit} style={{
             flex: 2, padding: 14, borderRadius: 12, border: 'none',
-            background: value.trim() ? 'linear-gradient(135deg,#2d8a4e,#3aab62)' : '#ccc',
-            color: '#fff', fontSize: 14, fontWeight: 800, cursor: value.trim() ? 'pointer' : 'not-allowed',
-            boxShadow: value.trim() ? '0 4px 16px rgba(45,138,78,.3)' : 'none',
+            background: canSubmit ? 'linear-gradient(135deg,#2d8a4e,#3aab62)' : '#ccc',
+            color: '#fff', fontSize: 14, fontWeight: 800, cursor: canSubmit ? 'pointer' : 'not-allowed',
+            boxShadow: canSubmit ? '0 4px 16px rgba(45,138,78,.3)' : 'none',
           }}>
             ✅ Rechnung erstellen
           </button>
