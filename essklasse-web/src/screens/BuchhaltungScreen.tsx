@@ -221,7 +221,7 @@ export function BuchhaltungScreen({ onOpenBeleg, onRechnungErstellen }: Props) {
                 key={b.id}
                 beleg={b}
                 objekte={objekte}
-                onOpen={b.deleted ? undefined : () => onOpenBeleg(b)}
+                onOpen={() => onOpenBeleg(b)}
                 showRechnungBtn={tab === 'bereit' && !b.deleted}
                 onMarkRechnung={() => onRechnungErstellen(b)}
               />
@@ -262,7 +262,7 @@ export function BuchhaltungScreen({ onOpenBeleg, onRechnungErstellen }: Props) {
 function BelegeRow({ beleg: b, objekte, onOpen, showRechnungBtn, onMarkRechnung }: {
   beleg: Bewirtungsbeleg;
   objekte: ReturnType<typeof useObjektStore.getState>['objekte'];
-  onOpen?: () => void;
+  onOpen: () => void;
   showRechnungBtn: boolean;
   onMarkRechnung: () => void;
 }) {
@@ -271,7 +271,7 @@ function BelegeRow({ beleg: b, objekte, onOpen, showRechnungBtn, onMarkRechnung 
 
   return (
     <div className={`${s.row} ${b.deleted ? s.rowDeleted : b.rechnungErstellt ? s.rowErledigt : !b.abgeschlossen ? s.rowOffen : ''}`}>
-      <div className={s.rowMain} onClick={onOpen} style={!onOpen ? { cursor: 'default' } : undefined}>
+      <div className={s.rowMain} onClick={onOpen}>
         <div className={s.rowTop}>
           <span className={s.rowNr}>{b.bestellungsnummer ?? '–'}</span>
           {b.rechnungsnummer && <span className={s.rowRechnungNr}>🧾 {b.rechnungsnummer}</span>}
