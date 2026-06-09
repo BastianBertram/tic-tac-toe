@@ -119,6 +119,7 @@ function UserTab() {
   const [filter, setFilter] = useState<FilterStatus>('aktiv');
   const [confirmDeactivate, setConfirmDeactivate] = useState(false);
   const [confirmAlleObjekte, setConfirmAlleObjekte] = useState(false);
+  const [confirmGeschaeftsfuehrung, setConfirmGeschaeftsfuehrung] = useState(false);
 
   function defaultObjektIds(rolle: UserRolle) {
     return rolle === 'buchhaltung' ? [ALLE_OBJEKTE_ID] : [];
@@ -144,7 +145,10 @@ function UserTab() {
   const canSave = form.vorname.trim() && form.nachname.trim() && form.email.trim();
   function handleSave() {
     if (!canSave) return;
-    // Warnung wenn Buchhaltung mit "Alle Objekte" gespeichert wird
+    if (form.rolle === 'geschaeftsfuehrung') {
+      setConfirmGeschaeftsfuehrung(true);
+      return;
+    }
     if (form.rolle === 'buchhaltung' && form.objektIds.includes(ALLE_OBJEKTE_ID)) {
       setConfirmAlleObjekte(true);
       return;
@@ -157,6 +161,7 @@ function UserTab() {
     else        addUser({ ...form, objektIds });
     setShowForm(false);
     setConfirmAlleObjekte(false);
+    setConfirmGeschaeftsfuehrung(false);
   }
   function toggleObjekt(id: string) {
     setForm(f => ({
@@ -353,6 +358,28 @@ function UserTab() {
           ]}
           onConfirmed={doSave}
           onCancel={() => setConfirmAlleObjekte(false)}
+        />
+      )}
+
+      {/* Warnung: Geschäftsführung vergeben */}
+      {confirmGeschaeftsfuehrung && (
+        <ConfirmModal
+          steps={[
+            {
+              title: '⚠️ Erweiterte Rolle vergeben',
+              body: `Die Rolle „Geschäftsführung" ermöglicht den Wechsel in alle anderen Rollen der App — einschließlich Admin. Bitte stelle sicher, dass dies beabsichtigt ist.`,
+              confirmLabel: 'Verstanden, weiter →',
+              danger: true,
+            },
+            {
+              title: 'Geschäftsführungs-Rolle bestätigen',
+              body: `${form.vorname} ${form.nachname} erhält die Rolle „Geschäftsführung" und damit vollen Rollenzugriff auf die gesamte App.`,
+              confirmLabel: 'Ja, so speichern',
+              danger: true,
+            },
+          ]}
+          onConfirmed={doSave}
+          onCancel={() => setConfirmGeschaeftsfuehrung(false)}
         />
       )}
 
