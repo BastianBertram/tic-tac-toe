@@ -21,6 +21,46 @@ const ROLLE_COLORS: Record<UserRolle, string> = {
   buchhaltung: '#1a5276',
 };
 
+/* ─── Zweistufiges Bestätigungs-Modal ─── */
+interface ConfirmStep {
+  title: string;
+  body: string;
+  confirmLabel: string;
+  danger?: boolean;
+}
+
+interface ConfirmModalProps {
+  steps: [ConfirmStep, ConfirmStep];
+  onConfirmed: () => void;
+  onCancel: () => void;
+}
+
+function ConfirmModal({ steps, onConfirmed, onCancel }: ConfirmModalProps) {
+  const [step, setStep] = useState<0 | 1>(0);
+  const current = steps[step];
+
+  return (
+    <div className={s.modalOverlay} onClick={onCancel}>
+      <div className={s.modalSheet} onClick={e => e.stopPropagation()}>
+        <div className={s.modalStep}>Schritt {step + 1} von 2</div>
+        <div className={s.modalTitle}>{current.title}</div>
+        <div className={s.modalBody}>{current.body}</div>
+        <div className={s.modalActions}>
+          <button type="button" className={s.cancelBtn} onClick={onCancel}>Abbrechen</button>
+          <button
+            type="button"
+            className={current.danger ? s.dangerBtn : s.saveBtn}
+            onClick={() => step === 0 ? setStep(1) : onConfirmed()}
+          >
+            {current.confirmLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Haupt-Screen ─── */
 export function AdminScreen() {
   const [tab, setTab] = useState<AdminTab>('user');
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -65,6 +105,7 @@ function UserTab() {
   const [form, setForm] = useState({ name: '', email: '', rolle: 'user' as UserRolle, objektIds: [] as string[] });
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<FilterStatus>('aktiv');
+  const [deactivateId, setDeactivateId] = useState<string | null>(null);
 
   function openNew() {
     setForm({ name: '', email: '', rolle: 'user', objektIds: [] });
@@ -98,6 +139,8 @@ function UserTab() {
 
   const countAktiv   = users.filter(u => u.aktiv).length;
   const countInaktiv = users.filter(u => !u.aktiv).length;
+
+  const deactivateTarget = deactivateId ? users.find(u => u.id === deactivateId) : null;
 
   return (
     <div className={s.tabContent}>
@@ -183,20 +226,49 @@ function UserTab() {
                 {ROLLE_LABELS[u.rolle]}
               </span>
               <div className={s.userActions}>
-                <button type="button" className={s.iconBtn} onClick={() => openEdit(u)} title="Bearbeiten">✏️</button>
-                <button
-                  type="button"
-                  className={`${s.iconBtn} ${!u.aktiv ? s.iconBtnWarning : ''}`}
-                  onClick={() => toggleAktiv(u.id)}
-                  title={u.aktiv ? 'Deaktivieren' : 'Aktivieren'}
-                >
-                  {u.aktiv ? '🔒' : '🔓'}
-                </button>
+                {u.aktiv && (
+                  <button type="button" className={s.iconBtn} onClick={() => openEdit(u)} title="Bearbeiten">✏️</button>
+                )}
+                {/* Aktive User: Deaktivieren-Button. Inaktive User: kein Button (endgültig) */}
+                {u.aktiv ? (
+                  <button
+                    type="button"
+                    className={s.iconBtnWarning}
+                    onClick={() => setDeactivateId(u.id)}
+                    title="Benutzer deaktivieren"
+                  >
+                    🔒
+                  </button>
+                ) : (
+                  <span className={s.inaktivLabel}>Inaktiv</span>
+                )}
               </div>
             </div>
           </div>
         ))}
       </div>
+
+      {/* Zweistufige Bestätigung Benutzer deaktivieren */}
+      {deactivateTarget && (
+        <ConfirmModal
+          steps={[
+            {
+              title: 'Benutzer deaktivieren?',
+              body: `„${deactivateTarget.name}" wird deaktiviert und kann sich nicht mehr anmelden.`,
+              confirmLabel: 'Weiter →',
+              danger: false,
+            },
+            {
+              title: 'Wirklich endgültig deaktivieren?',
+              body: `Dieser Schritt kann nicht rückgängig gemacht werden. „${deactivateTarget.name}" muss vom Admin neu angelegt werden, um wieder Zugang zu erhalten.`,
+              confirmLabel: 'Ja, endgültig deaktivieren',
+              danger: true,
+            },
+          ]}
+          onConfirmed={() => { toggleAktiv(deactivateTarget.id); setDeactivateId(null); }}
+          onCancel={() => setDeactivateId(null)}
+        />
+      )}
     </div>
   );
 }
@@ -209,6 +281,7 @@ function ObjekteTab() {
   const [form, setForm] = useState({ name: '', adresse: '', kuerzel: '' });
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<FilterStatus>('aktiv');
+  const [confirmTarget, setConfirmTarget] = useState<{ id: string; toAktiv: boolean } | null>(null);
 
   function openNew() { setForm({ name: '', adresse: '', kuerzel: '' }); setEditId(null); setShowForm(true); }
   function openEdit(o: typeof objekte[0]) {
@@ -236,6 +309,8 @@ function ObjekteTab() {
 
   const countAktiv   = objekte.filter(o => o.aktiv !== false).length;
   const countInaktiv = objekte.filter(o => o.aktiv === false).length;
+
+  const confirmObj = confirmTarget ? objekte.find(o => o.id === confirmTarget.id) : null;
 
   return (
     <div className={s.tabContent}>
@@ -295,8 +370,8 @@ function ObjekteTab() {
                 <button type="button" className={s.iconBtn} onClick={() => openEdit(o)} title="Bearbeiten">✏️</button>
                 <button
                   type="button"
-                  className={`${s.iconBtn} ${!isAktiv ? s.iconBtnWarning : ''}`}
-                  onClick={() => toggleAktiv(o.id)}
+                  className={isAktiv ? s.iconBtnWarning : s.iconBtnSuccess}
+                  onClick={() => setConfirmTarget({ id: o.id, toAktiv: !isAktiv })}
                   title={isAktiv ? 'Deaktivieren' : 'Aktivieren'}
                 >
                   {isAktiv ? '🔒' : '🔓'}
@@ -306,6 +381,45 @@ function ObjekteTab() {
           );
         })}
       </div>
+
+      {/* Zweistufige Bestätigung Objekt de-/aktivieren */}
+      {confirmObj && confirmTarget && (
+        <ConfirmModal
+          steps={
+            confirmTarget.toAktiv
+              ? [
+                  {
+                    title: 'Objekt wieder aktivieren?',
+                    body: `„${confirmObj.name}" wird wieder aktiviert und steht Benutzern zur Verfügung.`,
+                    confirmLabel: 'Weiter →',
+                    danger: false,
+                  },
+                  {
+                    title: 'Aktivierung bestätigen',
+                    body: `Bitte bestätige, dass „${confirmObj.name}" ab sofort wieder aktiv ist.`,
+                    confirmLabel: 'Ja, aktivieren',
+                    danger: false,
+                  },
+                ]
+              : [
+                  {
+                    title: 'Objekt deaktivieren?',
+                    body: `„${confirmObj.name}" wird deaktiviert. Benutzer können keine neuen Bewirtungen für dieses Objekt erstellen.`,
+                    confirmLabel: 'Weiter →',
+                    danger: false,
+                  },
+                  {
+                    title: 'Wirklich deaktivieren?',
+                    body: `Bestehende Bewirtungen bleiben erhalten. Das Objekt kann später wieder aktiviert werden.`,
+                    confirmLabel: 'Ja, deaktivieren',
+                    danger: true,
+                  },
+                ]
+          }
+          onConfirmed={() => { toggleAktiv(confirmObj.id); setConfirmTarget(null); }}
+          onCancel={() => setConfirmTarget(null)}
+        />
+      )}
     </div>
   );
 }

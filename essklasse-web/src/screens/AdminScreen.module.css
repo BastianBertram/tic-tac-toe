@@ -109,11 +109,27 @@
   color: #fff; font-size: 10px; font-weight: 700;
   padding: 2px 7px; border-radius: 20px; text-transform: uppercase; letter-spacing: .4px;
 }
-.userActions { display: flex; gap: 4px; }
+.userActions { display: flex; gap: 4px; align-items: center; }
 .iconBtn {
   width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--ek-border);
   background: var(--ek-bg); font-size: 14px; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
+}
+.iconBtnWarning {
+  width: 30px; height: 30px; border-radius: 8px; border: 1px solid #f5c6c6;
+  background: #fff3f3; font-size: 14px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.iconBtnSuccess {
+  width: 30px; height: 30px; border-radius: 8px; border: 1px solid #a8d5b5;
+  background: #f0faf3; font-size: 14px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.inaktivLabel {
+  font-size: 10px; font-weight: 700; color: var(--ek-muted);
+  padding: 2px 8px; border-radius: 20px;
+  background: var(--ek-surface2); border: 1px solid var(--ek-border);
+  text-transform: uppercase; letter-spacing: .4px;
 }
 
 /* Objekte list */
@@ -146,3 +162,27 @@
 .hamburger { display: flex; flex-direction: column; gap: 4px; }
 .hamburger span { display: block; width: 20px; height: 2px; background: currentColor; border-radius: 2px; }
 .navLabel { font-size: 10px; font-weight: 600; }
+
+/* Bestätigungs-Modal */
+.modalOverlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.55);
+  display: flex; align-items: flex-end; justify-content: center;
+  zIndex: 500; padding: 0 0 env(safe-area-inset-bottom);
+}
+.modalSheet {
+  background: var(--ek-surface); border-radius: 20px 20px 0 0;
+  padding: 24px 20px 32px; width: 100%; max-width: 480px;
+  box-shadow: 0 -4px 32px rgba(0,0,0,.2);
+}
+.modalStep {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .6px; color: var(--ek-muted); margin-bottom: 8px;
+}
+.modalTitle { font-size: 18px; font-weight: 800; color: var(--ek-charcoal); margin-bottom: 10px; }
+.modalBody  { font-size: 14px; color: var(--ek-muted); line-height: 1.5; margin-bottom: 24px; }
+.modalActions { display: flex; gap: 10px; }
+.dangerBtn {
+  flex: 2; padding: 14px; border-radius: 12px; border: none;
+  background: #c0392b; color: #fff; font-size: 14px; font-weight: 800; cursor: pointer;
+  box-shadow: 0 4px 16px rgba(192,57,43,.3);
+}
