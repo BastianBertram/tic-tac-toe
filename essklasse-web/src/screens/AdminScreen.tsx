@@ -13,12 +13,14 @@ const ROLLE_LABELS: Record<UserRolle, string> = {
   user: 'User',
   admin: 'Admin',
   buchhaltung: 'Buchhaltung',
+  bereichsleitung: 'Bereichsleitung',
 };
 
 const ROLLE_COLORS: Record<UserRolle, string> = {
   user: '#2e86c1',
   admin: '#922b21',
   buchhaltung: '#1a5276',
+  bereichsleitung: '#6c3483',
 };
 
 /* ─── Zweistufiges Bestätigungs-Modal ─── */
@@ -245,7 +247,7 @@ function UserTab() {
             <option value="buchhaltung">Buchhaltung</option>
           </select>
 
-          {(form.rolle === 'user' || form.rolle === 'buchhaltung') && objekte.length > 0 && (
+          {(form.rolle === 'user' || form.rolle === 'buchhaltung' || form.rolle === 'bereichsleitung') && objekte.length > 0 && (
             <>
               <label className={s.label}>Objekte zuordnen *</label>
               <div className={s.objektCheckList}>
@@ -306,7 +308,7 @@ function UserTab() {
               <div className={s.userName}>{u.name}</div>
               <div className={s.userEmail}>{u.email}</div>
               {u.telefon && <div className={s.userEmail}>{u.telefon}</div>}
-              {u.rolle === 'user' && u.objektIds.length > 0 && (
+              {(u.rolle === 'user' || u.rolle === 'bereichsleitung') && u.objektIds.length > 0 && (
                 <div className={s.userObjekte}>
                   {u.objektIds.map(id => {
                     const o = objekte.find(x => x.id === id);

@@ -20,6 +20,12 @@ const ROLES: { rolle: UserRolle; label: string; color: string; user: object }[] 
     color: '#1a5276',
     user: { id: 'demo-buch', name: 'Klaus Weber', email: 'buch@hwk.de', rolle: 'buchhaltung' },
   },
+  {
+    rolle: 'bereichsleitung',
+    label: 'Bereichsltg.',
+    color: '#6c3483',
+    user: { id: 'demo-bl', name: 'Maria Berger', email: 'berger@hwk.de', rolle: 'bereichsleitung', objektIds: ['demo-1', 'demo-2'] },
+  },
 ];
 
 export function DevRoleSwitcher() {
