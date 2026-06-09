@@ -107,6 +107,11 @@
 .objektCheckList { display: flex; flex-direction: column; gap: 6px; padding: 4px 0; }
 .checkRow { display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer; }
 .checkRow input { width: 16px; height: 16px; cursor: pointer; }
+.checkRowAlle {
+  padding: 8px 10px; border-radius: 9px; margin-bottom: 4px;
+  background: var(--ek-surface2); border: 1.5px solid var(--ek-border);
+}
+.checkRowAlleLabel { font-weight: 700; color: var(--ek-charcoal); }
 .formActions { display: flex; gap: 8px; margin-top: 4px; }
 .cancelBtn {
   flex: 1; padding: 10px; border-radius: 10px; border: 1.5px solid var(--ek-border);

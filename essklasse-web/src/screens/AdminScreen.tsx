@@ -108,14 +108,19 @@ function UserTab() {
   const objekte = useObjektStore(st => st.objekte);
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
+  const ALLE_OBJEKTE_ID = '__alle__';
   const emptyForm = { anrede: 'Herr' as Anrede, vorname: '', nachname: '', email: '', telefon: '', rolle: 'user' as UserRolle, objektIds: [] as string[] };
   const [form, setForm] = useState(emptyForm);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<FilterStatus>('aktiv');
   const [confirmDeactivate, setConfirmDeactivate] = useState(false);
+  const [confirmAlleObjekte, setConfirmAlleObjekte] = useState(false);
 
+  function defaultObjektIds(rolle: UserRolle) {
+    return rolle === 'buchhaltung' ? [ALLE_OBJEKTE_ID] : [];
+  }
   function openNew() {
-    setForm(emptyForm);
+    setForm({ ...emptyForm, objektIds: defaultObjektIds('user') });
     setEditId(null);
     setShowForm(true);
   }
@@ -127,7 +132,7 @@ function UserTab() {
       email: u.email,
       telefon: u.telefon ?? '',
       rolle: u.rolle,
-      objektIds: u.objektIds,
+      objektIds: u.objektIds.length === 0 && u.rolle === 'buchhaltung' ? [ALLE_OBJEKTE_ID] : u.objektIds,
     });
     setEditId(u.id);
     setShowForm(true);
@@ -135,14 +140,33 @@ function UserTab() {
   const canSave = form.vorname.trim() && form.nachname.trim() && form.email.trim();
   function handleSave() {
     if (!canSave) return;
-    if (editId) updateUser(editId, { anrede: form.anrede, vorname: form.vorname, nachname: form.nachname, email: form.email, telefon: form.telefon, rolle: form.rolle, objektIds: form.objektIds });
-    else        addUser(form);
+    // Warnung wenn Buchhaltung mit "Alle Objekte" gespeichert wird
+    if (form.rolle === 'buchhaltung' && form.objektIds.includes(ALLE_OBJEKTE_ID)) {
+      setConfirmAlleObjekte(true);
+      return;
+    }
+    doSave();
+  }
+  function doSave() {
+    const objektIds = form.objektIds.filter(id => id !== ALLE_OBJEKTE_ID);
+    if (editId) updateUser(editId, { anrede: form.anrede, vorname: form.vorname, nachname: form.nachname, email: form.email, telefon: form.telefon, rolle: form.rolle, objektIds });
+    else        addUser({ ...form, objektIds });
     setShowForm(false);
+    setConfirmAlleObjekte(false);
   }
   function toggleObjekt(id: string) {
     setForm(f => ({
       ...f,
-      objektIds: f.objektIds.includes(id) ? f.objektIds.filter(x => x !== id) : [...f.objektIds, id],
+      // Einzelnes Objekt anklicken → "Alle Objekte" wird automatisch entfernt
+      objektIds: f.objektIds.includes(id)
+        ? f.objektIds.filter(x => x !== id)
+        : [...f.objektIds.filter(x => x !== ALLE_OBJEKTE_ID), id],
+    }));
+  }
+  function toggleAlleObjekte() {
+    setForm(f => ({
+      ...f,
+      objektIds: f.objektIds.includes(ALLE_OBJEKTE_ID) ? [] : [ALLE_OBJEKTE_ID],
     }));
   }
 
@@ -212,16 +236,29 @@ function UserTab() {
           <input className={s.input} type="tel" value={form.telefon} onChange={e => setForm(f => ({...f, telefon: e.target.value}))} placeholder="+49 511 123456" />
 
           <label className={s.label}>Rolle *</label>
-          <select className={s.select} value={form.rolle} onChange={e => setForm(f => ({...f, rolle: e.target.value as UserRolle}))}>
+          <select className={s.select} value={form.rolle} onChange={e => {
+            const rolle = e.target.value as UserRolle;
+            setForm(f => ({ ...f, rolle, objektIds: defaultObjektIds(rolle) }));
+          }}>
             <option value="user">User</option>
             <option value="admin">Admin</option>
             <option value="buchhaltung">Buchhaltung</option>
           </select>
 
-          {form.rolle === 'user' && objekte.length > 0 && (
+          {(form.rolle === 'user' || form.rolle === 'buchhaltung') && objekte.length > 0 && (
             <>
               <label className={s.label}>Objekte zuordnen *</label>
               <div className={s.objektCheckList}>
+                {form.rolle === 'buchhaltung' && (
+                  <label className={`${s.checkRow} ${s.checkRowAlle}`}>
+                    <input
+                      type="checkbox"
+                      checked={form.objektIds.includes(ALLE_OBJEKTE_ID)}
+                      onChange={toggleAlleObjekte}
+                    />
+                    <span className={s.checkRowAlleLabel}>🌐 Alle Objekte</span>
+                  </label>
+                )}
                 {objekte.filter(o => o.aktiv !== false).map(o => (
                   <label key={o.id} className={s.checkRow}>
                     <input type="checkbox" checked={form.objektIds.includes(o.id)} onChange={() => toggleObjekt(o.id)} />
@@ -290,6 +327,26 @@ function UserTab() {
           </div>
         ))}
       </div>
+
+      {/* Warnung: Buchhaltung mit allen Objekten speichern */}
+      {confirmAlleObjekte && (
+        <ConfirmModal
+          steps={[
+            {
+              title: '⚠️ Zugriff auf alle Objekte',
+              body: `Diese Buchhaltungs-Rolle erhält Zugriff auf alle Objekte — auch auf solche, die in Zukunft hinzugefügt werden. Bitte prüfe, ob das beabsichtigt ist.`,
+              confirmLabel: 'Verstanden, weiter →',
+            },
+            {
+              title: 'Zugriff auf alle Objekte bestätigen',
+              body: `Der Benutzer ${form.vorname} ${form.nachname} erhält uneingeschränkten Zugriff auf alle Objekte und Bewirtungen.`,
+              confirmLabel: 'Ja, so speichern',
+            },
+          ]}
+          onConfirmed={doSave}
+          onCancel={() => setConfirmAlleObjekte(false)}
+        />
+      )}
 
       {/* Zweistufige Bestätigung Benutzer deaktivieren */}
       {confirmDeactivate && editTarget && (
