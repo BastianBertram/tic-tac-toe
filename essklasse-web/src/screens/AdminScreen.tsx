@@ -74,11 +74,6 @@ export function AdminScreen() {
         </div>
       </div>
 
-      <div className={s.tabs}>
-        <button type="button" className={`${s.tab} ${tab === 'user' ? s.tabActive : ''}`} onClick={() => setTab('user')}>👤 Benutzer</button>
-        <button type="button" className={`${s.tab} ${tab === 'objekte' ? s.tabActive : ''}`} onClick={() => setTab('objekte')}>🏢 Objekte</button>
-      </div>
-
       {tab === 'user'    && <UserTab />}
       {tab === 'objekte' && <ObjekteTab />}
 
@@ -86,6 +81,14 @@ export function AdminScreen() {
         <button type="button" className={s.hamburgerBtn} onClick={() => setDrawerOpen(true)}>
           <span className={s.hamburger}><span /><span /><span /></span>
           <span className={s.navLabel}>Menü</span>
+        </button>
+        <button type="button" className={`${s.navTab} ${tab === 'user' ? s.navTabActive : ''}`} onClick={() => setTab('user')}>
+          <span className={s.navTabIcon}>👤</span>
+          <span className={s.navTabLabel}>Benutzer</span>
+        </button>
+        <button type="button" className={`${s.navTab} ${tab === 'objekte' ? s.navTabActive : ''}`} onClick={() => setTab('objekte')}>
+          <span className={s.navTabIcon}>🏢</span>
+          <span className={s.navTabLabel}>Objekte</span>
         </button>
       </nav>
 
@@ -145,6 +148,7 @@ function UserTab() {
 
   return (
     <div className={s.tabContent}>
+      <div className={s.sectionTitle}>👤 Benutzer</div>
       <div className={s.searchRow}>
         <input
           className={s.searchInput}
@@ -324,6 +328,7 @@ function ObjekteTab() {
 
   return (
     <div className={s.tabContent}>
+      <div className={s.sectionTitle}>🏢 Objekte</div>
       <div className={s.searchRow}>
         <input
           className={s.searchInput}
