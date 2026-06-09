@@ -9,6 +9,7 @@ import s from './BuchhaltungScreen.module.css';
 
 type BuchTab = 'alle' | 'ueberfaellig' | 'bereit' | 'erledigt';
 type SortOpt = 'datum' | 'bestellnr' | 'bestellnr-desc' | 'rechnungsnr' | 'rechnungsnr-desc';
+type StatusFilter = 'offen' | 'abgeschlossen' | 'rechnung' | 'geloescht';
 
 interface Props { onOpenBeleg: (b: Bewirtungsbeleg) => void; onRechnungErstellen: (b: Bewirtungsbeleg) => void; }
 
@@ -23,35 +24,32 @@ function byDatumUhrzeit(a: Bewirtungsbeleg, b: Bewirtungsbeleg) {
          `${b.cateringDatumVon}T${b.uhrzeitVon ?? '00:00'}`);
 }
 
-/** Gemeinsame Filter/Such/Sortier-Logik */
+function textMatch(b: Bewirtungsbeleg, q: string, objekte: ReturnType<typeof useObjektStore.getState>['objekte']) {
+  const datum = format(parseISO(b.cateringDatumVon), 'dd.MM.yyyy');
+  const obj = objekte.find(o => o.id === b.objektId);
+  return (
+    datum.includes(q) ||
+    (b.bestellungsnummer ?? '').toLowerCase().includes(q) ||
+    (b.rechnungsnummer ?? '').toLowerCase().includes(q) ||
+    (b.veranstaltung ?? '').toLowerCase().includes(q) ||
+    (b.besteller ?? '').toLowerCase().includes(q) ||
+    (obj?.name ?? '').toLowerCase().includes(q) ||
+    (obj?.kuerzel ?? '').toLowerCase().includes(q)
+  );
+}
+
+/** Filter/Such/Sortier-Logik für Überfällig / Bereit / Erledigt */
 function applyControls(
   list: Bewirtungsbeleg[],
   objekte: ReturnType<typeof useObjektStore.getState>['objekte'],
   opts: { search: string; objekt: string; sort: SortOpt }
 ): Bewirtungsbeleg[] {
   let out = [...list];
-
-  if (opts.objekt !== 'alle') {
-    out = out.filter(b => b.objektId === opts.objekt);
-  }
-
+  if (opts.objekt !== 'alle') out = out.filter(b => b.objektId === opts.objekt);
   if (opts.search.trim()) {
     const q = opts.search.trim().toLowerCase();
-    out = out.filter(b => {
-      const datum = format(parseISO(b.cateringDatumVon), 'dd.MM.yyyy');
-      const obj = objekte.find(o => o.id === b.objektId);
-      return (
-        datum.includes(q) ||
-        (b.bestellungsnummer ?? '').toLowerCase().includes(q) ||
-        (b.rechnungsnummer ?? '').toLowerCase().includes(q) ||
-        (b.veranstaltung ?? '').toLowerCase().includes(q) ||
-        (b.besteller ?? '').toLowerCase().includes(q) ||
-        (obj?.name ?? '').toLowerCase().includes(q) ||
-        (obj?.kuerzel ?? '').toLowerCase().includes(q)
-      );
-    });
+    out = out.filter(b => textMatch(b, q, objekte));
   }
-
   if (opts.sort === 'datum') out.sort(byDatumUhrzeit);
   else if (opts.sort === 'bestellnr-desc') out.sort((a, b) => byBestellungsnr(b, a));
   else if (opts.sort === 'rechnungsnr') out.sort(byRechnungsnr);
@@ -60,9 +58,49 @@ function applyControls(
   return out;
 }
 
+/** Filter/Such-Logik für Alle Bewirtungen */
+function applyAlleControls(
+  list: Bewirtungsbeleg[],
+  objekte: ReturnType<typeof useObjektStore.getState>['objekte'],
+  opts: { search: string; statusFilter: StatusFilter[] }
+): Bewirtungsbeleg[] {
+  let out = [...list];
+
+  // Status-Filter (OR-Logik: keiner aktiv = alle zeigen)
+  if (opts.statusFilter.length > 0) {
+    out = out.filter(b => {
+      return opts.statusFilter.some(f => {
+        if (f === 'geloescht')    return b.deleted;
+        if (f === 'rechnung')     return !b.deleted && b.rechnungErstellt;
+        if (f === 'abgeschlossen') return !b.deleted && b.abgeschlossen && !b.rechnungErstellt;
+        if (f === 'offen')        return !b.deleted && !b.abgeschlossen;
+        return false;
+      });
+    });
+  }
+
+  if (opts.search.trim()) {
+    const q = opts.search.trim().toLowerCase();
+    out = out.filter(b => textMatch(b, q, objekte));
+  }
+
+  out.sort(byBestellungsnr);
+  return out;
+}
+
 /** Per-Tab Steuerungs-State */
 interface TabControls { search: string; objekt: string; sort: SortOpt; }
 const INIT_CONTROLS: TabControls = { search: '', objekt: 'alle', sort: 'datum' };
+
+interface AlleControls { search: string; statusFilter: StatusFilter[]; }
+const INIT_ALLE: AlleControls = { search: '', statusFilter: [] };
+
+const STATUS_FILTER_CONFIG: { id: StatusFilter; label: string; activeClass: string }[] = [
+  { id: 'offen',         label: 'Offen',          activeClass: 'filterChipActiveOffen' },
+  { id: 'abgeschlossen', label: 'Abgeschlossen',   activeClass: 'filterChipActiveAbgeschlossen' },
+  { id: 'rechnung',      label: '✅ Rechnung',     activeClass: 'filterChipActiveRechnung' },
+  { id: 'geloescht',     label: 'Gelöscht',        activeClass: 'filterChipActiveGeloescht' },
+];
 
 export function BuchhaltungScreen({ onOpenBeleg, onRechnungErstellen }: Props) {
   const belege = useBelegStore(st => st.belege);
@@ -71,17 +109,16 @@ export function BuchhaltungScreen({ onOpenBeleg, onRechnungErstellen }: Props) {
   const [tab, setTab] = useState<BuchTab>('alle');
   const [drawerOpen, setDrawerOpen] = useState(false);
 
-  // Eigene Steuerung pro Tab
+  const [ctrlAlle,  setCtrlAlle]  = useState<AlleControls>(INIT_ALLE);
   const [ctrlUeber, setCtrlUeber] = useState<TabControls>(INIT_CONTROLS);
   const [ctrlBereit, setCtrlBereit] = useState<TabControls>(INIT_CONTROLS);
-  const [ctrlErl, setCtrlErl] = useState<TabControls>(INIT_CONTROLS);
+  const [ctrlErl,   setCtrlErl]   = useState<TabControls>(INIT_CONTROLS);
 
   const now = new Date();
   const nowDate = format(now, 'yyyy-MM-dd');
   const nowTime = format(now, 'HH:mm');
 
-  const alleBelege = useMemo(() =>
-    [...belege].sort(byBestellungsnr), [belege]);
+  const alleBase = useMemo(() => [...belege].sort(byBestellungsnr), [belege]);
 
   const ueberfaelligBase = useMemo(() =>
     belege.filter(b => {
@@ -97,15 +134,16 @@ export function BuchhaltungScreen({ onOpenBeleg, onRechnungErstellen }: Props) {
   const erledigtBase = useMemo(() =>
     belege.filter(b => !b.deleted && b.rechnungErstellt), [belege]);
 
+  const alleBelege      = useMemo(() => applyAlleControls(alleBase,        objekte, ctrlAlle),  [alleBase,        objekte, ctrlAlle]);
   const ueberfaelligBelege = useMemo(() => applyControls(ueberfaelligBase, objekte, ctrlUeber), [ueberfaelligBase, objekte, ctrlUeber]);
-  const bereitBelege       = useMemo(() => applyControls(bereitBase,       objekte, ctrlBereit), [bereitBase,       objekte, ctrlBereit]);
-  const erledigtBelege     = useMemo(() => applyControls(erledigtBase,     objekte, ctrlErl),    [erledigtBase,     objekte, ctrlErl]);
+  const bereitBelege    = useMemo(() => applyControls(bereitBase,          objekte, ctrlBereit),[bereitBase,       objekte, ctrlBereit]);
+  const erledigtBelege  = useMemo(() => applyControls(erledigtBase,        objekte, ctrlErl),   [erledigtBase,     objekte, ctrlErl]);
 
   const TAB_CONFIG = [
-    { id: 'alle'         as BuchTab, label: 'Alle\nBewirtungen',      count: alleBelege.length,       urgent: false },
+    { id: 'alle'         as BuchTab, label: 'Alle\nBewirtungen',       count: alleBase.length,         urgent: false },
     { id: 'ueberfaellig' as BuchTab, label: 'Bewirtungen\nüberfällig', count: ueberfaelligBase.length, urgent: true  },
-    { id: 'bereit'       as BuchTab, label: 'Bereit für\nRechnung',   count: bereitBase.length,       urgent: false },
-    { id: 'erledigt'     as BuchTab, label: 'Rechnung\nerstellt',     count: erledigtBase.length,     urgent: false },
+    { id: 'bereit'       as BuchTab, label: 'Bereit für\nRechnung',    count: bereitBase.length,       urgent: false },
+    { id: 'erledigt'     as BuchTab, label: 'Rechnung\nerstellt',      count: erledigtBase.length,     urgent: false },
   ];
 
   const displayList =
@@ -114,17 +152,17 @@ export function BuchhaltungScreen({ onOpenBeleg, onRechnungErstellen }: Props) {
     tab === 'bereit'       ? bereitBelege :
     erledigtBelege;
 
-  // Welche Steuerung ist aktiv?
-  const ctrl =
-    tab === 'ueberfaellig' ? ctrlUeber :
-    tab === 'bereit'       ? ctrlBereit :
-    ctrlErl;
-  const setCtrl =
-    tab === 'ueberfaellig' ? setCtrlUeber :
-    tab === 'bereit'       ? setCtrlBereit :
-    setCtrlErl;
+  const ctrl    = tab === 'ueberfaellig' ? ctrlUeber : tab === 'bereit' ? ctrlBereit : ctrlErl;
+  const setCtrl = tab === 'ueberfaellig' ? setCtrlUeber : tab === 'bereit' ? setCtrlBereit : setCtrlErl;
 
-  const hasControls = tab !== 'alle';
+  function toggleStatusFilter(id: StatusFilter) {
+    setCtrlAlle(c => ({
+      ...c,
+      statusFilter: c.statusFilter.includes(id)
+        ? c.statusFilter.filter(f => f !== id)
+        : [...c.statusFilter, id],
+    }));
+  }
 
   return (
     <div className={s.screen}>
@@ -134,8 +172,34 @@ export function BuchhaltungScreen({ onOpenBeleg, onRechnungErstellen }: Props) {
       </div>
 
       <div className={s.content}>
-        {/* Filter/Suche/Sortierung — für alle Tabs außer "Alle" */}
-        {hasControls && (
+
+        {/* ── Alle Bewirtungen: Suche + Status-Filter-Chips ── */}
+        {tab === 'alle' && (
+          <div className={s.filters}>
+            <input
+              className={s.searchInput}
+              type="search"
+              placeholder="🔍 Datum, Bestellnr., Veranstaltung, Besteller, Objekt…"
+              value={ctrlAlle.search}
+              onChange={e => setCtrlAlle(c => ({ ...c, search: e.target.value }))}
+            />
+            <div className={s.filterChipsRow}>
+              {STATUS_FILTER_CONFIG.map(f => (
+                <button
+                  key={f.id}
+                  type="button"
+                  className={`${s.filterChip} ${ctrlAlle.statusFilter.includes(f.id) ? s[f.activeClass] : ''}`}
+                  onClick={() => toggleStatusFilter(f.id)}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── Überfällig / Bereit / Erledigt: Suche + Objekt + Sortierung ── */}
+        {tab !== 'alle' && (
           <div className={s.filters}>
             <input
               className={s.searchInput}
@@ -156,44 +220,34 @@ export function BuchhaltungScreen({ onOpenBeleg, onRechnungErstellen }: Props) {
             </select>
             <div className={s.sortRow}>
               <span className={s.sortLabel}>Sortierung:</span>
-              <button
-                type="button"
+              <button type="button"
                 className={`${s.sortBtn} ${ctrl.sort === 'datum' ? s.sortBtnActive : ''}`}
-                onClick={() => setCtrl(c => ({ ...c, sort: 'datum' }))}
-              >
+                onClick={() => setCtrl(c => ({ ...c, sort: 'datum' }))}>
                 📅 Bewirtungsdatum
               </button>
-              <button
-                type="button"
+              <button type="button"
                 className={`${s.sortBtn} ${ctrl.sort === 'bestellnr' ? s.sortBtnActive : ''}`}
-                onClick={() => setCtrl(c => ({ ...c, sort: 'bestellnr' }))}
-              >
+                onClick={() => setCtrl(c => ({ ...c, sort: 'bestellnr' }))}>
                 # Bestellnr. ↑
               </button>
               {tab === 'erledigt' && (
-                <button
-                  type="button"
+                <button type="button"
                   className={`${s.sortBtn} ${ctrl.sort === 'bestellnr-desc' ? s.sortBtnActive : ''}`}
-                  onClick={() => setCtrl(c => ({ ...c, sort: 'bestellnr-desc' }))}
-                >
+                  onClick={() => setCtrl(c => ({ ...c, sort: 'bestellnr-desc' }))}>
                   # Bestellnr. ↓
                 </button>
               )}
               {tab === 'erledigt' && (
-                <button
-                  type="button"
+                <button type="button"
                   className={`${s.sortBtn} ${ctrl.sort === 'rechnungsnr' ? s.sortBtnActive : ''}`}
-                  onClick={() => setCtrl(c => ({ ...c, sort: 'rechnungsnr' }))}
-                >
+                  onClick={() => setCtrl(c => ({ ...c, sort: 'rechnungsnr' }))}>
                   🧾 Rechnungsnr. ↑
                 </button>
               )}
               {tab === 'erledigt' && (
-                <button
-                  type="button"
+                <button type="button"
                   className={`${s.sortBtn} ${ctrl.sort === 'rechnungsnr-desc' ? s.sortBtnActive : ''}`}
-                  onClick={() => setCtrl(c => ({ ...c, sort: 'rechnungsnr-desc' }))}
-                >
+                  onClick={() => setCtrl(c => ({ ...c, sort: 'rechnungsnr-desc' }))}>
                   🧾 Rechnungsnr. ↓
                 </button>
               )}
