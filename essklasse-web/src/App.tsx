@@ -78,17 +78,8 @@ export default function App() {
     return (
       <AuthGuard>
         <div className={s.app}>
-          <AdminScreen onOpenBeleg={openBeleg} onRechnungErstellen={openRechnungModal} />
-          {view.type === 'detail' && (
-            <div style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'var(--ek-bg)', display: 'flex', flexDirection: 'column' }}>
-              <DetailScreen beleg={view.beleg} onClose={closeView} onRechnungErstellen={openRechnungModal} canDelete={false} />
-            </div>
-          )}
+          <AdminScreen />
           <DevOverlay />
-          {rechnungModalBeleg && (
-            <RechnungNummerModal beleg={rechnungModalBeleg} value={rechnungsnummerInput}
-              onChange={setRechnungsnummerInput} onConfirm={confirmRechnung} onCancel={() => setRechnungModalBeleg(null)} />
-          )}
         </div>
       </AuthGuard>
     );
