@@ -114,6 +114,24 @@ export function DetailScreen({ beleg: init, onClose, onAbschliessen, onBearbeite
           );
         })()}
 
+        {/* Finaler Bewirtungsbeleg (Abschlussfotos) — oben wenn abgeschlossen */}
+        {beleg.abschlussfotos && beleg.abschlussfotos.length > 0 && (
+          <div className={`${s.section} ${s.sectionAbschluss}`}>
+            <div className={s.sectionTitle}>📋 Finaler Bewirtungsbeleg ({beleg.abschlussfotos.length})</div>
+            <div className={s.photoGrid}>
+              {beleg.abschlussfotos.map((url, i) => (
+                <FileThumb
+                  key={i}
+                  url={url}
+                  filename={`${beleg.bestellungsnummer ?? 'beleg'}-abschluss-${i + 1}`}
+                  onOpenImage={() => setLightbox(url)}
+                  onOpenPdf={() => setPdfViewer({ dataUrl: url, name: `${beleg.bestellungsnummer ?? 'beleg'}-abschluss-${i+1}.pdf` })}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Bestellfotos (original) */}
         {beleg.fotoDataUrls.length > 0 && (
           <div className={s.section}>
@@ -126,24 +144,6 @@ export function DetailScreen({ beleg: init, onClose, onAbschliessen, onBearbeite
                   filename={`${beleg.bestellungsnummer ?? 'beleg'}-bestell-${i + 1}`}
                   onOpenImage={() => setLightbox(url)}
                   onOpenPdf={() => setPdfViewer({ dataUrl: url, name: `${beleg.bestellungsnummer ?? 'beleg'}-bestell-${i+1}.pdf` })}
-                />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Finaler Bewirtungsbeleg (Abschlussfotos) */}
-        {beleg.abschlussfotos && beleg.abschlussfotos.length > 0 && (
-          <div className={`${s.section} ${s.sectionAbschluss}`}>
-            <div className={s.sectionTitle}>📋 Finaler Bewirtungsbeleg ({beleg.abschlussfotos.length})</div>
-            <div className={s.photoGrid}>
-              {beleg.abschlussfotos.map((url, i) => (
-                <FileThumb
-                  key={i}
-                  url={url}
-                  filename={`${beleg.bestellungsnummer ?? 'beleg'}-abschluss-${i + 1}`}
-                  onOpenImage={() => setLightbox(url)}
-                  onOpenPdf={() => setPdfViewer({ dataUrl: url, name: `${beleg.bestellungsnummer ?? 'beleg'}-abschluss-${i+1}.pdf` })}
                 />
               ))}
             </div>
