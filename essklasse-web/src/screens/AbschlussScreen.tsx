@@ -87,14 +87,18 @@ export function AbschlussScreen({ beleg, onClose, onDone }: Props) {
           </div>
         </div>
 
-        {/* Finaler Bewirtungsbeleg-Foto */}
+        {/* Finaler Bewirtungsbeleg-Foto — Pflichtfeld */}
         <div className={s.fotoSection}>
           <PhotoCapture
             dataUrls={fotos}
             onChange={setFotos}
-            onExtracted={() => {}}
-            label="📷 Finaler Bewirtungsbeleg *"
+            label="📋 Finaler Bewirtungsbeleg (Pflichtfeld)"
           />
+          {fotos.length === 0 && (
+            <div className={s.fotoHinweis}>
+              ⚠️ Bitte fotografieren oder laden Sie den überarbeiteten Bewirtungsbeleg hoch, bevor Sie abschließen.
+            </div>
+          )}
         </div>
 
         {/* Hinweis */}
@@ -197,7 +201,13 @@ export function AbschlussScreen({ beleg, onClose, onDone }: Props) {
         )}
 
         {/* Abschließen-Button */}
-        <button className={s.abschlussBtn} onClick={handleAbschliessen} type="button">
+        <button
+          className={`${s.abschlussBtn} ${fotos.length === 0 ? s.abschlussBtnDisabled : ''}`}
+          onClick={fotos.length > 0 ? handleAbschliessen : undefined}
+          type="button"
+          disabled={fotos.length === 0}
+          title={fotos.length === 0 ? 'Bitte zuerst den finalen Bewirtungsbeleg hochladen' : undefined}
+        >
           ✓ Bewirtung jetzt abschließen
         </button>
 

@@ -24,8 +24,13 @@
 /* ── Foto Section ────────────────────────────────────────── */
 .fotoSection {
   background: var(--ek-surface);
-  border-radius: 14px; border: 1px solid var(--ek-border);
+  border-radius: 14px; border: 2px solid var(--ek-red);
   padding: 14px; margin-bottom: 12px;
+}
+.fotoHinweis {
+  margin-top: 10px; padding: 10px 12px; border-radius: 10px;
+  background: #fff3cd; color: #856404; font-size: 12px; font-weight: 600;
+  border: 1px solid #ffc107;
 }
 
 /* ── Info Banner ─────────────────────────────────────────── */
@@ -131,6 +136,9 @@
   background: linear-gradient(135deg, #2d8a4e, #3aab62);
   color: #fff; border-radius: 16px; margin-bottom: 10px;
   box-shadow: 0 6px 20px rgba(45,138,78,.35);
+}
+.abschlussBtnDisabled {
+  background: #ccc; box-shadow: none; cursor: not-allowed; opacity: .7;
 }
 .cancelBtn {
   width: 100%; padding: 13px; font-size: 14px;

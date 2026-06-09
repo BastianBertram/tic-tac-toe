@@ -56,6 +56,9 @@
 .posName { font-weight: 700; font-size: 14px; color: var(--ek-charcoal); }
 .posMeta { color: var(--ek-muted); font-size: 12px; margin-top: 2px; }
 
+.sectionAbschluss { border-color: #27ae60; }
+.sectionAbschluss .sectionTitle { color: #1a5c30; }
+
 .photoGrid { display: flex; flex-wrap: wrap; gap: 8px; }
 .photo {
   width: calc(50% - 4px); aspect-ratio: 4/3; object-fit: cover;
@@ -64,6 +67,13 @@
   transition: opacity .1s;
 }
 .photo:hover { opacity: .9; }
+.pdfThumb {
+  width: calc(50% - 4px); aspect-ratio: 4/3;
+  border-radius: 10px; border: 1px solid var(--ek-border);
+  background: var(--ek-surface2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 700; color: var(--ek-muted); gap: 4px;
+}
 
 .lightbox {
   position: fixed; inset: 0; background: rgba(0,0,0,.92);

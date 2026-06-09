@@ -105,14 +105,31 @@ export function DetailScreen({ beleg: init, onClose, onAbschliessen, onBearbeite
           );
         })()}
 
-        {/* Fotos */}
+        {/* Bestellfotos (original) */}
         {beleg.fotoDataUrls.length > 0 && (
           <div className={s.section}>
-            <div className={s.sectionTitle}>Fotos ({beleg.fotoDataUrls.length})</div>
+            <div className={s.sectionTitle}>📷 Bestellfotos ({beleg.fotoDataUrls.length})</div>
             <div className={s.photoGrid}>
               {beleg.fotoDataUrls.map((url, i) => (
-                <img key={i} src={url} className={s.photo}
-                  onClick={() => setLightbox(url)} alt={`Foto ${i + 1}`} />
+                url.startsWith('data:application/pdf')
+                  ? <div key={i} className={s.pdfThumb} onClick={() => {}} title={`PDF ${i + 1}`}>📄 PDF</div>
+                  : <img key={i} src={url} className={s.photo}
+                      onClick={() => setLightbox(url)} alt={`Bestellfoto ${i + 1}`} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Finaler Bewirtungsbeleg (Abschlussfotos) */}
+        {beleg.abschlussfotos && beleg.abschlussfotos.length > 0 && (
+          <div className={`${s.section} ${s.sectionAbschluss}`}>
+            <div className={s.sectionTitle}>📋 Finaler Bewirtungsbeleg ({beleg.abschlussfotos.length})</div>
+            <div className={s.photoGrid}>
+              {beleg.abschlussfotos.map((url, i) => (
+                url.startsWith('data:application/pdf')
+                  ? <div key={i} className={s.pdfThumb} title={`PDF ${i + 1}`}>📄 PDF</div>
+                  : <img key={i} src={url} className={s.photo}
+                      onClick={() => setLightbox(url)} alt={`Abschlussbeleg ${i + 1}`} />
               ))}
             </div>
           </div>
