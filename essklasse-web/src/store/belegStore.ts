@@ -6,7 +6,9 @@ import { format } from 'date-fns';
 
 interface BelegStore {
   belege: Bewirtungsbeleg[];
-  addBeleg: (b: Omit<Bewirtungsbeleg, 'id' | 'erstelltAm' | 'syncStatus' | 'abgeschlossen'>) => string;
+  /** Laufender Zähler für Bestellungsnummern, pro Kalenderjahr */
+  bestellungZaehler: Record<string, number>;  // key = "26", "27", …
+  addBeleg: (b: Omit<Bewirtungsbeleg, 'id' | 'erstelltAm' | 'syncStatus' | 'abgeschlossen' | 'bestellungsnummer'>) => string;
   updateBeleg: (id: string, partial: Partial<Bewirtungsbeleg>) => void;
   deleteBeleg: (id: string) => void;
   setSyncStatus: (id: string, status: SyncStatus, fehler?: string) => void;
@@ -24,12 +26,18 @@ export const useBelegStore = create<BelegStore>()(
   persist(
     (set, get) => ({
       belege: [],
+      bestellungZaehler: {},
 
       addBeleg: (b) => {
         const id = uuidv4();
+        const year = String(new Date().getFullYear()).slice(-2); // "26"
+        const zaehler = get().bestellungZaehler;
+        const naechste = (zaehler[year] ?? 0) + 1;
+        const bestellungsnummer = `A${year}${String(naechste).padStart(7, '0')}`;
         set(s => ({
+          bestellungZaehler: { ...s.bestellungZaehler, [year]: naechste },
           belege: [{
-            ...b, id,
+            ...b, id, bestellungsnummer,
             erstelltAm: new Date().toISOString(),
             syncStatus: 'local',
             abgeschlossen: false,

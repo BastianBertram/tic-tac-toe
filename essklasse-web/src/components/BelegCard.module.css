@@ -86,6 +86,11 @@
 
 .meta { display: flex; gap: 14px; font-size: 12px; color: var(--ek-muted); flex-wrap: wrap; margin-bottom: 8px; }
 
+.bestellNr {
+  font-size: 11px; font-weight: 700; color: var(--ek-muted);
+  letter-spacing: .5px; margin-top: 1px;
+}
+
 .orderNr {
   background: #e8f5ee; color: var(--ek-green-dark);
   border-radius: 8px; padding: 4px 10px;

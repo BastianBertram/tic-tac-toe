@@ -59,6 +59,7 @@ export interface AppUser {
 
 export interface Bewirtungsbeleg {
   id: string;
+  bestellungsnummer: string;   // z.B. "A260000001"
   objektId: string;
   objektName: string;
   // Abschluss

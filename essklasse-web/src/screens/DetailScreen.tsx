@@ -40,7 +40,10 @@ export function DetailScreen({ beleg: init, onClose, onAbschliessen, onBearbeite
     <div className={s.screen}>
       <div className={s.header}>
         <button className={s.backBtn} onClick={onClose} type="button">← Zurück</button>
-        <span className={s.title}>{beleg.veranstaltung || 'Bewirtungsbeleg'}</span>
+        <div className={s.titleWrap}>
+          <span className={s.title}>{beleg.veranstaltung || 'Bewirtungsbeleg'}</span>
+          {beleg.bestellungsnummer && <span className={s.bestellNr}>{beleg.bestellungsnummer}</span>}
+        </div>
         {!beleg.abgeschlossen && (
           <button className={s.delBtn} onClick={del} type="button">🗑</button>
         )}

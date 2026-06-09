@@ -8,7 +8,9 @@
   box-shadow: 0 1px 4px rgba(0,0,0,.06);
 }
 .backBtn { background: transparent; color: var(--ek-red); font-size: 14px; font-weight: 700; padding: 0; }
-.title { flex: 1; font-size: 16px; font-weight: 800; color: var(--ek-charcoal); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.titleWrap { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.title { font-size: 16px; font-weight: 800; color: var(--ek-charcoal); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bestellNr { font-size: 11px; font-weight: 700; color: var(--ek-muted); letter-spacing: .5px; }
 .delBtn { background: transparent; font-size: 20px; }
 
 .scroll { flex: 1; overflow-y: auto; padding: 16px; padding-bottom: 60px; }

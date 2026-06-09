@@ -45,6 +45,7 @@ export function BelegCard({ beleg, onClick, highlight = null, onAbschliessen }: 
         <div className={s.info}>
           <div className={s.title}>{beleg.veranstaltung || 'Bewirtung'}</div>
           <div className={s.sub}>{beleg.besteller} · {datum}</div>
+          {beleg.bestellungsnummer && <div className={s.bestellNr}>{beleg.bestellungsnummer}</div>}
         </div>
         <StatusBadge status={beleg.syncStatus} />
       </div>
