@@ -91,6 +91,7 @@ export default function App() {
             onAbschliessen={rolle !== 'buchhaltung' ? () => openAbschluss(view.beleg) : undefined}
             onBearbeiten={rolle !== 'buchhaltung' ? () => setView({ type: 'edit', beleg: view.beleg }) : undefined}
             onRechnungErstellen={rolle === 'buchhaltung' ? openRechnungModal : undefined}
+            canDelete={rolle !== 'buchhaltung'}
           />
           {rechnungModalBeleg && (
             <RechnungNummerModal

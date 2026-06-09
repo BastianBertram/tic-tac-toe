@@ -6,9 +6,9 @@ import { StatusBadge } from '../components/StatusBadge';
 import { useBelegStore } from '../store/belegStore';
 import s from './DetailScreen.module.css';
 
-interface Props { beleg: Bewirtungsbeleg; onClose: () => void; onAbschliessen?: () => void; onBearbeiten?: () => void; onRechnungErstellen?: (b: Bewirtungsbeleg) => void; }
+interface Props { beleg: Bewirtungsbeleg; onClose: () => void; onAbschliessen?: () => void; onBearbeiten?: () => void; onRechnungErstellen?: (b: Bewirtungsbeleg) => void; canDelete?: boolean; }
 
-export function DetailScreen({ beleg: init, onClose, onAbschliessen, onBearbeiten, onRechnungErstellen }: Props) {
+export function DetailScreen({ beleg: init, onClose, onAbschliessen, onBearbeiten, onRechnungErstellen, canDelete = true }: Props) {
   const store = useBelegStore();
   const beleg = store.belege.find(b => b.id === init.id) ?? init;
   const [retrying, setRetrying] = useState(false);
@@ -44,7 +44,7 @@ export function DetailScreen({ beleg: init, onClose, onAbschliessen, onBearbeite
           <span className={s.title}>{beleg.veranstaltung || 'Bewirtungsbeleg'}</span>
           {beleg.bestellungsnummer && <span className={s.bestellNr}>{beleg.bestellungsnummer}</span>}
         </div>
-        {!beleg.abgeschlossen && (
+        {canDelete && !beleg.abgeschlossen && (
           <button className={s.delBtn} onClick={del} type="button">🗑</button>
         )}
       </div>
