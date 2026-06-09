@@ -12,6 +12,7 @@ import { AbgeschlossenScreen } from './screens/AbgeschlossenScreen';
 import { BuchhaltungScreen } from './screens/BuchhaltungScreen';
 import { AdminScreen } from './screens/AdminScreen';
 import { useAuthStore } from './store/authStore';
+import { DevRoleSwitcher } from './components/DevRoleSwitcher';
 import type { Bewirtungsbeleg } from './types';
 import s from './App.module.css';
 
@@ -100,6 +101,7 @@ export default function App() {
             <BuchhaltungScreen onOpenBeleg={openBeleg} />
           </div>
           <BuchhaltungNav />
+          <DevOverlay />
         </div>
       </AuthGuard>
     );
@@ -119,9 +121,15 @@ export default function App() {
           active={tab} onTab={setTab} onNew={() => setView({ type: 'new' })}
           onAbgeschlossene={() => setView({ type: 'abgeschlossen' })}
         />
+        <DevOverlay />
       </div>
     </AuthGuard>
   );
+}
+
+function DevOverlay() {
+  if (!import.meta.env.DEV) return null;
+  return <DevRoleSwitcher />;
 }
 
 function BuchhaltungNav() {
