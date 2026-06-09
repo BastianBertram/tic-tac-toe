@@ -100,6 +100,7 @@ export function TodayScreen({ onOpenBeleg, onAbschliessen, onTabAbschluss }: Pro
       {/* ── Header ── */}
       <div className={s.header}>
         <img src="/logo.webp" alt="EssKlasse" className={s.logo} />
+        <span className={s.headerSection}>📋 Heute</span>
         <div className={s.headerRight}>
           <ObjektSwitcherButton />
           {pendingCount > 0 && <div className={s.syncBadge}>☁️ {pendingCount}</div>}

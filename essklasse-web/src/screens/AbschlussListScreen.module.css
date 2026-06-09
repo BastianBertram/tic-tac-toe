@@ -8,6 +8,7 @@
 }
 .logo  { height: 36px; width: auto; }
 .title { font-size: 17px; font-weight: 900; color: var(--ek-charcoal); }
+.headerSection { flex: 1; font-size: 16px; font-weight: 800; color: var(--ek-charcoal); text-align: center; }
 
 .urgentBanner {
   display: flex; align-items: center; gap: 10px;

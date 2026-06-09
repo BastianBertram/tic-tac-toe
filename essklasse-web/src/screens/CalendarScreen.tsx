@@ -53,6 +53,7 @@ export function CalendarScreen({ onOpenBeleg, onTabAbschluss }: Props) {
       {/* Header mit Logo + Switcher + Profil */}
       <div className={s.header}>
         <img src="/logo.webp" alt="EssKlasse" className={s.logo} />
+        <span className={s.headerSection}>📅 Kalender</span>
         <div className={s.headerRight}>
           <ObjektSwitcherButton />
         </div>
