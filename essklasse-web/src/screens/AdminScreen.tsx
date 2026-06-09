@@ -132,7 +132,7 @@ function UserTab() {
     setEditId(u.id);
     setShowForm(true);
   }
-  const canSave = form.vorname.trim() && form.nachname.trim() && form.email.trim() && form.telefon.trim();
+  const canSave = form.vorname.trim() && form.nachname.trim() && form.email.trim();
   function handleSave() {
     if (!canSave) return;
     if (editId) updateUser(editId, { anrede: form.anrede, vorname: form.vorname, nachname: form.nachname, email: form.email, telefon: form.telefon, rolle: form.rolle, objektIds: form.objektIds });
@@ -208,7 +208,7 @@ function UserTab() {
           <label className={s.label}>E-Mail *</label>
           <input className={s.input} type="email" value={form.email} onChange={e => setForm(f => ({...f, email: e.target.value}))} placeholder="name@hwk.de" />
 
-          <label className={s.label}>Telefonnummer *</label>
+          <label className={s.label}>Telefonnummer</label>
           <input className={s.input} type="tel" value={form.telefon} onChange={e => setForm(f => ({...f, telefon: e.target.value}))} placeholder="+49 511 123456" />
 
           <label className={s.label}>Rolle *</label>
