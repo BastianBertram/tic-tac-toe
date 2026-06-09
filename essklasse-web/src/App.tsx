@@ -52,30 +52,42 @@ export default function App() {
   function closeView() { setView({ type: 'main' }); }
 
   // ── Buchhaltung: eigener Zweig, BuchhaltungScreen bleibt immer gemountet ──
-  if (rolle === 'buchhaltung' || rolle === 'admin') {
+  // ── Buchhaltung ──
+  if (rolle === 'buchhaltung') {
     return (
       <AuthGuard>
         <div className={s.app}>
           <BuchhaltungScreen onOpenBeleg={openBeleg} onRechnungErstellen={openRechnungModal} />
           {view.type === 'detail' && (
             <div style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'var(--ek-bg)', display: 'flex', flexDirection: 'column' }}>
-              <DetailScreen
-                beleg={view.beleg}
-                onClose={closeView}
-                onRechnungErstellen={openRechnungModal}
-                canDelete={false}
-              />
+              <DetailScreen beleg={view.beleg} onClose={closeView} onRechnungErstellen={openRechnungModal} canDelete={false} />
             </div>
           )}
           <DevOverlay />
           {rechnungModalBeleg && (
-            <RechnungNummerModal
-              beleg={rechnungModalBeleg}
-              value={rechnungsnummerInput}
-              onChange={setRechnungsnummerInput}
-              onConfirm={confirmRechnung}
-              onCancel={() => setRechnungModalBeleg(null)}
-            />
+            <RechnungNummerModal beleg={rechnungModalBeleg} value={rechnungsnummerInput}
+              onChange={setRechnungsnummerInput} onConfirm={confirmRechnung} onCancel={() => setRechnungModalBeleg(null)} />
+          )}
+        </div>
+      </AuthGuard>
+    );
+  }
+
+  // ── Admin ──
+  if (rolle === 'admin') {
+    return (
+      <AuthGuard>
+        <div className={s.app}>
+          <AdminScreen onOpenBeleg={openBeleg} onRechnungErstellen={openRechnungModal} />
+          {view.type === 'detail' && (
+            <div style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'var(--ek-bg)', display: 'flex', flexDirection: 'column' }}>
+              <DetailScreen beleg={view.beleg} onClose={closeView} onRechnungErstellen={openRechnungModal} canDelete={false} />
+            </div>
+          )}
+          <DevOverlay />
+          {rechnungModalBeleg && (
+            <RechnungNummerModal beleg={rechnungModalBeleg} value={rechnungsnummerInput}
+              onChange={setRechnungsnummerInput} onConfirm={confirmRechnung} onCancel={() => setRechnungModalBeleg(null)} />
           )}
         </div>
       </AuthGuard>
