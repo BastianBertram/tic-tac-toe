@@ -336,11 +336,13 @@ function UserTab() {
               title: '⚠️ Zugriff auf alle Objekte',
               body: `Diese Buchhaltungs-Rolle erhält Zugriff auf alle Objekte — auch auf solche, die in Zukunft hinzugefügt werden. Bitte prüfe, ob das beabsichtigt ist.`,
               confirmLabel: 'Verstanden, weiter →',
+              danger: true,
             },
             {
               title: 'Zugriff auf alle Objekte bestätigen',
               body: `Der Benutzer ${form.vorname} ${form.nachname} erhält uneingeschränkten Zugriff auf alle Objekte und Bewirtungen.`,
               confirmLabel: 'Ja, so speichern',
+              danger: true,
             },
           ]}
           onConfirmed={doSave}
