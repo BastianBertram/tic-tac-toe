@@ -93,6 +93,13 @@
   padding: 9px 12px; border-radius: 9px; border: 1.5px solid var(--ek-border);
   background: var(--ek-bg); font-size: 14px; color: var(--ek-charcoal); width: 100%;
 }
+.inputError { border-color: #e74c3c !important; background: #fdf3f2; }
+.inputOk    { border-color: #2d8a4e !important; }
+.fieldError {
+  font-size: 12px; font-weight: 600; color: #c0392b;
+  background: #fdecea; border: 1px solid #f5c6c6;
+  border-radius: 8px; padding: 7px 10px; margin-top: -2px;
+}
 /* Anrede */
 .anredeRow { display: flex; gap: 8px; }
 .anredeBtn {
