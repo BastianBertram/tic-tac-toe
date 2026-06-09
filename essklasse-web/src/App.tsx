@@ -196,7 +196,7 @@ function RechnungNummerModal({ beleg, value, onChange, onConfirm, onCancel }: {
         <input
           autoFocus
           type="text"
-          placeholder="z.B. RE-2026-00042"
+          placeholder="z.B. R260001"
           value={value}
           onChange={e => onChange(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && value.trim() && onConfirm()}
