@@ -51,9 +51,11 @@ export function BelegCard({ beleg, onClick, highlight = null, onAbschliessen }: 
       </div>
 
       <div className={s.meta}>
+        {beleg.objektName && <span>🏢 {beleg.objektName}</span>}
         {beleg.raum && <span>📍 {beleg.raum}</span>}
         <span>👥 {beleg.personenzahl} Pers.</span>
         {beleg.uhrzeitVon && <span>🕐 {beleg.uhrzeitVon}–{beleg.uhrzeitBis}</span>}
+        {beleg.erstelltVon && <span>👤 {beleg.erstelltVon}</span>}
       </div>
 
       {beleg.bcAuftragsnummer && (

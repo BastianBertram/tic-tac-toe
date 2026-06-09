@@ -8,7 +8,7 @@ interface BelegStore {
   belege: Bewirtungsbeleg[];
   /** Laufender Zähler für Bestellungsnummern, pro Kalenderjahr */
   bestellungZaehler: Record<string, number>;  // key = "26", "27", …
-  addBeleg: (b: Omit<Bewirtungsbeleg, 'id' | 'erstelltAm' | 'syncStatus' | 'abgeschlossen' | 'bestellungsnummer'>) => string;
+  addBeleg: (b: Omit<Bewirtungsbeleg, 'id' | 'erstelltAm' | 'syncStatus' | 'abgeschlossen' | 'bestellungsnummer'>, erstelltVon?: string) => string;
   updateBeleg: (id: string, partial: Partial<Bewirtungsbeleg>) => void;
   deleteBeleg: (id: string) => void;
   setSyncStatus: (id: string, status: SyncStatus, fehler?: string) => void;
@@ -28,7 +28,7 @@ export const useBelegStore = create<BelegStore>()(
       belege: [],
       bestellungZaehler: {},
 
-      addBeleg: (b) => {
+      addBeleg: (b, erstelltVon) => {
         const id = uuidv4();
         const year = (b.cateringDatumVon ?? new Date().toISOString().slice(0, 10)).slice(2, 4); // "26" aus "2026-06-09"
         const zaehler = get().bestellungZaehler;
@@ -39,6 +39,7 @@ export const useBelegStore = create<BelegStore>()(
           belege: [{
             ...b, id, bestellungsnummer,
             erstelltAm: new Date().toISOString(),
+            ...(erstelltVon ? { erstelltVon } : {}),
             syncStatus: 'local',
             abgeschlossen: false,
           }, ...s.belege],

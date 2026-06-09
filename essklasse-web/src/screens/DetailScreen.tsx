@@ -76,7 +76,9 @@ export function DetailScreen({ beleg: init, onClose, onAbschliessen, onBearbeite
         {/* Kopfdaten */}
         <div className={s.section}>
           <div className={s.sectionTitle}>Kopfdaten</div>
-          <Row label="Besteller"   value={beleg.besteller} />
+          <Row label="Objekt"       value={beleg.objektName} />
+          <Row label="Erstellt von" value={beleg.erstelltVon ?? ''} />
+          <Row label="Besteller"    value={beleg.besteller} />
           <Row label="Datum"       value={datum} />
           <Row label="Uhrzeit"     value={`${beleg.uhrzeitVon} – ${beleg.uhrzeitBis}`} />
           <Row label="Veranstaltung" value={beleg.veranstaltung} />

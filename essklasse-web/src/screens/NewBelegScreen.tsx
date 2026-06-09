@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { format } from 'date-fns';
 import { useBelegStore } from '../store/belegStore';
 import { useObjektStore } from '../store/objektStore';
+import { useAuthStore } from '../store/authStore';
 import { PhotoCapture } from '../components/PhotoCapture';
 import { PositionEditor } from '../components/PositionEditor';
 import type { BelegPosition, Bewirtungsbeleg } from '../types';
@@ -40,6 +41,7 @@ export function NewBelegScreen({ onClose, editBeleg }: Props) {
   const [savedOrderNr, setSavedOrderNr] = useState<string | null>(null);
   const [selectedObjektId, setSelectedObjektId] = useState<string>(editBeleg?.objektId ?? aktivesObjekt?.id ?? '');
   const addBeleg = useBelegStore(s => s.addBeleg);
+  const currentUser = useAuthStore(st => st.user);
   const updateBeleg = useBelegStore(s => s.updateBeleg);
   const setSyncStatus = useBelegStore(s => s.setSyncStatus);
 
@@ -108,7 +110,7 @@ export function NewBelegScreen({ onClose, editBeleg }: Props) {
       fotoDataUrls: f.fotoDataUrls,
       wuensche: f.wuensche,
       interneNotiz: f.interneNotiz,
-    });
+    }, currentUser?.name ?? currentUser?.email);
 
     // Try BC sync (will be skipped if not configured)
     try {
