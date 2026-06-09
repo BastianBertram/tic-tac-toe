@@ -93,6 +93,17 @@
   padding: 9px 12px; border-radius: 9px; border: 1.5px solid var(--ek-border);
   background: var(--ek-bg); font-size: 14px; color: var(--ek-charcoal); width: 100%;
 }
+/* Anrede */
+.anredeRow { display: flex; gap: 8px; }
+.anredeBtn {
+  flex: 1; padding: 9px; border-radius: 9px;
+  border: 1.5px solid var(--ek-border); background: var(--ek-bg);
+  font-size: 14px; font-weight: 600; color: var(--ek-muted); cursor: pointer;
+}
+.anredeBtnActive {
+  border-color: var(--ek-charcoal); background: var(--ek-charcoal); color: #fff;
+}
+
 .objektCheckList { display: flex; flex-direction: column; gap: 6px; padding: 4px 0; }
 .checkRow { display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer; }
 .checkRow input { width: 16px; height: 16px; cursor: pointer; }

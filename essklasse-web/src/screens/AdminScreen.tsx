@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { useUserStore } from '../store/userStore';
 import { useObjektStore } from '../store/objektStore';
 import { HamburgerDrawer } from '../components/HamburgerDrawer';
-import type { UserRolle } from '../types';
+import type { UserRolle, Anrede } from '../types';
 import s from './AdminScreen.module.css';
 
 type AdminTab = 'user' | 'objekte';
@@ -108,25 +108,34 @@ function UserTab() {
   const objekte = useObjektStore(st => st.objekte);
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
-  const [form, setForm] = useState({ name: '', email: '', rolle: 'user' as UserRolle, objektIds: [] as string[] });
+  const emptyForm = { anrede: 'Herr' as Anrede, vorname: '', nachname: '', email: '', telefon: '', rolle: 'user' as UserRolle, objektIds: [] as string[] };
+  const [form, setForm] = useState(emptyForm);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<FilterStatus>('aktiv');
-  // Zweistufige Bestätigung beim Deaktivieren (nur aus dem Formular)
   const [confirmDeactivate, setConfirmDeactivate] = useState(false);
 
   function openNew() {
-    setForm({ name: '', email: '', rolle: 'user', objektIds: [] });
+    setForm(emptyForm);
     setEditId(null);
     setShowForm(true);
   }
   function openEdit(u: typeof users[0]) {
-    setForm({ name: u.name, email: u.email, rolle: u.rolle, objektIds: u.objektIds });
+    setForm({
+      anrede: u.anrede ?? 'Herr',
+      vorname: u.vorname ?? '',
+      nachname: u.nachname ?? '',
+      email: u.email,
+      telefon: u.telefon ?? '',
+      rolle: u.rolle,
+      objektIds: u.objektIds,
+    });
     setEditId(u.id);
     setShowForm(true);
   }
+  const canSave = form.vorname.trim() && form.nachname.trim() && form.email.trim() && form.telefon.trim();
   function handleSave() {
-    if (!form.name.trim() || !form.email.trim()) return;
-    if (editId) updateUser(editId, { name: form.name, email: form.email, rolle: form.rolle, objektIds: form.objektIds });
+    if (!canSave) return;
+    if (editId) updateUser(editId, { anrede: form.anrede, vorname: form.vorname, nachname: form.nachname, email: form.email, telefon: form.telefon, rolle: form.rolle, objektIds: form.objektIds });
     else        addUser(form);
     setShowForm(false);
   }
@@ -179,19 +188,39 @@ function UserTab() {
       {showForm && (
         <div className={s.formCard}>
           <div className={s.formTitle}>{editId ? 'Benutzer bearbeiten' : 'Neuer Benutzer'}</div>
-          <label className={s.label}>Name</label>
-          <input className={s.input} value={form.name} onChange={e => setForm(f => ({...f, name: e.target.value}))} placeholder="Vor- und Nachname" />
-          <label className={s.label}>E-Mail</label>
+
+          <label className={s.label}>Anrede *</label>
+          <div className={s.anredeRow}>
+            {(['Herr', 'Frau'] as Anrede[]).map(a => (
+              <button key={a} type="button"
+                className={`${s.anredeBtn} ${form.anrede === a ? s.anredeBtnActive : ''}`}
+                onClick={() => setForm(f => ({...f, anrede: a}))}
+              >{a}</button>
+            ))}
+          </div>
+
+          <label className={s.label}>Vorname *</label>
+          <input className={s.input} value={form.vorname} onChange={e => setForm(f => ({...f, vorname: e.target.value}))} placeholder="Vorname" />
+
+          <label className={s.label}>Nachname *</label>
+          <input className={s.input} value={form.nachname} onChange={e => setForm(f => ({...f, nachname: e.target.value}))} placeholder="Nachname" />
+
+          <label className={s.label}>E-Mail *</label>
           <input className={s.input} type="email" value={form.email} onChange={e => setForm(f => ({...f, email: e.target.value}))} placeholder="name@hwk.de" />
-          <label className={s.label}>Rolle</label>
+
+          <label className={s.label}>Telefonnummer *</label>
+          <input className={s.input} type="tel" value={form.telefon} onChange={e => setForm(f => ({...f, telefon: e.target.value}))} placeholder="+49 511 123456" />
+
+          <label className={s.label}>Rolle *</label>
           <select className={s.select} value={form.rolle} onChange={e => setForm(f => ({...f, rolle: e.target.value as UserRolle}))}>
             <option value="user">User</option>
             <option value="admin">Admin</option>
             <option value="buchhaltung">Buchhaltung</option>
           </select>
+
           {form.rolle === 'user' && objekte.length > 0 && (
             <>
-              <label className={s.label}>Objekte zuordnen</label>
+              <label className={s.label}>Objekte zuordnen *</label>
               <div className={s.objektCheckList}>
                 {objekte.filter(o => o.aktiv !== false).map(o => (
                   <label key={o.id} className={s.checkRow}>
@@ -202,6 +231,7 @@ function UserTab() {
               </div>
             </>
           )}
+
           {/* Deaktivieren — nur bei bestehenden aktiven Usern */}
           {editId && editTarget?.aktiv && (
             <>
@@ -219,7 +249,7 @@ function UserTab() {
             <button type="button" className={s.cancelBtn} onClick={() => setShowForm(false)}>Abbrechen</button>
             {/* Inaktive User können nur gespeichert werden (kein Reaktivieren) */}
             {(!editId || editTarget?.aktiv) && (
-              <button type="button" className={s.saveBtn} onClick={handleSave} disabled={!form.name.trim() || !form.email.trim()}>Speichern</button>
+              <button type="button" className={s.saveBtn} onClick={handleSave} disabled={!canSave}>Speichern</button>
             )}
             {editId && !editTarget?.aktiv && (
               <button type="button" className={s.cancelBtn} onClick={() => setShowForm(false)}>Schließen</button>
@@ -236,8 +266,9 @@ function UserTab() {
               {u.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
             </div>
             <div className={s.userInfo}>
-              <div className={s.userName}>{u.name}</div>
+              <div className={s.userName}>{u.anrede ? `${u.anrede} ` : ''}{u.name}</div>
               <div className={s.userEmail}>{u.email}</div>
+              {u.telefon && <div className={s.userEmail}>{u.telefon}</div>}
               {u.rolle === 'user' && u.objektIds.length > 0 && (
                 <div className={s.userObjekte}>
                   {u.objektIds.map(id => {

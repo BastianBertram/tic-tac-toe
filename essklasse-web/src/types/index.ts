@@ -46,11 +46,18 @@ export interface AbschlussPosition {
 
 export type UserRolle = 'user' | 'admin' | 'buchhaltung';
 
+export type Anrede = 'Herr' | 'Frau';
+
 /** Ein App-User (für Admin-Verwaltung) */
 export interface AppUser {
   id: string;
+  anrede: Anrede;
+  vorname: string;
+  nachname: string;
+  /** Vollständiger Name = vorname + nachname (abgeleitet, für Rückwärtskompatibilität) */
   name: string;
   email: string;
+  telefon: string;
   rolle: UserRolle;
   /** Objekt-IDs, auf die der User Zugriff hat (nur relevant für rolle=user) */
   objektIds: string[];
