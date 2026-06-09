@@ -173,7 +173,7 @@ function UserTab() {
             </button>
           ))}
         </div>
-        <button type="button" className={s.addBtn} onClick={openNew}>+ Neu</button>
+        <button type="button" className={s.addBtn} onClick={openNew}>+ Neuer Benutzer</button>
       </div>
 
       {showForm && (
@@ -352,7 +352,7 @@ function ObjekteTab() {
             </button>
           ))}
         </div>
-        <button type="button" className={s.addBtn} onClick={openNew}>+ Neu</button>
+        <button type="button" className={s.addBtn} onClick={openNew}>+ Neues Objekt</button>
       </div>
 
       {showForm && (
