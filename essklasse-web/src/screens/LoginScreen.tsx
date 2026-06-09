@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import s from './LoginScreen.module.css';
+import { isValidEmail } from '../utils/email';
 
 const BASE = (import.meta as any).env?.VITE_API_URL ?? 'http://localhost:3001';
 
@@ -10,6 +11,9 @@ export function LoginScreen() {
   const [email,   setEmail]   = useState('');
   const [loading, setLoading] = useState(false);
   const [error,   setError]   = useState('');
+  const emailTouched = email.length > 0;
+  const emailFormatOk = isValidEmail(email);
+  const emailError = emailTouched && !emailFormatOk;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -62,17 +66,18 @@ export function LoginScreen() {
                     required
                     autoFocus
                     autoComplete="email"
-                    className={s.input}
+                    className={`${s.input} ${emailError ? s.inputError : emailTouched && emailFormatOk ? s.inputOk : ''}`}
                     placeholder="E-Mail"
                     value={email}
                     onChange={e => setEmail(e.target.value)}
                   />
                 </div>
+                {emailError && <div className={s.fieldError}>Bitte eine gültige E-Mail-Adresse eingeben.</div>}
               </div>
 
               {error && <div className={s.error}>⚠️ {error}</div>}
 
-              <button type="submit" className={s.btn} disabled={loading || !email.trim()}>
+              <button type="submit" className={s.btn} disabled={loading || !emailFormatOk}>
                 {loading ? '⏳ Wird gesendet …' : 'Anmelde-Link anfordern →'}
               </button>
             </form>

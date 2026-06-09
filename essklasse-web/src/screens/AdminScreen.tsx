@@ -4,6 +4,7 @@ import { useUserStore } from '../store/userStore';
 import { useObjektStore } from '../store/objektStore';
 import { HamburgerDrawer } from '../components/HamburgerDrawer';
 import type { UserRolle, Anrede } from '../types';
+import { isValidEmail } from '../utils/email';
 import s from './AdminScreen.module.css';
 
 type AdminTab = 'user' | 'objekte';
@@ -142,9 +143,8 @@ function UserTab() {
     setEditId(u.id);
     setShowForm(true);
   }
-  const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
   const emailTouched = form.email.length > 0;
-  const emailFormatOk = EMAIL_REGEX.test(form.email.trim());
+  const emailFormatOk = isValidEmail(form.email);
   const emailError = emailTouched && !emailFormatOk
     ? 'Bitte eine gültige E-Mail-Adresse eingeben.'
     : null;
@@ -451,7 +451,10 @@ function ObjekteTab() {
     setShowForm(true);
   }
 
-  const canSaveObjekt = form.name.trim() && form.kuerzel.trim() && form.strasse.trim() && form.plz.trim() && form.ort.trim();
+  const objEmailTouched = form.email.length > 0;
+  const objEmailOk = !objEmailTouched || isValidEmail(form.email);
+  const objEmailError = objEmailTouched && !objEmailOk ? 'Bitte eine gültige E-Mail-Adresse eingeben.' : null;
+  const canSaveObjekt = form.name.trim() && form.kuerzel.trim() && form.strasse.trim() && form.plz.trim() && form.ort.trim() && objEmailOk;
 
   function handleSave() {
     if (!canSaveObjekt) return;
@@ -541,7 +544,14 @@ function ObjekteTab() {
           <input className={s.input} type="tel" value={form.telefon} onChange={e => setForm(f => ({...f, telefon: e.target.value}))} placeholder="0511 123456" />
 
           <label className={s.label}>E-Mail</label>
-          <input className={s.input} type="email" value={form.email} onChange={e => setForm(f => ({...f, email: e.target.value}))} placeholder="info@objekt.de" />
+          <input
+            className={`${s.input} ${objEmailError ? s.inputError : objEmailTouched && objEmailOk ? s.inputOk : ''}`}
+            type="email"
+            value={form.email}
+            onChange={e => setForm(f => ({...f, email: e.target.value}))}
+            placeholder="info@objekt.de"
+          />
+          {objEmailError && <div className={s.fieldError}>{objEmailError}</div>}
 
           <label className={s.label}>Kostenstellen</label>
           <div className={s.kostenstellenList}>

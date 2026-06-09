@@ -90,6 +90,14 @@
   box-shadow: 0 0 0 3px rgba(139,26,26,.10);
 }
 
+.inputError { border-color: #e74c3c !important; background: #fdf3f2; }
+.inputOk    { border-color: #2d8a4e !important; }
+.fieldError {
+  font-size: 12px; font-weight: 600; color: #c0392b;
+  background: #fdecea; border: 1px solid #f5c6c6;
+  border-radius: 8px; padding: 7px 10px; margin-top: 6px;
+}
+
 .error {
   background: #fdf0f0;
   color: var(--ek-red);
