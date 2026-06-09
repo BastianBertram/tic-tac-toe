@@ -55,8 +55,9 @@
   background: var(--ek-surface); border-radius: 14px;
   border: 1.5px solid var(--ek-border); overflow: hidden;
 }
-.rowOffen  { border-left: 4px solid #e74c3c; }
+.rowOffen    { border-left: 4px solid #e74c3c; }
 .rowErledigt { border-left: 4px solid #27ae60; opacity: .8; }
+.rowDeleted  { border-left: 4px solid #aaa; opacity: .5; }
 
 .rowMain { padding: 12px 14px; cursor: pointer; }
 .rowMain:active { background: var(--ek-surface2); }
@@ -68,6 +69,7 @@
 .chipDone  { background: #eafaf1; color: #27ae60; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 20px; }
 .chipOffen { background: #fdecea; color: #e74c3c; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 20px; }
 .chipRechnung { background: #d5f5e3; color: #1e8449; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 20px; }
+.chipDeleted  { background: #f0f0f0; color: #888;    font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 20px; }
 
 .rowTitle { font-size: 14px; font-weight: 700; color: var(--ek-charcoal); margin-bottom: 5px; }
 .rowMeta { display: flex; flex-wrap: wrap; gap: 8px; font-size: 12px; color: var(--ek-muted); }

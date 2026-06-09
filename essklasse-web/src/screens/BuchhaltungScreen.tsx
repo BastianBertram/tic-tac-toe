@@ -81,7 +81,7 @@ export function BuchhaltungScreen({ onOpenBeleg, onRechnungErstellen }: Props) {
   const nowTime = format(now, 'HH:mm');
 
   const alleBelege = useMemo(() =>
-    belege.filter(b => !b.deleted).sort(byBestellungsnr), [belege]);
+    [...belege].sort(byBestellungsnr), [belege]);
 
   const ueberfaelligBase = useMemo(() =>
     belege.filter(b => {
@@ -221,8 +221,8 @@ export function BuchhaltungScreen({ onOpenBeleg, onRechnungErstellen }: Props) {
                 key={b.id}
                 beleg={b}
                 objekte={objekte}
-                onOpen={() => onOpenBeleg(b)}
-                showRechnungBtn={tab === 'bereit'}
+                onOpen={b.deleted ? undefined : () => onOpenBeleg(b)}
+                showRechnungBtn={tab === 'bereit' && !b.deleted}
                 onMarkRechnung={() => onRechnungErstellen(b)}
               />
             ))
@@ -262,7 +262,7 @@ export function BuchhaltungScreen({ onOpenBeleg, onRechnungErstellen }: Props) {
 function BelegeRow({ beleg: b, objekte, onOpen, showRechnungBtn, onMarkRechnung }: {
   beleg: Bewirtungsbeleg;
   objekte: ReturnType<typeof useObjektStore.getState>['objekte'];
-  onOpen: () => void;
+  onOpen?: () => void;
   showRechnungBtn: boolean;
   onMarkRechnung: () => void;
 }) {
@@ -270,14 +270,16 @@ function BelegeRow({ beleg: b, objekte, onOpen, showRechnungBtn, onMarkRechnung 
   const objekt = objekte.find(o => o.id === b.objektId);
 
   return (
-    <div className={`${s.row} ${b.rechnungErstellt ? s.rowErledigt : !b.abgeschlossen ? s.rowOffen : ''}`}>
-      <div className={s.rowMain} onClick={onOpen}>
+    <div className={`${s.row} ${b.deleted ? s.rowDeleted : b.rechnungErstellt ? s.rowErledigt : !b.abgeschlossen ? s.rowOffen : ''}`}>
+      <div className={s.rowMain} onClick={onOpen} style={!onOpen ? { cursor: 'default' } : undefined}>
         <div className={s.rowTop}>
           <span className={s.rowNr}>{b.bestellungsnummer ?? '–'}</span>
           {b.rechnungsnummer && <span className={s.rowRechnungNr}>🧾 {b.rechnungsnummer}</span>}
-          {b.abgeschlossen
-            ? <span className={s.chipDone}>Abgeschlossen</span>
-            : <span className={s.chipOffen}>Offen</span>}
+          {b.deleted
+            ? <span className={s.chipDeleted}>Bewirtung gelöscht</span>
+            : b.abgeschlossen
+              ? <span className={s.chipDone}>Abgeschlossen</span>
+              : <span className={s.chipOffen}>Offen</span>}
           {b.rechnungErstellt && <span className={s.chipRechnung}>✅ Rechnung</span>}
         </div>
         <div className={s.rowTitle}>{b.veranstaltung || 'Bewirtung'}</div>
