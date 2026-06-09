@@ -233,7 +233,7 @@
 .modalOverlay {
   position: fixed; inset: 0; background: rgba(0,0,0,.55);
   display: flex; align-items: flex-end; justify-content: center;
-  zIndex: 500; padding: 0 0 env(safe-area-inset-bottom);
+  z-index: 500; padding: 0 0 env(safe-area-inset-bottom);
 }
 .modalSheet {
   background: var(--ek-surface); border-radius: 20px 20px 0 0;
