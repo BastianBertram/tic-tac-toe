@@ -254,10 +254,14 @@ function FileThumb({ url, filename, onOpen }: { url: string; filename: string; o
   function handleOpen(e: React.MouseEvent) {
     e.stopPropagation();
     if (isPdf) {
-      // PDF in neuem Tab öffnen
       const blob = dataUrlToBlob(url);
       const objUrl = URL.createObjectURL(blob);
-      window.open(objUrl, '_blank');
+      const a = document.createElement('a');
+      a.href = objUrl;
+      a.target = '_blank';
+      a.rel = 'noopener';
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(objUrl), 2000);
     } else {
       onOpen();
     }
