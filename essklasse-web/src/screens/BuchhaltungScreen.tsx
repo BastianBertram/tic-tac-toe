@@ -41,6 +41,7 @@ export function BuchhaltungScreen({ onOpenBeleg }: Props) {
   // "Überfällig" Steuerung
   const [ueberfaelligSort, setUeberfaelligSort] = useState<UeberfaelligSort>('datum');
   const [ueberfaelligSearch, setUeberfaelligSearch] = useState('');
+  const [ueberfaelligObjekt, setUeberfaelligObjekt] = useState('alle');
 
   const now = new Date();
   const nowDate = format(now, 'yyyy-MM-dd');
@@ -64,6 +65,11 @@ export function BuchhaltungScreen({ onOpenBeleg }: Props) {
   const ueberfaelligBelege = useMemo(() => {
     let list = [...ueberfaelligBase];
 
+    // Objekt-Filter
+    if (ueberfaelligObjekt !== 'alle') {
+      list = list.filter(b => b.objektId === ueberfaelligObjekt);
+    }
+
     // Suche: Datum, Bestellnummer, Veranstaltung, Besteller, Objekt
     if (ueberfaelligSearch.trim()) {
       const q = ueberfaelligSearch.trim().toLowerCase();
@@ -84,7 +90,7 @@ export function BuchhaltungScreen({ onOpenBeleg }: Props) {
     // Sortierung
     list.sort(ueberfaelligSort === 'datum' ? byDatumUhrzeit : byBestellungsnr);
     return list;
-  }, [ueberfaelligBase, ueberfaelligSort, ueberfaelligSearch]);
+  }, [ueberfaelligBase, ueberfaelligSort, ueberfaelligSearch, ueberfaelligObjekt, objekte]);
 
   const bereitBase = useMemo(() =>
     belege.filter(b => !b.deleted && b.abgeschlossen && !b.rechnungErstellt),
@@ -139,6 +145,10 @@ export function BuchhaltungScreen({ onOpenBeleg }: Props) {
               value={ueberfaelligSearch}
               onChange={e => setUeberfaelligSearch(e.target.value)}
             />
+            <select className={s.select} value={ueberfaelligObjekt} onChange={e => setUeberfaelligObjekt(e.target.value)}>
+              <option value="alle">Alle Objekte</option>
+              {objekte.map(o => <option key={o.id} value={o.id}>{o.kuerzel ? `${o.kuerzel} – ${o.name}` : o.name}</option>)}
+            </select>
             <div className={s.sortRow}>
               <span className={s.sortLabel}>Sortierung:</span>
               <button
