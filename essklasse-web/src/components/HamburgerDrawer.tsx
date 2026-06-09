@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAuthStore } from '../store/authStore';
 import { useObjektStore } from '../store/objektStore';
+import type { UserRolle } from '../types';
 import s from './ProfilSheet.module.css';
 import d from './HamburgerDrawer.module.css';
 
@@ -11,15 +12,31 @@ interface Props {
   onAbgeschlossene: () => void;
 }
 
+const GF_ROLLEN: { rolle: UserRolle; label: string; icon: string; color: string }[] = [
+  { rolle: 'geschaeftsfuehrung', label: 'Geschäftsführung', icon: '👔', color: '#1e6b4a' },
+  { rolle: 'user',               label: 'User',             icon: '👤', color: '#2e86c1' },
+  { rolle: 'bereichsleitung',    label: 'Bereichsleitung',  icon: '🏛️', color: '#6c3483' },
+  { rolle: 'buchhaltung',        label: 'Buchhaltung',      icon: '📊', color: '#1a5276' },
+  { rolle: 'admin',              label: 'Admin',            icon: '⚙️', color: '#922b21' },
+];
+
 export function HamburgerDrawer({ onClose, onAbgeschlossene }: Props) {
-  const user         = useAuthStore(st => st.user);
-  const logout       = useAuthStore(st => st.logout);
-  const resetObjekte = useObjektStore(st => st.reset);
-  const objekte      = useObjektStore(st => st.objekte);
-  const aktiv        = useObjektStore(st => st.getAktivesObjekt());
-  const isBuchhaltung = user?.rolle === 'buchhaltung';
-  const isAdmin       = user?.rolle === 'admin';
+  const user              = useAuthStore(st => st.user);
+  const logout            = useAuthStore(st => st.logout);
+  const switchRolleAs     = useAuthStore(st => st.switchRolleAs);
+  const isGfBase          = useAuthStore(st => st.isGeschaeftsfuehrungBase());
+  const resetObjekte      = useObjektStore(st => st.reset);
+  const objekte           = useObjektStore(st => st.objekte);
+  const aktiv             = useObjektStore(st => st.getAktivesObjekt());
+  const isBuchhaltung     = user?.rolle === 'buchhaltung';
+  const isAdmin           = user?.rolle === 'admin';
   const [loading, setLoading] = useState(false);
+
+  function handleRolleSwitch(rolle: UserRolle) {
+    switchRolleAs(rolle);
+    onClose();
+    window.location.reload();
+  }
 
   async function handleLogout() {
     setLoading(true);
@@ -49,8 +66,10 @@ export function HamburgerDrawer({ onClose, onAbgeschlossene }: Props) {
           <div>
             <div className={s.profileName}>{user?.name || '—'}</div>
             <div className={s.profileEmail}>{user?.email}</div>
-            {user?.rolle === 'admin' && <span className={s.adminBadge}>Administrator</span>}
-            {user?.rolle === 'bereichsleitung' && <span className={s.adminBadge} style={{ background: '#6c3483' }}>Bereichsleitung</span>}
+            {user?.rolle === 'admin'              && <span className={s.adminBadge}>Administrator</span>}
+            {user?.rolle === 'bereichsleitung'   && <span className={s.adminBadge} style={{ background: '#6c3483' }}>Bereichsleitung</span>}
+            {user?.rolle === 'geschaeftsfuehrung' && <span className={s.adminBadge} style={{ background: '#1e6b4a' }}>Geschäftsführung</span>}
+            {isGfBase && user?.baseRolle && <span className={s.adminBadge} style={{ background: '#1e6b4a', marginLeft: 4 }}>GF</span>}
           </div>
         </div>
 
@@ -84,6 +103,31 @@ export function HamburgerDrawer({ onClose, onAbgeschlossene }: Props) {
               ✅ Abgeschlossene Bewirtungen
             </button>
             <div className={s.divider} />
+          </>
+        )}
+
+        {/* Rollenwechsel — nur für Geschäftsführung */}
+        {isGfBase && (
+          <>
+            <div className={s.divider} />
+            <div className={d.rolleSection}>
+              <div className={d.rolleSectionTitle}>Rolle wechseln</div>
+              {GF_ROLLEN.map(r => (
+                <button
+                  key={r.rolle}
+                  type="button"
+                  className={`${d.rolleBtn} ${user?.rolle === r.rolle ? d.rolleBtnActive : ''}`}
+                  style={user?.rolle === r.rolle ? { borderColor: r.color, background: r.color } : { borderColor: r.color + '55' }}
+                  onClick={() => handleRolleSwitch(r.rolle)}
+                >
+                  <span className={d.rolleBtnIcon}>{r.icon}</span>
+                  <span className={d.rolleBtnLabel} style={{ color: user?.rolle === r.rolle ? '#fff' : r.color }}>
+                    {r.label}
+                  </span>
+                  {user?.rolle === r.rolle && <span className={d.rolleBtnCheck}>✓</span>}
+                </button>
+              ))}
+            </div>
           </>
         )}
 

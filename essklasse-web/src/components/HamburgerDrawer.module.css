@@ -7,3 +7,20 @@
   text-align: left;
 }
 .abgeschlosseneBtn:hover { background: #d4eddc; }
+
+/* Rollenwechsel (Geschäftsführung) */
+.rolleSection { display: flex; flex-direction: column; gap: 8px; padding: 4px 0 12px; }
+.rolleSectionTitle {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .6px; color: var(--ek-muted); margin-bottom: 2px;
+}
+.rolleBtn {
+  display: flex; align-items: center; gap: 10px;
+  width: 100%; padding: 11px 14px; border-radius: 12px;
+  border: 1.5px solid; background: transparent; cursor: pointer;
+  text-align: left;
+}
+.rolleBtnActive { }
+.rolleBtnIcon { font-size: 18px; flex-shrink: 0; }
+.rolleBtnLabel { flex: 1; font-size: 14px; font-weight: 700; }
+.rolleBtnCheck { font-size: 14px; font-weight: 800; color: #fff; }

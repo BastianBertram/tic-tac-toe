@@ -14,6 +14,7 @@ const ROLLE_LABELS: Record<UserRolle, string> = {
   admin: 'Admin',
   buchhaltung: 'Buchhaltung',
   bereichsleitung: 'Bereichsleitung',
+  geschaeftsfuehrung: 'Geschäftsführung',
 };
 
 const ROLLE_COLORS: Record<UserRolle, string> = {
@@ -21,6 +22,7 @@ const ROLLE_COLORS: Record<UserRolle, string> = {
   admin: '#922b21',
   buchhaltung: '#1a5276',
   bereichsleitung: '#6c3483',
+  geschaeftsfuehrung: '#1e6b4a',
 };
 
 /* ─── Zweistufiges Bestätigungs-Modal ─── */
@@ -245,6 +247,7 @@ function UserTab() {
             <option value="user">User</option>
             <option value="bereichsleitung">Bereichsleitung</option>
             <option value="buchhaltung">Buchhaltung</option>
+            <option value="geschaeftsfuehrung">Geschäftsführung</option>
             <option value="admin">Admin</option>
           </select>
 

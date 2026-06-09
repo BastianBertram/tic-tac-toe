@@ -51,7 +51,7 @@ export interface AbschlussPosition {
   pfand?: number;
 }
 
-export type UserRolle = 'user' | 'admin' | 'buchhaltung' | 'bereichsleitung';
+export type UserRolle = 'user' | 'admin' | 'buchhaltung' | 'bereichsleitung' | 'geschaeftsfuehrung';
 
 export type Anrede = 'Herr' | 'Frau';
 
