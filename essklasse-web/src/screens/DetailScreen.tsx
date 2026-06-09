@@ -6,9 +6,9 @@ import { StatusBadge } from '../components/StatusBadge';
 import { useBelegStore } from '../store/belegStore';
 import s from './DetailScreen.module.css';
 
-interface Props { beleg: Bewirtungsbeleg; onClose: () => void; onAbschliessen?: () => void; onBearbeiten?: () => void; }
+interface Props { beleg: Bewirtungsbeleg; onClose: () => void; onAbschliessen?: () => void; onBearbeiten?: () => void; onRechnungErstellen?: (b: Bewirtungsbeleg) => void; }
 
-export function DetailScreen({ beleg: init, onClose, onAbschliessen, onBearbeiten }: Props) {
+export function DetailScreen({ beleg: init, onClose, onAbschliessen, onBearbeiten, onRechnungErstellen }: Props) {
   const store = useBelegStore();
   const beleg = store.belege.find(b => b.id === init.id) ?? init;
   const [retrying, setRetrying] = useState(false);
@@ -162,12 +162,42 @@ export function DetailScreen({ beleg: init, onClose, onAbschliessen, onBearbeite
       )}
       {beleg.abgeschlossen && (
         <div style={{
-          margin: '0 16px 16px', padding: '12px 16px',
+          margin: '0 16px 8px', padding: '12px 16px',
           background: '#e8f5ee', borderRadius: 12,
           border: '1px solid #c3dfc9', color: '#1a5c30',
           fontSize: 13, fontWeight: 700, textAlign: 'center',
         }}>
           ✓ Abgeschlossen {beleg.abgeschlossenVon ? `von ${beleg.abgeschlossenVon}` : ''}
+        </div>
+      )}
+      {/* Buchhaltung: Rechnung erstellen */}
+      {onRechnungErstellen && beleg.abgeschlossen && !beleg.rechnungErstellt && (
+        <div style={{ padding: '0 16px 8px' }}>
+          <button
+            type="button"
+            onClick={() => onRechnungErstellen(beleg)}
+            style={{
+              width: '100%', padding: 14, fontSize: 15, fontWeight: 800,
+              background: 'linear-gradient(135deg,#2d8a4e,#3aab62)',
+              color: '#fff', borderRadius: 12, border: 'none', cursor: 'pointer',
+              boxShadow: '0 4px 16px rgba(45,138,78,.3)',
+            }}
+          >
+            🧾 Rechnung erstellen
+          </button>
+        </div>
+      )}
+      {beleg.rechnungErstellt && (
+        <div style={{
+          margin: '0 16px 16px', padding: '12px 16px',
+          background: '#d5f5e3', borderRadius: 12,
+          border: '1px solid #a9dfbf', color: '#1e8449',
+          fontSize: 13, fontWeight: 700,
+        }}>
+          <div>✅ Rechnung erstellt {beleg.rechnungErstelltVon ? `von ${beleg.rechnungErstelltVon}` : ''}</div>
+          {beleg.rechnungsnummer && (
+            <div style={{ marginTop: 4, fontSize: 15, letterSpacing: '.5px' }}>🧾 {beleg.rechnungsnummer}</div>
+          )}
         </div>
       )}
 

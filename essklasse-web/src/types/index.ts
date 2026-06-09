@@ -92,4 +92,5 @@ export interface Bewirtungsbeleg {
   rechnungErstellt?: boolean;
   rechnungErstelltAm?: string;
   rechnungErstelltVon?: string;
+  rechnungsnummer?: string;
 }

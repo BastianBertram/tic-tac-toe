@@ -3,18 +3,20 @@ import { format, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { useBelegStore } from '../store/belegStore';
 import { useObjektStore } from '../store/objektStore';
-import { useAuthStore } from '../store/authStore';
 import { HamburgerDrawer } from '../components/HamburgerDrawer';
 import type { Bewirtungsbeleg } from '../types';
 import s from './BuchhaltungScreen.module.css';
 
 type BuchTab = 'alle' | 'ueberfaellig' | 'bereit' | 'erledigt';
-type SortOpt = 'datum' | 'bestellnr' | 'bestellnr-desc';
+type SortOpt = 'datum' | 'bestellnr' | 'bestellnr-desc' | 'rechnungsnr' | 'rechnungsnr-desc';
 
-interface Props { onOpenBeleg: (b: Bewirtungsbeleg) => void; }
+interface Props { onOpenBeleg: (b: Bewirtungsbeleg) => void; onRechnungErstellen: (b: Bewirtungsbeleg) => void; }
 
 function byBestellungsnr(a: Bewirtungsbeleg, b: Bewirtungsbeleg) {
   return (a.bestellungsnummer ?? '').localeCompare(b.bestellungsnummer ?? '');
+}
+function byRechnungsnr(a: Bewirtungsbeleg, b: Bewirtungsbeleg) {
+  return (a.rechnungsnummer ?? '').localeCompare(b.rechnungsnummer ?? '');
 }
 function byDatumUhrzeit(a: Bewirtungsbeleg, b: Bewirtungsbeleg) {
   return `${a.cateringDatumVon}T${a.uhrzeitVon ?? '00:00'}`.localeCompare(
@@ -41,6 +43,7 @@ function applyControls(
       return (
         datum.includes(q) ||
         (b.bestellungsnummer ?? '').toLowerCase().includes(q) ||
+        (b.rechnungsnummer ?? '').toLowerCase().includes(q) ||
         (b.veranstaltung ?? '').toLowerCase().includes(q) ||
         (b.besteller ?? '').toLowerCase().includes(q) ||
         (obj?.name ?? '').toLowerCase().includes(q) ||
@@ -51,6 +54,8 @@ function applyControls(
 
   if (opts.sort === 'datum') out.sort(byDatumUhrzeit);
   else if (opts.sort === 'bestellnr-desc') out.sort((a, b) => byBestellungsnr(b, a));
+  else if (opts.sort === 'rechnungsnr') out.sort(byRechnungsnr);
+  else if (opts.sort === 'rechnungsnr-desc') out.sort((a, b) => byRechnungsnr(b, a));
   else out.sort(byBestellungsnr);
   return out;
 }
@@ -59,11 +64,9 @@ function applyControls(
 interface TabControls { search: string; objekt: string; sort: SortOpt; }
 const INIT_CONTROLS: TabControls = { search: '', objekt: 'alle', sort: 'datum' };
 
-export function BuchhaltungScreen({ onOpenBeleg }: Props) {
+export function BuchhaltungScreen({ onOpenBeleg, onRechnungErstellen }: Props) {
   const belege = useBelegStore(st => st.belege);
-  const markRechnung = useBelegStore(st => st.markRechnungErstellt);
   const objekte = useObjektStore(st => st.objekte);
-  const user = useAuthStore(st => st.user);
 
   const [tab, setTab] = useState<BuchTab>('alle');
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -176,6 +179,24 @@ export function BuchhaltungScreen({ onOpenBeleg }: Props) {
                   # Bestellnr. ↓
                 </button>
               )}
+              {tab === 'erledigt' && (
+                <button
+                  type="button"
+                  className={`${s.sortBtn} ${ctrl.sort === 'rechnungsnr' ? s.sortBtnActive : ''}`}
+                  onClick={() => setCtrl(c => ({ ...c, sort: 'rechnungsnr' }))}
+                >
+                  🧾 Rechnungsnr. ↑
+                </button>
+              )}
+              {tab === 'erledigt' && (
+                <button
+                  type="button"
+                  className={`${s.sortBtn} ${ctrl.sort === 'rechnungsnr-desc' ? s.sortBtnActive : ''}`}
+                  onClick={() => setCtrl(c => ({ ...c, sort: 'rechnungsnr-desc' }))}
+                >
+                  🧾 Rechnungsnr. ↓
+                </button>
+              )}
             </div>
           </div>
         )}
@@ -202,7 +223,7 @@ export function BuchhaltungScreen({ onOpenBeleg }: Props) {
                 objekte={objekte}
                 onOpen={() => onOpenBeleg(b)}
                 showRechnungBtn={tab === 'bereit'}
-                onMarkRechnung={() => markRechnung(b.id, user?.name)}
+                onMarkRechnung={() => onRechnungErstellen(b)}
               />
             ))
           )}
@@ -253,6 +274,7 @@ function BelegeRow({ beleg: b, objekte, onOpen, showRechnungBtn, onMarkRechnung 
       <div className={s.rowMain} onClick={onOpen}>
         <div className={s.rowTop}>
           <span className={s.rowNr}>{b.bestellungsnummer ?? '–'}</span>
+          {b.rechnungsnummer && <span className={s.rowRechnungNr}>🧾 {b.rechnungsnummer}</span>}
           {b.abgeschlossen
             ? <span className={s.chipDone}>Abgeschlossen</span>
             : <span className={s.chipOffen}>Offen</span>}

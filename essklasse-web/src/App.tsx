@@ -12,6 +12,7 @@ import { AbgeschlossenScreen } from './screens/AbgeschlossenScreen';
 import { BuchhaltungScreen } from './screens/BuchhaltungScreen';
 import { AdminScreen } from './screens/AdminScreen';
 import { useAuthStore } from './store/authStore';
+import { useBelegStore } from './store/belegStore';
 import { DevRoleSwitcher } from './components/DevRoleSwitcher';
 import type { Bewirtungsbeleg } from './types';
 import s from './App.module.css';
@@ -28,6 +29,23 @@ export default function App() {
   const [tab, setTab]   = useState<Tab>('today');
   const [view, setView] = useState<View>({ type: 'main' });
   const rolle = useAuthStore(st => st.user?.rolle);
+  const user = useAuthStore(st => st.user);
+  const markRechnung = useBelegStore(st => st.markRechnungErstellt);
+
+  // Modal für Rechnungsnummer-Eingabe (Buchhaltung)
+  const [rechnungModalBeleg, setRechnungModalBeleg] = useState<Bewirtungsbeleg | null>(null);
+  const [rechnungsnummerInput, setRechnungsnummerInput] = useState('');
+
+  function openRechnungModal(b: Bewirtungsbeleg) {
+    setRechnungsnummerInput(b.rechnungsnummer ?? '');
+    setRechnungModalBeleg(b);
+  }
+  function confirmRechnung() {
+    if (!rechnungModalBeleg || !rechnungsnummerInput.trim()) return;
+    markRechnung(rechnungModalBeleg.id, user?.name, rechnungsnummerInput.trim());
+    setRechnungModalBeleg(null);
+    setRechnungsnummerInput('');
+  }
 
   function openBeleg(b: Bewirtungsbeleg) { setView({ type: 'detail', beleg: b }); }
   function openAbschluss(b: Bewirtungsbeleg) { setView({ type: 'abschluss', beleg: b }); }
@@ -72,7 +90,17 @@ export default function App() {
             onClose={closeView}
             onAbschliessen={rolle !== 'buchhaltung' ? () => openAbschluss(view.beleg) : undefined}
             onBearbeiten={rolle !== 'buchhaltung' ? () => setView({ type: 'edit', beleg: view.beleg }) : undefined}
+            onRechnungErstellen={rolle === 'buchhaltung' ? openRechnungModal : undefined}
           />
+          {rechnungModalBeleg && (
+            <RechnungNummerModal
+              beleg={rechnungModalBeleg}
+              value={rechnungsnummerInput}
+              onChange={setRechnungsnummerInput}
+              onConfirm={confirmRechnung}
+              onCancel={() => setRechnungModalBeleg(null)}
+            />
+          )}
         </div>
       </AuthGuard>
     );
@@ -97,8 +125,17 @@ export default function App() {
     return (
       <AuthGuard>
         <div className={s.app}>
-          <BuchhaltungScreen onOpenBeleg={openBeleg} />
+          <BuchhaltungScreen onOpenBeleg={openBeleg} onRechnungErstellen={openRechnungModal} />
           <DevOverlay />
+          {rechnungModalBeleg && (
+            <RechnungNummerModal
+              beleg={rechnungModalBeleg}
+              value={rechnungsnummerInput}
+              onChange={setRechnungsnummerInput}
+              onConfirm={confirmRechnung}
+              onCancel={() => setRechnungModalBeleg(null)}
+            />
+          )}
         </div>
       </AuthGuard>
     );
@@ -127,5 +164,70 @@ export default function App() {
 function DevOverlay() {
   if (!import.meta.env.DEV) return null;
   return <DevRoleSwitcher />;
+}
+
+function RechnungNummerModal({ beleg, value, onChange, onConfirm, onCancel }: {
+  beleg: Bewirtungsbeleg;
+  value: string;
+  onChange: (v: string) => void;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, background: 'rgba(0,0,0,.55)',
+      display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
+      zIndex: 300, padding: '0 0 env(safe-area-inset-bottom)',
+    }}>
+      <div style={{
+        background: 'var(--ek-surface)', borderRadius: '20px 20px 0 0',
+        padding: '24px 20px 32px', width: '100%', maxWidth: 480,
+        boxShadow: '0 -4px 32px rgba(0,0,0,.18)',
+      }}>
+        <div style={{ fontWeight: 800, fontSize: 17, color: 'var(--ek-charcoal)', marginBottom: 4 }}>
+          Rechnung erstellen
+        </div>
+        <div style={{ fontSize: 13, color: 'var(--ek-muted)', marginBottom: 20 }}>
+          {beleg.veranstaltung || 'Bewirtung'} · {beleg.bestellungsnummer}
+        </div>
+        <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: 'var(--ek-muted)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '.5px' }}>
+          Rechnungsnummer <span style={{ color: '#e74c3c' }}>*</span>
+        </label>
+        <input
+          autoFocus
+          type="text"
+          placeholder="z.B. RE-2026-00042"
+          value={value}
+          onChange={e => onChange(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && value.trim() && onConfirm()}
+          style={{
+            width: '100%', boxSizing: 'border-box',
+            padding: '12px 14px', borderRadius: 10,
+            border: '1.5px solid var(--ek-border)',
+            background: 'var(--ek-bg)', fontSize: 15,
+            color: 'var(--ek-charcoal)', marginBottom: 20,
+            outline: value.trim() ? 'none' : '1.5px solid #e74c3c',
+          }}
+        />
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button type="button" onClick={onCancel} style={{
+            flex: 1, padding: 14, borderRadius: 12, border: '1.5px solid var(--ek-border)',
+            background: 'var(--ek-bg)', fontSize: 14, fontWeight: 700,
+            color: 'var(--ek-muted)', cursor: 'pointer',
+          }}>
+            Abbrechen
+          </button>
+          <button type="button" onClick={onConfirm} disabled={!value.trim()} style={{
+            flex: 2, padding: 14, borderRadius: 12, border: 'none',
+            background: value.trim() ? 'linear-gradient(135deg,#2d8a4e,#3aab62)' : '#ccc',
+            color: '#fff', fontSize: 14, fontWeight: 800, cursor: value.trim() ? 'pointer' : 'not-allowed',
+            boxShadow: value.trim() ? '0 4px 16px rgba(45,138,78,.3)' : 'none',
+          }}>
+            ✅ Rechnung erstellen
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
