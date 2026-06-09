@@ -64,14 +64,19 @@ export function BuchhaltungScreen({ onOpenBeleg }: Props) {
   const ueberfaelligBelege = useMemo(() => {
     let list = [...ueberfaelligBase];
 
-    // Suche: Datum (z.B. "09.06" oder "09.06.2026") oder Bestellnummer
+    // Suche: Datum, Bestellnummer, Veranstaltung, Besteller, Objekt
     if (ueberfaelligSearch.trim()) {
       const q = ueberfaelligSearch.trim().toLowerCase();
       list = list.filter(b => {
         const datumFormatted = format(parseISO(b.cateringDatumVon), 'dd.MM.yyyy');
+        const objektName = objekte.find(o => o.id === b.objektId);
         return (
           datumFormatted.includes(q) ||
-          (b.bestellungsnummer ?? '').toLowerCase().includes(q)
+          (b.bestellungsnummer ?? '').toLowerCase().includes(q) ||
+          (b.veranstaltung ?? '').toLowerCase().includes(q) ||
+          (b.besteller ?? '').toLowerCase().includes(q) ||
+          (objektName?.name ?? '').toLowerCase().includes(q) ||
+          (objektName?.kuerzel ?? '').toLowerCase().includes(q)
         );
       });
     }
@@ -130,7 +135,7 @@ export function BuchhaltungScreen({ onOpenBeleg }: Props) {
             <input
               className={s.searchInput}
               type="search"
-              placeholder="🔍 Datum (09.06.2026) oder Bestellnummer…"
+              placeholder="🔍 Datum, Bestellnr., Veranstaltung, Besteller, Objekt…"
               value={ueberfaelligSearch}
               onChange={e => setUeberfaelligSearch(e.target.value)}
             />
