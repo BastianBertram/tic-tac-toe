@@ -40,7 +40,7 @@ export function AbschlussListScreen({ onOpenBeleg }: Props) {
     <div className={s.screen}>
       <div className={s.header}>
         <img src="/logo.webp" alt="EssKlasse" className={s.logo} />
-        <div className={s.title}>Abzuschließen</div>
+        <div className={s.title}>Bewirtung abschließen</div>
       </div>
 
       {offene.length > 0 && (
