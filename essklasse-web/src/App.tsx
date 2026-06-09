@@ -126,7 +126,19 @@ export default function App() {
     return (
       <AuthGuard>
         <div className={s.app}>
+          {/* BuchhaltungScreen immer gemountet → Tab-State bleibt erhalten */}
           <BuchhaltungScreen onOpenBeleg={openBeleg} onRechnungErstellen={openRechnungModal} />
+          {/* DetailScreen als Vollbild-Overlay */}
+          {view.type === 'detail' && (
+            <div style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'var(--ek-bg)', display: 'flex', flexDirection: 'column' }}>
+              <DetailScreen
+                beleg={view.beleg}
+                onClose={closeView}
+                onRechnungErstellen={openRechnungModal}
+                canDelete={false}
+              />
+            </div>
+          )}
           <DevOverlay />
           {rechnungModalBeleg && (
             <RechnungNummerModal
