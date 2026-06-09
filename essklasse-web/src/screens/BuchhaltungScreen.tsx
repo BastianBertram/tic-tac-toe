@@ -140,11 +140,13 @@ export function BuchhaltungScreen({ onOpenBeleg, onRechnungErstellen }: Props) {
   const erledigtBelege  = useMemo(() => applyControls(erledigtBase,        objekte, ctrlErl),   [erledigtBase,     objekte, ctrlErl]);
 
   const TAB_CONFIG = [
-    { id: 'alle'         as BuchTab, label: 'Alle\nBewirtungen',       count: alleBase.length,         urgent: false },
-    { id: 'ueberfaellig' as BuchTab, label: 'Bewirtungen\nüberfällig', count: ueberfaelligBase.length, urgent: true  },
-    { id: 'bereit'       as BuchTab, label: 'Bereit für\nRechnung',    count: bereitBase.length,       urgent: false },
-    { id: 'erledigt'     as BuchTab, label: 'Rechnung\nerstellt',      count: erledigtBase.length,     urgent: false },
+    { id: 'alle'         as BuchTab, label: 'Alle\nBewirtungen',       headerTitle: 'Alle Bewirtungen',       icon: '📋', count: alleBase.length,         urgent: false },
+    { id: 'ueberfaellig' as BuchTab, label: 'Bewirtungen\nüberfällig', headerTitle: 'Bewirtungen überfällig', icon: '⚠️', count: ueberfaelligBase.length, urgent: true  },
+    { id: 'bereit'       as BuchTab, label: 'Bereit für\nRechnung',    headerTitle: 'Bereit für Rechnung',    icon: '📄', count: bereitBase.length,       urgent: false },
+    { id: 'erledigt'     as BuchTab, label: 'Rechnung\nerstellt',      headerTitle: 'Rechnung erstellt',      icon: '✅', count: erledigtBase.length,     urgent: false },
   ];
+
+  const activeTab = TAB_CONFIG.find(t => t.id === tab)!;
 
   const displayList =
     tab === 'alle'         ? alleBelege :
@@ -163,6 +165,7 @@ export function BuchhaltungScreen({ onOpenBeleg, onRechnungErstellen }: Props) {
     <div className={s.screen}>
       <div className={s.header}>
         <img src="/logo.webp" alt="EssKlasse" className={s.logo} />
+        <span className={s.headerSection}>{activeTab.icon} {activeTab.headerTitle}</span>
         <span className={s.rolleChip}>Buchhaltung</span>
       </div>
 
