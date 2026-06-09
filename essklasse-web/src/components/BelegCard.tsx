@@ -62,7 +62,6 @@ export function BelegCard({ beleg, onClick, highlight = null, onAbschliessen }: 
 
       <div className={s.footer}>
         <span className={s.posCnt}>{beleg.positionen.length} Position(en)</span>
-        {beleg.fotoDataUrls.length > 0 && <span>📷 {beleg.fotoDataUrls.length}</span>}
       </div>
 
       {/* Abschließen-Button – nur wenn noch offen und Callback vorhanden */}
