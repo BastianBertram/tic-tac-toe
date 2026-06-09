@@ -243,8 +243,9 @@ function UserTab() {
             setForm(f => ({ ...f, rolle, objektIds: defaultObjektIds(rolle) }));
           }}>
             <option value="user">User</option>
-            <option value="admin">Admin</option>
+            <option value="bereichsleitung">Bereichsleitung</option>
             <option value="buchhaltung">Buchhaltung</option>
+            <option value="admin">Admin</option>
           </select>
 
           {(form.rolle === 'user' || form.rolle === 'buchhaltung' || form.rolle === 'bereichsleitung') && objekte.length > 0 && (
