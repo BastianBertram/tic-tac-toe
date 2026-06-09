@@ -405,8 +405,7 @@ function ObjekteTab() {
     setShowForm(true);
   }
 
-  const canSaveObjekt = form.name.trim() && form.kuerzel.trim() && form.strasse.trim() && form.plz.trim() && form.ort.trim()
-    && form.kostenstellen.some(k => k.trim());
+  const canSaveObjekt = form.name.trim() && form.kuerzel.trim() && form.strasse.trim() && form.plz.trim() && form.ort.trim();
 
   function handleSave() {
     if (!canSaveObjekt) return;
@@ -498,7 +497,7 @@ function ObjekteTab() {
           <label className={s.label}>E-Mail</label>
           <input className={s.input} type="email" value={form.email} onChange={e => setForm(f => ({...f, email: e.target.value}))} placeholder="info@objekt.de" />
 
-          <label className={s.label}>Kostenstellen *</label>
+          <label className={s.label}>Kostenstellen</label>
           <div className={s.kostenstellenList}>
             {form.kostenstellen.map((k, idx) => (
               <div key={idx} className={s.kostenstelleRow}>
