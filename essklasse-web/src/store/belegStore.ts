@@ -30,7 +30,7 @@ export const useBelegStore = create<BelegStore>()(
 
       addBeleg: (b) => {
         const id = uuidv4();
-        const year = String(new Date().getFullYear()).slice(-2); // "26"
+        const year = (b.cateringDatumVon ?? new Date().toISOString().slice(0, 10)).slice(2, 4); // "26" aus "2026-06-09"
         const zaehler = get().bestellungZaehler;
         const naechste = (zaehler[year] ?? 0) + 1;
         const bestellungsnummer = `A${year}${String(naechste).padStart(7, '0')}`;
