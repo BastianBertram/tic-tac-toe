@@ -39,7 +39,9 @@ export function TodayScreen({ onOpenBeleg, onAbschliessen, onTabAbschluss }: Pro
 
   const today    = format(new Date(), 'yyyy-MM-dd');
   const tomorrow = format(addDays(new Date(), 1), 'yyyy-MM-dd');
-  const todayStr = format(new Date(), "EEE, d. MMM yyyy", { locale: de });
+  const todayStr      = format(new Date(), "EEE, d. MMM yyyy", { locale: de });
+  const todayShort    = format(new Date(), "d. MMM", { locale: de });
+  const tomorrowShort = format(addDays(new Date(), 1), "d. MMM", { locale: de });
   const nowTime  = format(new Date(), 'HH:mm');   // z.B. "09:35"
 
   const belegeForObjekt = useMemo(
@@ -91,6 +93,7 @@ export function TodayScreen({ onOpenBeleg, onAbschliessen, onTabAbschluss }: Pro
         >
           <span className={s.counterNum}>{todaysBelege.length}</span>
           <span className={s.counterLabel}>Heute</span>
+          <span className={s.counterDate}>{todayShort}</span>
         </button>
         <button
           className={`${s.counterBtn} ${view === 'tomorrow' ? s.counterActive : s.counterInactive}`}
@@ -98,6 +101,7 @@ export function TodayScreen({ onOpenBeleg, onAbschliessen, onTabAbschluss }: Pro
         >
           <span className={s.counterNum}>{tomorrowsBelege.length}</span>
           <span className={s.counterLabel}>Morgen</span>
+          <span className={s.counterDate}>{tomorrowShort}</span>
         </button>
       </div>
 
