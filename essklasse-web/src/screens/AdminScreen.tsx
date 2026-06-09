@@ -303,7 +303,7 @@ function UserTab() {
               {u.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
             </div>
             <div className={s.userInfo}>
-              <div className={s.userName}>{u.anrede ? `${u.anrede} ` : ''}{u.name}</div>
+              <div className={s.userName}>{u.name}</div>
               <div className={s.userEmail}>{u.email}</div>
               {u.telefon && <div className={s.userEmail}>{u.telefon}</div>}
               {u.rolle === 'user' && u.objektIds.length > 0 && (
