@@ -49,7 +49,7 @@ function ConfirmModal({ steps, onConfirmed, onCancel }: ConfirmModalProps) {
           <button type="button" className={s.cancelBtn} onClick={onCancel}>Abbrechen</button>
           <button
             type="button"
-            className={current.danger ? s.dangerBtn : s.saveBtn}
+            className={s.dangerBtn}
             onClick={() => step === 0 ? setStep(1) : onConfirmed()}
           >
             {current.confirmLabel}
