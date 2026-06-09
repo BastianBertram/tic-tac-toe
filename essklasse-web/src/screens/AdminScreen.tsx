@@ -105,7 +105,8 @@ function UserTab() {
   const [form, setForm] = useState({ name: '', email: '', rolle: 'user' as UserRolle, objektIds: [] as string[] });
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<FilterStatus>('aktiv');
-  const [deactivateId, setDeactivateId] = useState<string | null>(null);
+  // Zweistufige Bestätigung beim Deaktivieren (nur aus dem Formular)
+  const [confirmDeactivate, setConfirmDeactivate] = useState(false);
 
   function openNew() {
     setForm({ name: '', email: '', rolle: 'user', objektIds: [] });
@@ -130,6 +131,8 @@ function UserTab() {
     }));
   }
 
+  const editTarget = editId ? users.find(u => u.id === editId) : null;
+
   const q = search.toLowerCase();
   const filtered = users.filter(u => {
     const matchSearch = !q || u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q);
@@ -139,8 +142,6 @@ function UserTab() {
 
   const countAktiv   = users.filter(u => u.aktiv).length;
   const countInaktiv = users.filter(u => !u.aktiv).length;
-
-  const deactivateTarget = deactivateId ? users.find(u => u.id === deactivateId) : null;
 
   return (
     <div className={s.tabContent}>
@@ -195,9 +196,28 @@ function UserTab() {
               </div>
             </>
           )}
+          {/* Deaktivieren — nur bei bestehenden aktiven Usern */}
+          {editId && editTarget?.aktiv && (
+            <>
+              <div className={s.dividerLine} />
+              <button
+                type="button"
+                className={s.deactivateBtn}
+                onClick={() => setConfirmDeactivate(true)}
+              >
+                🔒 Benutzer deaktivieren
+              </button>
+            </>
+          )}
           <div className={s.formActions}>
             <button type="button" className={s.cancelBtn} onClick={() => setShowForm(false)}>Abbrechen</button>
-            <button type="button" className={s.saveBtn} onClick={handleSave} disabled={!form.name.trim() || !form.email.trim()}>Speichern</button>
+            {/* Inaktive User können nur gespeichert werden (kein Reaktivieren) */}
+            {(!editId || editTarget?.aktiv) && (
+              <button type="button" className={s.saveBtn} onClick={handleSave} disabled={!form.name.trim() || !form.email.trim()}>Speichern</button>
+            )}
+            {editId && !editTarget?.aktiv && (
+              <button type="button" className={s.cancelBtn} onClick={() => setShowForm(false)}>Schließen</button>
+            )}
           </div>
         </div>
       )}
@@ -226,22 +246,8 @@ function UserTab() {
                 {ROLLE_LABELS[u.rolle]}
               </span>
               <div className={s.userActions}>
-                {u.aktiv && (
-                  <button type="button" className={s.iconBtn} onClick={() => openEdit(u)} title="Bearbeiten">✏️</button>
-                )}
-                {/* Aktive User: Deaktivieren-Button. Inaktive User: kein Button (endgültig) */}
-                {u.aktiv ? (
-                  <button
-                    type="button"
-                    className={s.iconBtnWarning}
-                    onClick={() => setDeactivateId(u.id)}
-                    title="Benutzer deaktivieren"
-                  >
-                    🔒
-                  </button>
-                ) : (
-                  <span className={s.inaktivLabel}>Inaktiv</span>
-                )}
+                <button type="button" className={s.iconBtn} onClick={() => openEdit(u)} title="Bearbeiten">✏️</button>
+                {!u.aktiv && <span className={s.inaktivLabel}>Inaktiv</span>}
               </div>
             </div>
           </div>
@@ -249,24 +255,27 @@ function UserTab() {
       </div>
 
       {/* Zweistufige Bestätigung Benutzer deaktivieren */}
-      {deactivateTarget && (
+      {confirmDeactivate && editTarget && (
         <ConfirmModal
           steps={[
             {
               title: 'Benutzer deaktivieren?',
-              body: `„${deactivateTarget.name}" wird deaktiviert und kann sich nicht mehr anmelden.`,
+              body: `„${editTarget.name}" wird deaktiviert und kann sich nicht mehr anmelden.`,
               confirmLabel: 'Weiter →',
-              danger: false,
             },
             {
               title: 'Wirklich endgültig deaktivieren?',
-              body: `Dieser Schritt kann nicht rückgängig gemacht werden. „${deactivateTarget.name}" muss vom Admin neu angelegt werden, um wieder Zugang zu erhalten.`,
+              body: `Dieser Schritt kann nicht rückgängig gemacht werden. „${editTarget.name}" muss vom Admin neu angelegt werden, um wieder Zugang zu erhalten.`,
               confirmLabel: 'Ja, endgültig deaktivieren',
               danger: true,
             },
           ]}
-          onConfirmed={() => { toggleAktiv(deactivateTarget.id); setDeactivateId(null); }}
-          onCancel={() => setDeactivateId(null)}
+          onConfirmed={() => {
+            toggleAktiv(editTarget.id);
+            setConfirmDeactivate(false);
+            setShowForm(false);
+          }}
+          onCancel={() => setConfirmDeactivate(false)}
         />
       )}
     </div>
@@ -310,6 +319,7 @@ function ObjekteTab() {
   const countAktiv   = objekte.filter(o => o.aktiv !== false).length;
   const countInaktiv = objekte.filter(o => o.aktiv === false).length;
 
+  const editObj    = editId ? objekte.find(o => o.id === editId) : null;
   const confirmObj = confirmTarget ? objekte.find(o => o.id === confirmTarget.id) : null;
 
   return (
@@ -348,6 +358,31 @@ function ObjekteTab() {
           <input className={s.input} value={form.name} onChange={e => setForm(f => ({...f, name: e.target.value}))} placeholder="HWK Hannover Hauptgebäude" />
           <label className={s.label}>Adresse</label>
           <input className={s.input} value={form.adresse} onChange={e => setForm(f => ({...f, adresse: e.target.value}))} placeholder="Berliner Allee 17, 30175 Hannover" />
+
+          {/* De-/Aktivieren — nur bei bestehenden Objekten */}
+          {editId && editObj && (
+            <>
+              <div className={s.dividerLine} />
+              {editObj.aktiv !== false ? (
+                <button
+                  type="button"
+                  className={s.deactivateBtn}
+                  onClick={() => setConfirmTarget({ id: editId, toAktiv: false })}
+                >
+                  🔒 Objekt deaktivieren
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className={s.activateBtn}
+                  onClick={() => setConfirmTarget({ id: editId, toAktiv: true })}
+                >
+                  🔓 Objekt aktivieren
+                </button>
+              )}
+            </>
+          )}
+
           <div className={s.formActions}>
             <button type="button" className={s.cancelBtn} onClick={() => setShowForm(false)}>Abbrechen</button>
             <button type="button" className={s.saveBtn} onClick={handleSave} disabled={!form.name.trim()}>Speichern</button>
@@ -368,14 +403,7 @@ function ObjekteTab() {
               </div>
               <div className={s.userActions}>
                 <button type="button" className={s.iconBtn} onClick={() => openEdit(o)} title="Bearbeiten">✏️</button>
-                <button
-                  type="button"
-                  className={isAktiv ? s.iconBtnWarning : s.iconBtnSuccess}
-                  onClick={() => setConfirmTarget({ id: o.id, toAktiv: !isAktiv })}
-                  title={isAktiv ? 'Deaktivieren' : 'Aktivieren'}
-                >
-                  {isAktiv ? '🔒' : '🔓'}
-                </button>
+                {!isAktiv && <span className={s.inaktivLabel}>Inaktiv</span>}
               </div>
             </div>
           );
@@ -392,13 +420,11 @@ function ObjekteTab() {
                     title: 'Objekt wieder aktivieren?',
                     body: `„${confirmObj.name}" wird wieder aktiviert und steht Benutzern zur Verfügung.`,
                     confirmLabel: 'Weiter →',
-                    danger: false,
                   },
                   {
                     title: 'Aktivierung bestätigen',
                     body: `Bitte bestätige, dass „${confirmObj.name}" ab sofort wieder aktiv ist.`,
                     confirmLabel: 'Ja, aktivieren',
-                    danger: false,
                   },
                 ]
               : [
@@ -406,7 +432,6 @@ function ObjekteTab() {
                     title: 'Objekt deaktivieren?',
                     body: `„${confirmObj.name}" wird deaktiviert. Benutzer können keine neuen Bewirtungen für dieses Objekt erstellen.`,
                     confirmLabel: 'Weiter →',
-                    danger: false,
                   },
                   {
                     title: 'Wirklich deaktivieren?',
@@ -416,7 +441,11 @@ function ObjekteTab() {
                   },
                 ]
           }
-          onConfirmed={() => { toggleAktiv(confirmObj.id); setConfirmTarget(null); }}
+          onConfirmed={() => {
+            toggleAktiv(confirmObj.id);
+            setConfirmTarget(null);
+            setShowForm(false);
+          }}
           onCancel={() => setConfirmTarget(null)}
         />
       )}

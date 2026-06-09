@@ -82,6 +82,18 @@
 }
 .saveBtn:disabled { opacity: .4; cursor: not-allowed; }
 
+.dividerLine { border: none; border-top: 1px solid var(--ek-border); margin: 4px 0; }
+.deactivateBtn {
+  width: 100%; padding: 10px; border-radius: 10px;
+  border: 1.5px solid #f5c6c6; background: #fff3f3;
+  color: #c0392b; font-size: 13px; font-weight: 700; cursor: pointer; text-align: left;
+}
+.activateBtn {
+  width: 100%; padding: 10px; border-radius: 10px;
+  border: 1.5px solid #a8d5b5; background: #f0faf3;
+  color: #2d8a4e; font-size: 13px; font-weight: 700; cursor: pointer; text-align: left;
+}
+
 /* User list */
 .list { display: flex; flex-direction: column; gap: 10px; }
 .userRow {
