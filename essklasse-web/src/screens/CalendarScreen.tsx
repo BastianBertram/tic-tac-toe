@@ -6,6 +6,7 @@ import {
 import { de } from 'date-fns/locale';
 import { useBelegStore } from '../store/belegStore';
 import { useObjektStore } from '../store/objektStore';
+import { useAuthStore } from '../store/authStore';
 import { BelegCard } from '../components/BelegCard';
 import { ObjektSwitcherButton } from '../components/ObjektSwitcher';
 import { OffeneBanner } from '../components/OffeneBanner';
@@ -27,10 +28,17 @@ export function CalendarScreen({ onOpenBeleg, onTabAbschluss }: Props) {
   const [selected, setSelected] = useState(format(new Date(), 'yyyy-MM-dd'));
   const belege        = useBelegStore(st => st.belege);
   const aktivesObjekt = useObjektStore(st => st.getAktivesObjekt());
+  const authUser      = useAuthStore(st => st.user);
+  const isUserRolle   = authUser?.rolle === 'user';
 
   const belegeForObjekt = useMemo(
-    () => belege.filter(b => !aktivesObjekt || b.objektId === aktivesObjekt.id),
-    [belege, aktivesObjekt]
+    () => belege.filter(b => {
+      if (b.deleted) return false;
+      if (aktivesObjekt && b.objektId !== aktivesObjekt.id) return false;
+      if (isUserRolle && b.erstelltVon !== authUser?.name) return false;
+      return true;
+    }),
+    [belege, aktivesObjekt, isUserRolle, authUser?.name]
   );
   const datesWithBelege = useMemo(
     () => [...new Set(belegeForObjekt.map(b => b.cateringDatumVon))],

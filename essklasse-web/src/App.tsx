@@ -94,7 +94,7 @@ export default function App() {
     );
   }
 
-  // ── User / Admin: view-basiertes Routing ──
+  // ── User / Bereichsleitung: view-basiertes Routing ──
   if (view.type === 'edit') {
     return (
       <AuthGuard>
@@ -164,7 +164,7 @@ export default function App() {
     );
   }
 
-  // ── User / Admin ──
+  // ── User / Bereichsleitung ──
   return (
     <AuthGuard>
       <div className={s.app}>
