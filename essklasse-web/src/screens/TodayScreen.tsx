@@ -52,9 +52,10 @@ export function TodayScreen({ onOpenBeleg, onAbschliessen, onTabAbschluss }: Pro
   const rightIsToday = isToday(rightDate);
 
   function dayTitle(date: Date, idx: number): string {
-    if (isToday(date)) return 'Heute';
-    if (idx === 1 && isToday(addDays(date, -1))) return 'Morgen';
-    return format(date, 'EEEE', { locale: de });
+    const weekday = format(date, 'EEEE', { locale: de });
+    if (isToday(date)) return `Heute, ${weekday}`;
+    if (idx === 1 && isToday(addDays(date, -1))) return `Morgen, ${weekday}`;
+    return weekday;
   }
   function dateShort(date: Date): string {
     return format(date, 'EEE, d. MMM', { locale: de });
