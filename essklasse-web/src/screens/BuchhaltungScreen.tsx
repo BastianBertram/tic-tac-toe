@@ -9,20 +9,53 @@ import type { Bewirtungsbeleg } from '../types';
 import s from './BuchhaltungScreen.module.css';
 
 type BuchTab = 'alle' | 'ueberfaellig' | 'bereit' | 'erledigt';
-type UeberfaelligSort = 'datum' | 'bestellnr';
+type SortOpt = 'datum' | 'bestellnr';
 
 interface Props { onOpenBeleg: (b: Bewirtungsbeleg) => void; }
 
 function byBestellungsnr(a: Bewirtungsbeleg, b: Bewirtungsbeleg) {
   return (a.bestellungsnummer ?? '').localeCompare(b.bestellungsnummer ?? '');
 }
-
-/** Sortiert nach Datum + Uhrzeit aufsteigend */
 function byDatumUhrzeit(a: Bewirtungsbeleg, b: Bewirtungsbeleg) {
-  const keyA = `${a.cateringDatumVon}T${a.uhrzeitVon ?? '00:00'}`;
-  const keyB = `${b.cateringDatumVon}T${b.uhrzeitVon ?? '00:00'}`;
-  return keyA.localeCompare(keyB);
+  return `${a.cateringDatumVon}T${a.uhrzeitVon ?? '00:00'}`.localeCompare(
+         `${b.cateringDatumVon}T${b.uhrzeitVon ?? '00:00'}`);
 }
+
+/** Gemeinsame Filter/Such/Sortier-Logik */
+function applyControls(
+  list: Bewirtungsbeleg[],
+  objekte: ReturnType<typeof useObjektStore.getState>['objekte'],
+  opts: { search: string; objekt: string; sort: SortOpt }
+): Bewirtungsbeleg[] {
+  let out = [...list];
+
+  if (opts.objekt !== 'alle') {
+    out = out.filter(b => b.objektId === opts.objekt);
+  }
+
+  if (opts.search.trim()) {
+    const q = opts.search.trim().toLowerCase();
+    out = out.filter(b => {
+      const datum = format(parseISO(b.cateringDatumVon), 'dd.MM.yyyy');
+      const obj = objekte.find(o => o.id === b.objektId);
+      return (
+        datum.includes(q) ||
+        (b.bestellungsnummer ?? '').toLowerCase().includes(q) ||
+        (b.veranstaltung ?? '').toLowerCase().includes(q) ||
+        (b.besteller ?? '').toLowerCase().includes(q) ||
+        (obj?.name ?? '').toLowerCase().includes(q) ||
+        (obj?.kuerzel ?? '').toLowerCase().includes(q)
+      );
+    });
+  }
+
+  out.sort(opts.sort === 'datum' ? byDatumUhrzeit : byBestellungsnr);
+  return out;
+}
+
+/** Per-Tab Steuerungs-State */
+interface TabControls { search: string; objekt: string; sort: SortOpt; }
+const INIT_CONTROLS: TabControls = { search: '', objekt: 'alle', sort: 'datum' };
 
 export function BuchhaltungScreen({ onOpenBeleg }: Props) {
   const belege = useBelegStore(st => st.belege);
@@ -33,24 +66,17 @@ export function BuchhaltungScreen({ onOpenBeleg }: Props) {
   const [tab, setTab] = useState<BuchTab>('alle');
   const [drawerOpen, setDrawerOpen] = useState(false);
 
-  // "Bereit für Rechnung" Filter
-  const [filterObjekt, setFilterObjekt] = useState('alle');
-  const [filterDatumVon, setFilterDatumVon] = useState('');
-  const [filterDatumBis, setFilterDatumBis] = useState('');
-
-  // "Überfällig" Steuerung
-  const [ueberfaelligSort, setUeberfaelligSort] = useState<UeberfaelligSort>('datum');
-  const [ueberfaelligSearch, setUeberfaelligSearch] = useState('');
-  const [ueberfaelligObjekt, setUeberfaelligObjekt] = useState('alle');
+  // Eigene Steuerung pro Tab
+  const [ctrlUeber, setCtrlUeber] = useState<TabControls>(INIT_CONTROLS);
+  const [ctrlBereit, setCtrlBereit] = useState<TabControls>(INIT_CONTROLS);
+  const [ctrlErl, setCtrlErl] = useState<TabControls>(INIT_CONTROLS);
 
   const now = new Date();
   const nowDate = format(now, 'yyyy-MM-dd');
   const nowTime = format(now, 'HH:mm');
 
   const alleBelege = useMemo(() =>
-    belege.filter(b => !b.deleted).sort(byBestellungsnr),
-    [belege]
-  );
+    belege.filter(b => !b.deleted).sort(byBestellungsnr), [belege]);
 
   const ueberfaelligBase = useMemo(() =>
     belege.filter(b => {
@@ -58,64 +84,23 @@ export function BuchhaltungScreen({ onOpenBeleg }: Props) {
       if (b.cateringDatumVon < nowDate) return true;
       if (b.cateringDatumVon === nowDate && b.uhrzeitBis && b.uhrzeitBis < nowTime) return true;
       return false;
-    }),
-    [belege, nowDate, nowTime]
-  );
-
-  const ueberfaelligBelege = useMemo(() => {
-    let list = [...ueberfaelligBase];
-
-    // Objekt-Filter
-    if (ueberfaelligObjekt !== 'alle') {
-      list = list.filter(b => b.objektId === ueberfaelligObjekt);
-    }
-
-    // Suche: Datum, Bestellnummer, Veranstaltung, Besteller, Objekt
-    if (ueberfaelligSearch.trim()) {
-      const q = ueberfaelligSearch.trim().toLowerCase();
-      list = list.filter(b => {
-        const datumFormatted = format(parseISO(b.cateringDatumVon), 'dd.MM.yyyy');
-        const objektName = objekte.find(o => o.id === b.objektId);
-        return (
-          datumFormatted.includes(q) ||
-          (b.bestellungsnummer ?? '').toLowerCase().includes(q) ||
-          (b.veranstaltung ?? '').toLowerCase().includes(q) ||
-          (b.besteller ?? '').toLowerCase().includes(q) ||
-          (objektName?.name ?? '').toLowerCase().includes(q) ||
-          (objektName?.kuerzel ?? '').toLowerCase().includes(q)
-        );
-      });
-    }
-
-    // Sortierung
-    list.sort(ueberfaelligSort === 'datum' ? byDatumUhrzeit : byBestellungsnr);
-    return list;
-  }, [ueberfaelligBase, ueberfaelligSort, ueberfaelligSearch, ueberfaelligObjekt, objekte]);
+    }), [belege, nowDate, nowTime]);
 
   const bereitBase = useMemo(() =>
-    belege.filter(b => !b.deleted && b.abgeschlossen && !b.rechnungErstellt),
-    [belege]
-  );
+    belege.filter(b => !b.deleted && b.abgeschlossen && !b.rechnungErstellt), [belege]);
 
-  const bereitBelege = useMemo(() => {
-    return bereitBase.filter(b => {
-      if (filterObjekt !== 'alle' && b.objektId !== filterObjekt) return false;
-      if (filterDatumVon && b.cateringDatumVon < filterDatumVon) return false;
-      if (filterDatumBis && b.cateringDatumVon > filterDatumBis) return false;
-      return true;
-    }).sort(byBestellungsnr);
-  }, [bereitBase, filterObjekt, filterDatumVon, filterDatumBis]);
+  const erledigtBase = useMemo(() =>
+    belege.filter(b => !b.deleted && b.rechnungErstellt), [belege]);
 
-  const erledigtBelege = useMemo(() =>
-    belege.filter(b => !b.deleted && b.rechnungErstellt).sort(byBestellungsnr),
-    [belege]
-  );
+  const ueberfaelligBelege = useMemo(() => applyControls(ueberfaelligBase, objekte, ctrlUeber), [ueberfaelligBase, objekte, ctrlUeber]);
+  const bereitBelege       = useMemo(() => applyControls(bereitBase,       objekte, ctrlBereit), [bereitBase,       objekte, ctrlBereit]);
+  const erledigtBelege     = useMemo(() => applyControls(erledigtBase,     objekte, ctrlErl),    [erledigtBase,     objekte, ctrlErl]);
 
   const TAB_CONFIG = [
-    { id: 'alle'         as BuchTab, label: 'Alle\nBewirtungen',     count: alleBelege.length,           urgent: false },
-    { id: 'ueberfaellig' as BuchTab, label: 'Bewirtungen\nüberfällig', count: ueberfaelligBase.length,   urgent: true  },
-    { id: 'bereit'       as BuchTab, label: 'Bereit für\nRechnung',  count: bereitBase.length,           urgent: false },
-    { id: 'erledigt'     as BuchTab, label: 'Rechnung\nerstellt',    count: erledigtBelege.length,       urgent: false },
+    { id: 'alle'         as BuchTab, label: 'Alle\nBewirtungen',      count: alleBelege.length,       urgent: false },
+    { id: 'ueberfaellig' as BuchTab, label: 'Bewirtungen\nüberfällig', count: ueberfaelligBase.length, urgent: true  },
+    { id: 'bereit'       as BuchTab, label: 'Bereit für\nRechnung',   count: bereitBase.length,       urgent: false },
+    { id: 'erledigt'     as BuchTab, label: 'Rechnung\nerstellt',     count: erledigtBase.length,     urgent: false },
   ];
 
   const displayList =
@@ -124,62 +109,62 @@ export function BuchhaltungScreen({ onOpenBeleg }: Props) {
     tab === 'bereit'       ? bereitBelege :
     erledigtBelege;
 
+  // Welche Steuerung ist aktiv?
+  const ctrl =
+    tab === 'ueberfaellig' ? ctrlUeber :
+    tab === 'bereit'       ? ctrlBereit :
+    ctrlErl;
+  const setCtrl =
+    tab === 'ueberfaellig' ? setCtrlUeber :
+    tab === 'bereit'       ? setCtrlBereit :
+    setCtrlErl;
+
+  const hasControls = tab !== 'alle';
+
   return (
     <div className={s.screen}>
-      {/* Header */}
       <div className={s.header}>
         <img src="/logo.webp" alt="EssKlasse" className={s.logo} />
         <span className={s.rolleChip}>Buchhaltung</span>
       </div>
 
-      {/* Tab-spezifische Steuerung */}
       <div className={s.content}>
-
-        {/* Überfällig: Suche + Sortierung */}
-        {tab === 'ueberfaellig' && (
+        {/* Filter/Suche/Sortierung — für alle Tabs außer "Alle" */}
+        {hasControls && (
           <div className={s.filters}>
             <input
               className={s.searchInput}
               type="search"
               placeholder="🔍 Datum, Bestellnr., Veranstaltung, Besteller, Objekt…"
-              value={ueberfaelligSearch}
-              onChange={e => setUeberfaelligSearch(e.target.value)}
+              value={ctrl.search}
+              onChange={e => setCtrl(c => ({ ...c, search: e.target.value }))}
             />
-            <select className={s.select} value={ueberfaelligObjekt} onChange={e => setUeberfaelligObjekt(e.target.value)}>
+            <select
+              className={s.select}
+              value={ctrl.objekt}
+              onChange={e => setCtrl(c => ({ ...c, objekt: e.target.value }))}
+            >
               <option value="alle">Alle Objekte</option>
-              {objekte.map(o => <option key={o.id} value={o.id}>{o.kuerzel ? `${o.kuerzel} – ${o.name}` : o.name}</option>)}
+              {objekte.map(o => (
+                <option key={o.id} value={o.id}>{o.kuerzel ? `${o.kuerzel} – ${o.name}` : o.name}</option>
+              ))}
             </select>
             <div className={s.sortRow}>
               <span className={s.sortLabel}>Sortierung:</span>
               <button
                 type="button"
-                className={`${s.sortBtn} ${ueberfaelligSort === 'datum' ? s.sortBtnActive : ''}`}
-                onClick={() => setUeberfaelligSort('datum')}
+                className={`${s.sortBtn} ${ctrl.sort === 'datum' ? s.sortBtnActive : ''}`}
+                onClick={() => setCtrl(c => ({ ...c, sort: 'datum' }))}
               >
                 📅 Bewirtungsdatum
               </button>
               <button
                 type="button"
-                className={`${s.sortBtn} ${ueberfaelligSort === 'bestellnr' ? s.sortBtnActive : ''}`}
-                onClick={() => setUeberfaelligSort('bestellnr')}
+                className={`${s.sortBtn} ${ctrl.sort === 'bestellnr' ? s.sortBtnActive : ''}`}
+                onClick={() => setCtrl(c => ({ ...c, sort: 'bestellnr' }))}
               >
                 # Bestellnummer
               </button>
-            </div>
-          </div>
-        )}
-
-        {/* Bereit für Rechnung: Objekt- + Datumsfilter */}
-        {tab === 'bereit' && (
-          <div className={s.filters}>
-            <select className={s.select} value={filterObjekt} onChange={e => setFilterObjekt(e.target.value)}>
-              <option value="alle">Alle Objekte</option>
-              {objekte.map(o => <option key={o.id} value={o.id}>{o.kuerzel ? `${o.kuerzel} – ${o.name}` : o.name}</option>)}
-            </select>
-            <div className={s.dateRow}>
-              <input type="date" className={s.dateInput} value={filterDatumVon} onChange={e => setFilterDatumVon(e.target.value)} />
-              <span className={s.dateSep}>–</span>
-              <input type="date" className={s.dateInput} value={filterDatumBis} onChange={e => setFilterDatumBis(e.target.value)} />
             </div>
           </div>
         )}
