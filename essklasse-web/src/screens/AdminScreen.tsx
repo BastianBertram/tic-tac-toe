@@ -383,25 +383,48 @@ function ObjekteTab() {
   const { objekte, setObjekte, updateObjekt, toggleAktiv } = useObjektStore();
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
-  const [form, setForm] = useState({ name: '', adresse: '', kuerzel: '' });
+  const emptyObjForm = { name: '', kuerzel: '', strasse: '', plz: '', ort: '', telefon: '', email: '', kostenstellen: [''] };
+  const [form, setForm] = useState(emptyObjForm);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<FilterStatus>('aktiv');
   const [confirmTarget, setConfirmTarget] = useState<{ id: string; toAktiv: boolean } | null>(null);
 
-  function openNew() { setForm({ name: '', adresse: '', kuerzel: '' }); setEditId(null); setShowForm(true); }
+  function openNew() { setForm(emptyObjForm); setEditId(null); setShowForm(true); }
   function openEdit(o: typeof objekte[0]) {
-    setForm({ name: o.name, adresse: o.adresse ?? '', kuerzel: o.kuerzel ?? '' });
+    setForm({
+      name: o.name,
+      kuerzel: o.kuerzel ?? '',
+      strasse: o.strasse ?? '',
+      plz: o.plz ?? '',
+      ort: o.ort ?? '',
+      telefon: o.telefon ?? '',
+      email: o.email ?? '',
+      kostenstellen: o.kostenstellen?.length ? o.kostenstellen : [''],
+    });
     setEditId(o.id);
     setShowForm(true);
   }
+
+  const canSaveObjekt = form.name.trim() && form.kuerzel.trim() && form.strasse.trim() && form.plz.trim() && form.ort.trim()
+    && form.kostenstellen.some(k => k.trim());
+
   function handleSave() {
-    if (!form.name.trim()) return;
-    if (editId) {
-      updateObjekt(editId, { name: form.name, adresse: form.adresse, kuerzel: form.kuerzel });
-    } else {
-      setObjekte([...objekte, { id: uuidv4(), name: form.name, adresse: form.adresse, kuerzel: form.kuerzel, aktiv: true }]);
-    }
+    if (!canSaveObjekt) return;
+    const kostenstellen = form.kostenstellen.filter(k => k.trim());
+    const data = { name: form.name, kuerzel: form.kuerzel, strasse: form.strasse, plz: form.plz, ort: form.ort, telefon: form.telefon, email: form.email, kostenstellen };
+    if (editId) updateObjekt(editId, data);
+    else setObjekte([...objekte, { id: uuidv4(), ...data, aktiv: true }]);
     setShowForm(false);
+  }
+
+  function setKostenstelle(idx: number, val: string) {
+    setForm(f => { const ks = [...f.kostenstellen]; ks[idx] = val; return { ...f, kostenstellen: ks }; });
+  }
+  function addKostenstelle() {
+    setForm(f => ({ ...f, kostenstellen: [...f.kostenstellen, ''] }));
+  }
+  function removeKostenstelle(idx: number) {
+    setForm(f => ({ ...f, kostenstellen: f.kostenstellen.filter((_, i) => i !== idx) }));
   }
 
   const q = search.toLowerCase();
@@ -448,31 +471,61 @@ function ObjekteTab() {
       {showForm && (
         <div className={s.formCard}>
           <div className={s.formTitle}>{editId ? 'Objekt bearbeiten' : 'Neues Objekt'}</div>
-          <label className={s.label}>Kürzel (z.B. HWK-01)</label>
-          <input className={s.input} value={form.kuerzel} onChange={e => setForm(f => ({...f, kuerzel: e.target.value}))} placeholder="HWK-01" />
-          <label className={s.label}>Name *</label>
+
+          <label className={s.label}>Objektname *</label>
           <input className={s.input} value={form.name} onChange={e => setForm(f => ({...f, name: e.target.value}))} placeholder="HWK Hannover Hauptgebäude" />
-          <label className={s.label}>Adresse</label>
-          <input className={s.input} value={form.adresse} onChange={e => setForm(f => ({...f, adresse: e.target.value}))} placeholder="Berliner Allee 17, 30175 Hannover" />
+
+          <label className={s.label}>Objektkürzel *</label>
+          <input className={s.input} value={form.kuerzel} onChange={e => setForm(f => ({...f, kuerzel: e.target.value}))} placeholder="z.B. HWK oder FBZ" />
+
+          <label className={s.label}>Straße und Hausnummer *</label>
+          <input className={s.input} value={form.strasse} onChange={e => setForm(f => ({...f, strasse: e.target.value}))} placeholder="Berliner Allee 17" />
+
+          <div className={s.twoCol}>
+            <div>
+              <label className={s.label}>PLZ *</label>
+              <input className={s.input} value={form.plz} onChange={e => setForm(f => ({...f, plz: e.target.value}))} placeholder="30175" maxLength={5} />
+            </div>
+            <div style={{ flex: 2 }}>
+              <label className={s.label}>Ort *</label>
+              <input className={s.input} value={form.ort} onChange={e => setForm(f => ({...f, ort: e.target.value}))} placeholder="Hannover" />
+            </div>
+          </div>
+
+          <label className={s.label}>Telefonnummer</label>
+          <input className={s.input} type="tel" value={form.telefon} onChange={e => setForm(f => ({...f, telefon: e.target.value}))} placeholder="0511 123456" />
+
+          <label className={s.label}>E-Mail</label>
+          <input className={s.input} type="email" value={form.email} onChange={e => setForm(f => ({...f, email: e.target.value}))} placeholder="info@objekt.de" />
+
+          <label className={s.label}>Kostenstellen *</label>
+          <div className={s.kostenstellenList}>
+            {form.kostenstellen.map((k, idx) => (
+              <div key={idx} className={s.kostenstelleRow}>
+                <input
+                  className={s.input}
+                  value={k}
+                  onChange={e => setKostenstelle(idx, e.target.value)}
+                  placeholder={`Kostenstelle ${idx + 1}`}
+                />
+                {form.kostenstellen.length > 1 && (
+                  <button type="button" className={s.ksRemoveBtn} onClick={() => removeKostenstelle(idx)}>✕</button>
+                )}
+              </div>
+            ))}
+            <button type="button" className={s.ksAddBtn} onClick={addKostenstelle}>+ Kostenstelle hinzufügen</button>
+          </div>
 
           {/* De-/Aktivieren — nur bei bestehenden Objekten */}
           {editId && editObj && (
             <>
               <div className={s.dividerLine} />
               {editObj.aktiv !== false ? (
-                <button
-                  type="button"
-                  className={s.deactivateBtn}
-                  onClick={() => setConfirmTarget({ id: editId, toAktiv: false })}
-                >
+                <button type="button" className={s.deactivateBtn} onClick={() => setConfirmTarget({ id: editId, toAktiv: false })}>
                   🔒 Objekt deaktivieren
                 </button>
               ) : (
-                <button
-                  type="button"
-                  className={s.activateBtn}
-                  onClick={() => setConfirmTarget({ id: editId, toAktiv: true })}
-                >
+                <button type="button" className={s.activateBtn} onClick={() => setConfirmTarget({ id: editId, toAktiv: true })}>
                   🔓 Objekt aktivieren
                 </button>
               )}
@@ -481,7 +534,7 @@ function ObjekteTab() {
 
           <div className={s.formActions}>
             <button type="button" className={s.cancelBtn} onClick={() => setShowForm(false)}>Abbrechen</button>
-            <button type="button" className={s.saveBtn} onClick={handleSave} disabled={!form.name.trim()}>Speichern</button>
+            <button type="button" className={s.saveBtn} onClick={handleSave} disabled={!canSaveObjekt}>Speichern</button>
           </div>
         </div>
       )}
@@ -490,12 +543,18 @@ function ObjekteTab() {
         {filtered.length === 0 && <div className={s.emptyState}>Keine Objekte gefunden</div>}
         {filtered.map(o => {
           const isAktiv = o.aktiv !== false;
+          const adresse = [o.strasse, o.plz && o.ort ? `${o.plz} ${o.ort}` : ''].filter(Boolean).join(', ') || o.adresse;
           return (
             <div key={o.id} className={`${s.objektRow} ${!isAktiv ? s.userRowInaktiv : ''}`}>
-              <div className={s.objektKuerzel}>{o.kuerzel ?? '—'}</div>
+              <div className={s.objektKuerzel}>{o.kuerzel || '—'}</div>
               <div className={s.objektInfo}>
                 <div className={s.objektName}>{o.name}</div>
-                {o.adresse && <div className={s.objektAdresse}>📍 {o.adresse}</div>}
+                {adresse && <div className={s.objektAdresse}>📍 {adresse}</div>}
+                {o.kostenstellen?.length > 0 && (
+                  <div className={s.userObjekte}>
+                    {o.kostenstellen.map(k => <span key={k} className={s.objektTag}>{k}</span>)}
+                  </div>
+                )}
               </div>
               <div className={s.userActions}>
                 <button type="button" className={s.iconBtn} onClick={() => openEdit(o)} title="Bearbeiten">✏️</button>
@@ -506,42 +565,20 @@ function ObjekteTab() {
         })}
       </div>
 
-      {/* Zweistufige Bestätigung Objekt de-/aktivieren */}
       {confirmObj && confirmTarget && (
         <ConfirmModal
           steps={
             confirmTarget.toAktiv
               ? [
-                  {
-                    title: 'Objekt wieder aktivieren?',
-                    body: `„${confirmObj.name}" wird wieder aktiviert und steht Benutzern zur Verfügung.`,
-                    confirmLabel: 'Weiter →',
-                  },
-                  {
-                    title: 'Aktivierung bestätigen',
-                    body: `Bitte bestätige, dass „${confirmObj.name}" ab sofort wieder aktiv ist.`,
-                    confirmLabel: 'Ja, aktivieren',
-                  },
+                  { title: 'Objekt wieder aktivieren?', body: `„${confirmObj.name}" wird wieder aktiviert und steht Benutzern zur Verfügung.`, confirmLabel: 'Weiter →' },
+                  { title: 'Aktivierung bestätigen', body: `Bitte bestätige, dass „${confirmObj.name}" ab sofort wieder aktiv ist.`, confirmLabel: 'Ja, aktivieren' },
                 ]
               : [
-                  {
-                    title: 'Objekt deaktivieren?',
-                    body: `„${confirmObj.name}" wird deaktiviert. Benutzer können keine neuen Bewirtungen für dieses Objekt erstellen.`,
-                    confirmLabel: 'Weiter →',
-                  },
-                  {
-                    title: 'Wirklich deaktivieren?',
-                    body: `Bestehende Bewirtungen bleiben erhalten. Das Objekt kann später wieder aktiviert werden.`,
-                    confirmLabel: 'Ja, deaktivieren',
-                    danger: true,
-                  },
+                  { title: 'Objekt deaktivieren?', body: `„${confirmObj.name}" wird deaktiviert. Benutzer können keine neuen Bewirtungen für dieses Objekt erstellen.`, confirmLabel: 'Weiter →' },
+                  { title: 'Wirklich deaktivieren?', body: `Bestehende Bewirtungen bleiben erhalten. Das Objekt kann später wieder aktiviert werden.`, confirmLabel: 'Ja, deaktivieren' },
                 ]
           }
-          onConfirmed={() => {
-            toggleAktiv(confirmObj.id);
-            setConfirmTarget(null);
-            setShowForm(false);
-          }}
+          onConfirmed={() => { toggleAktiv(confirmObj.id); setConfirmTarget(null); setShowForm(false); }}
           onCancel={() => setConfirmTarget(null)}
         />
       )}

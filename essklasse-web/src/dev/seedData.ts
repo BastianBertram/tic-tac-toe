@@ -32,9 +32,9 @@ function abschluss(positionen: BelegPosition[]): AbschlussPosition[] {
 }
 
 const OBJEKTE = [
-  { id: 'demo-1', name: 'HWK Hannover Hauptgebäude', adresse: 'Berliner Allee 17, 30175 Hannover', kuerzel: 'HWK-01' },
-  { id: 'demo-2', name: 'Berufsschulzentrum Nord',   adresse: 'Podbielskistr. 22, 30163 Hannover', kuerzel: 'BSZ-N' },
-  { id: 'demo-3', name: 'Bildungszentrum Mitte',     adresse: 'Expo Plaza 4, 30539 Hannover',       kuerzel: 'BZM' },
+  { id: 'demo-1', name: 'HWK Hannover Hauptgebäude', kuerzel: 'HWK-01', strasse: 'Berliner Allee 17', plz: '30175', ort: 'Hannover', telefon: '0511 34859-0', email: 'info@hwk-hannover.de', kostenstellen: ['KST-100', 'KST-101'], aktiv: true },
+  { id: 'demo-2', name: 'Berufsschulzentrum Nord',   kuerzel: 'BSZ-N',  strasse: 'Podbielskistr. 22', plz: '30163', ort: 'Hannover', telefon: '0511 12345-0', email: '',                        kostenstellen: ['KST-200'],            aktiv: true },
+  { id: 'demo-3', name: 'Bildungszentrum Mitte',     kuerzel: 'BZM',    strasse: 'Expo Plaza 4',      plz: '30539', ort: 'Hannover', telefon: '',             email: 'bzm@hwk-hannover.de',     kostenstellen: ['KST-300', 'KST-301'], aktiv: true },
 ];
 
 const USERS_EXTRA = [

@@ -185,6 +185,26 @@
   text-transform: uppercase; letter-spacing: .4px;
 }
 
+/* Zwei-Spalten-Layout (PLZ + Ort) */
+.twoCol { display: flex; gap: 8px; }
+.twoCol > div { display: flex; flex-direction: column; flex: 1; }
+
+/* Kostenstellen */
+.kostenstellenList { display: flex; flex-direction: column; gap: 6px; }
+.kostenstelleRow { display: flex; gap: 6px; align-items: center; }
+.kostenstelleRow .input { flex: 1; }
+.ksRemoveBtn {
+  flex-shrink: 0; width: 28px; height: 28px; border-radius: 8px;
+  border: 1px solid var(--ek-border); background: var(--ek-bg);
+  font-size: 12px; color: var(--ek-muted); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.ksAddBtn {
+  padding: 7px 12px; border-radius: 9px; border: 1.5px dashed var(--ek-border);
+  background: transparent; font-size: 13px; font-weight: 600;
+  color: var(--ek-muted); cursor: pointer; text-align: left;
+}
+
 /* Objekte list */
 .objektRow {
   display: flex; align-items: center; gap: 12px;

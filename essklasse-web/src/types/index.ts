@@ -29,10 +29,17 @@ export interface BelegPosition {
 /** Ein Objekt / Standort (z.B. „HWK Hauptgebäude", „Berufsschule Nord") */
 export interface Objekt {
   id: string;
-  name: string;
+  name: string;          // Pflicht
+  kuerzel: string;       // Pflicht, z.B. "HWK" oder "FBZ"
+  strasse: string;       // Pflicht
+  plz: string;           // Pflicht
+  ort: string;           // Pflicht
+  telefon?: string;      // Optional
+  email?: string;        // Optional
+  kostenstellen: string[]; // mind. eine
+  /** @deprecated Einzelfeld – wird aus strasse+plz+ort zusammengesetzt */
   adresse?: string;
-  kuerzel?: string;   // z.B. "HWK-01" – erscheint im Switcher-Button
-  aktiv?: boolean;    // undefined = aktiv (rückwärtskompatibel)
+  aktiv?: boolean;
 }
 
 export interface AbschlussPosition {
