@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { BottomNav } from './components/BottomNav';
 import type { Tab } from './components/BottomNav';
 import { AuthGuard } from './components/AuthGuard';
@@ -14,6 +14,7 @@ import { AdminScreen } from './screens/AdminScreen';
 import { useAuthStore } from './store/authStore';
 import { useBelegStore } from './store/belegStore';
 import { DevRoleSwitcher } from './components/DevRoleSwitcher';
+import { seedAll } from './dev/seedData';
 import type { Bewirtungsbeleg } from './types';
 import s from './App.module.css';
 
@@ -31,6 +32,14 @@ export default function App() {
   const rolle = useAuthStore(st => st.user?.rolle);
   const user = useAuthStore(st => st.user);
   const markRechnung = useBelegStore(st => st.markRechnungErstellt);
+
+  // Im DEV-Modus einmalig Testdaten einspielen (nur wenn noch leer)
+  useEffect(() => {
+    if (import.meta.env.DEV) {
+      const { belege } = useBelegStore.getState();
+      if (belege.length === 0) seedAll();
+    }
+  }, []);
 
   // Modal für Rechnungsnummer-Eingabe (Buchhaltung)
   const [rechnungModalBeleg, setRechnungModalBeleg] = useState<Bewirtungsbeleg | null>(null);

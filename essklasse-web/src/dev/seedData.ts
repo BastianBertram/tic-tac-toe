@@ -38,10 +38,10 @@ const OBJEKTE = [
 ];
 
 const USERS_EXTRA = [
-  { id: 'demo-user-2', name: 'Peter Brandt',   email: 'peter.brandt@hwk.de',   rolle: 'user' as const,         objektIds: ['demo-2', 'demo-3'], aktiv: true,  erstelltAm: s(30) },
-  { id: 'demo-user-3', name: 'Sandra Köhler',  email: 'sandra.koehler@hwk.de', rolle: 'user' as const,         objektIds: ['demo-1', 'demo-2'], aktiv: true,  erstelltAm: s(20) },
-  { id: 'demo-user-4', name: 'Thomas Müller',  email: 'thomas.mueller@hwk.de', rolle: 'user' as const,         objektIds: ['demo-3'],           aktiv: false, erstelltAm: s(60) },
-  { id: 'demo-buch-2', name: 'Britta Hoffmann', email: 'b.hoffmann@hwk.de',    rolle: 'buchhaltung' as const,  objektIds: [],                   aktiv: true,  erstelltAm: s(90) },
+  { id: 'demo-user-2', anrede: 'Herr' as const, vorname: 'Peter',   nachname: 'Brandt',   name: 'Peter Brandt',    email: 'peter.brandt@hwk.de',   telefon: '0511 99001-20', rolle: 'user' as const,        objektIds: ['demo-2', 'demo-3'], aktiv: true,  erstelltAm: s(30) },
+  { id: 'demo-user-3', anrede: 'Frau' as const,  vorname: 'Sandra',  nachname: 'Köhler',   name: 'Sandra Köhler',  email: 'sandra.koehler@hwk.de', telefon: '0511 99001-31', rolle: 'user' as const,        objektIds: ['demo-1', 'demo-2'], aktiv: true,  erstelltAm: s(20) },
+  { id: 'demo-user-4', anrede: 'Herr' as const, vorname: 'Thomas',  nachname: 'Müller',   name: 'Thomas Müller',  email: 'thomas.mueller@hwk.de', telefon: '',              rolle: 'user' as const,        objektIds: ['demo-3'],           aktiv: false, erstelltAm: s(60) },
+  { id: 'demo-buch-2', anrede: 'Frau' as const,  vorname: 'Britta',  nachname: 'Hoffmann', name: 'Britta Hoffmann',email: 'b.hoffmann@hwk.de',     telefon: '0511 99001-50', rolle: 'buchhaltung' as const, objektIds: [],                   aktiv: true,  erstelltAm: s(90) },
 ];
 
 function makeBeleg(overrides: Partial<Bewirtungsbeleg> & {
