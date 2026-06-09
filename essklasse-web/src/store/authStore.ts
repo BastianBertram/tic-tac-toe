@@ -1,11 +1,15 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
+export type UserRolle = 'user' | 'admin' | 'buchhaltung';
+
 export interface AuthUser {
   id: string;
   email: string;
   name: string;
-  role: 'admin' | 'user';
+  rolle: UserRolle;
+  /** Objekt-IDs für rolle=user (undefined = alle für admin/buchhaltung) */
+  objektIds?: string[];
 }
 
 interface AuthStore {
@@ -15,6 +19,8 @@ interface AuthStore {
   setToken:    (token: string) => void;
   logout:      () => void;
   isAdmin:     () => boolean;
+  isBuchhaltung: () => boolean;
+  isUser:      () => boolean;
 }
 
 export const useAuthStore = create<AuthStore>()(
@@ -25,7 +31,9 @@ export const useAuthStore = create<AuthStore>()(
       setAuth:     (user, accessToken) => set({ user, accessToken }),
       setToken:    (accessToken)       => set({ accessToken }),
       logout:      ()                  => set({ user: null, accessToken: null }),
-      isAdmin:     ()                  => get().user?.role === 'admin',
+      isAdmin:     ()                  => get().user?.rolle === 'admin',
+      isBuchhaltung: ()                => get().user?.rolle === 'buchhaltung',
+      isUser:      ()                  => get().user?.rolle === 'user',
     }),
     {
       name:        'ek-auth',

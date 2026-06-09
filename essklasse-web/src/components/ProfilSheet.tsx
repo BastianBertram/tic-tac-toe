@@ -23,7 +23,7 @@ export function ProfilButton() {
   );
 }
 
-function ProfilModal({ onClose }: { onClose: () => void }) {
+export function ProfilModal({ onClose }: { onClose: () => void }) {
   const user    = useAuthStore(st => st.user);
   const logout  = useAuthStore(st => st.logout);
   const resetObjekte = useObjektStore(st => st.reset);
@@ -57,7 +57,7 @@ function ProfilModal({ onClose }: { onClose: () => void }) {
           <div>
             <div className={s.profileName}>{user?.name || '—'}</div>
             <div className={s.profileEmail}>{user?.email}</div>
-            {user?.role === 'admin' && (
+            {user?.rolle === 'admin' && (
               <span className={s.adminBadge}>Administrator</span>
             )}
           </div>

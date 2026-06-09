@@ -9,6 +9,9 @@ import { DetailScreen } from './screens/DetailScreen';
 import { AbschlussScreen } from './screens/AbschlussScreen';
 import { AbschlussListScreen } from './screens/AbschlussListScreen';
 import { AbgeschlossenScreen } from './screens/AbgeschlossenScreen';
+import { BuchhaltungScreen } from './screens/BuchhaltungScreen';
+import { AdminScreen } from './screens/AdminScreen';
+import { useAuthStore } from './store/authStore';
 import type { Bewirtungsbeleg } from './types';
 import s from './App.module.css';
 
@@ -23,6 +26,7 @@ type View =
 export default function App() {
   const [tab, setTab]   = useState<Tab>('today');
   const [view, setView] = useState<View>({ type: 'main' });
+  const rolle = useAuthStore(st => st.user?.rolle);
 
   function openBeleg(b: Bewirtungsbeleg) { setView({ type: 'detail', beleg: b }); }
   function openAbschluss(b: Bewirtungsbeleg) { setView({ type: 'abschluss', beleg: b }); }
@@ -57,6 +61,7 @@ export default function App() {
   if (view.type === 'new') {
     return <AuthGuard><div className={s.app}><NewBelegScreen onClose={closeView} /></div></AuthGuard>;
   }
+
   if (view.type === 'detail') {
     return (
       <AuthGuard>
@@ -64,13 +69,14 @@ export default function App() {
           <DetailScreen
             beleg={view.beleg}
             onClose={closeView}
-            onAbschliessen={() => openAbschluss(view.beleg)}
-            onBearbeiten={() => setView({ type: 'edit', beleg: view.beleg })}
+            onAbschliessen={rolle !== 'buchhaltung' ? () => openAbschluss(view.beleg) : undefined}
+            onBearbeiten={rolle !== 'buchhaltung' ? () => setView({ type: 'edit', beleg: view.beleg }) : undefined}
           />
         </div>
       </AuthGuard>
     );
   }
+
   if (view.type === 'abschluss') {
     return (
       <AuthGuard>
@@ -85,6 +91,21 @@ export default function App() {
     );
   }
 
+  // ── Buchhaltung ──
+  if (rolle === 'buchhaltung') {
+    return (
+      <AuthGuard>
+        <div className={s.app}>
+          <div className={s.content}>
+            <BuchhaltungScreen onOpenBeleg={openBeleg} />
+          </div>
+          <BuchhaltungNav />
+        </div>
+      </AuthGuard>
+    );
+  }
+
+  // ── User / Admin ──
   return (
     <AuthGuard>
       <div className={s.app}>
@@ -92,9 +113,31 @@ export default function App() {
           {tab === 'today'     && <TodayScreen     onOpenBeleg={openBeleg} onAbschliessen={openAbschluss} onTabAbschluss={() => setTab('abschluss')} />}
           {tab === 'calendar'  && <CalendarScreen  onOpenBeleg={openBeleg} onTabAbschluss={() => setTab('abschluss')} />}
           {tab === 'abschluss' && <AbschlussListScreen onOpenBeleg={openBeleg} />}
+          {tab === 'admin'     && <AdminScreen />}
         </div>
-        <BottomNav active={tab} onTab={setTab} onNew={() => setView({ type: 'new' })} onAbgeschlossene={() => setView({ type: 'abgeschlossen' })} />
+        <BottomNav
+          active={tab} onTab={setTab} onNew={() => setView({ type: 'new' })}
+          onAbgeschlossene={() => setView({ type: 'abgeschlossen' })}
+        />
       </div>
     </AuthGuard>
+  );
+}
+
+function BuchhaltungNav() {
+  const logout = useAuthStore(st => st.logout);
+  return (
+    <nav style={{
+      display: 'flex', justifyContent: 'space-around', alignItems: 'center',
+      height: 60, background: 'var(--ek-surface)', borderTop: '1px solid var(--ek-border)',
+      flexShrink: 0,
+    }}>
+      <button type="button" onClick={logout} style={{
+        background: 'none', border: 'none', cursor: 'pointer',
+        fontSize: 11, color: 'var(--ek-muted)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
+      }}>
+        <span style={{ fontSize: 20 }}>🚪</span>Abmelden
+      </button>
+    </nav>
   );
 }

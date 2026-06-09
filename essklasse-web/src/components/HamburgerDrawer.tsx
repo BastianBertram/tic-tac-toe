@@ -47,7 +47,7 @@ export function HamburgerDrawer({ onClose, onAbgeschlossene }: Props) {
           <div>
             <div className={s.profileName}>{user?.name || '—'}</div>
             <div className={s.profileEmail}>{user?.email}</div>
-            {user?.role === 'admin' && <span className={s.adminBadge}>Administrator</span>}
+            {user?.rolle === 'admin' && <span className={s.adminBadge}>Administrator</span>}
           </div>
         </div>
 

@@ -43,6 +43,20 @@ export interface AbschlussPosition {
   pfand?: number;
 }
 
+export type UserRolle = 'user' | 'admin' | 'buchhaltung';
+
+/** Ein App-User (für Admin-Verwaltung) */
+export interface AppUser {
+  id: string;
+  name: string;
+  email: string;
+  rolle: UserRolle;
+  /** Objekt-IDs, auf die der User Zugriff hat (nur relevant für rolle=user) */
+  objektIds: string[];
+  aktiv: boolean;
+  erstelltAm: string;
+}
+
 export interface Bewirtungsbeleg {
   id: string;
   objektId: string;
@@ -74,4 +88,7 @@ export interface Bewirtungsbeleg {
   deleted?: boolean;
   bcAuftragsnummer?: string;
   bcFehler?: string;
+  rechnungErstellt?: boolean;
+  rechnungErstelltAm?: string;
+  rechnungErstelltVon?: string;
 }

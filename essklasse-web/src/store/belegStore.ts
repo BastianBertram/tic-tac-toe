@@ -12,6 +12,7 @@ interface BelegStore {
   setSyncStatus: (id: string, status: SyncStatus, fehler?: string) => void;
   setBcAuftragsnummer: (id: string, nr: string) => void;
   schliesseBeleg: (id: string, positionen: AbschlussPosition[], user?: string, abschlussfotos?: string[]) => void;
+  markRechnungErstellt: (id: string, userName?: string) => void;
   getBelegeByDate: (date: string) => Bewirtungsbeleg[];
   getTodaysBelege: () => Bewirtungsbeleg[];
   getDatesWithBelege: () => string[];
@@ -58,6 +59,16 @@ export const useBelegStore = create<BelegStore>()(
             abgeschlossenVon: user,
             abschlussPositionen: positionen,
             ...(abschlussfotos?.length ? { abschlussfotos } : {}),
+          } : b),
+        })),
+
+      markRechnungErstellt: (id, userName) =>
+        set(s => ({
+          belege: s.belege.map(b => b.id === id ? {
+            ...b,
+            rechnungErstellt: !b.rechnungErstellt,
+            rechnungErstelltAm: !b.rechnungErstellt ? new Date().toISOString() : undefined,
+            rechnungErstelltVon: !b.rechnungErstellt ? userName : undefined,
           } : b),
         })),
 

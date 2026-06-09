@@ -1,14 +1,16 @@
 import React, { useMemo, useState } from 'react';
 import { useBelegStore } from '../store/belegStore';
+import { useAuthStore } from '../store/authStore';
 import { format } from 'date-fns';
 import s from './BottomNav.module.css';
 import { HamburgerDrawer } from './HamburgerDrawer';
 
-export type Tab = 'today' | 'calendar' | 'abschluss';
+export type Tab = 'today' | 'calendar' | 'abschluss' | 'admin';
 interface Props { active: Tab; onTab: (t: Tab) => void; onNew: () => void; onAbgeschlossene: () => void; }
 
 export function BottomNav({ active, onTab, onNew, onAbgeschlossene }: Props) {
   const belege = useBelegStore(st => st.belege);
+  const rolle = useAuthStore(st => st.user?.rolle);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   const pending = useMemo(
@@ -43,9 +45,13 @@ export function BottomNav({ active, onTab, onNew, onAbgeschlossene }: Props) {
           <span className={s.fabPlus}>+</span>
         </button>
 
-        {/* Rechts: Kalender + Abschließen */}
+        {/* Rechts: Kalender + Abschließen/Admin */}
         <TabBtn icon="📅" label="Kalender" active={active === 'calendar'} onClick={() => onTab('calendar')} badge={pending} />
-        <TabBtn icon="✓" label={<>Bewirtung<br />Abschließen</>} active={active === 'abschluss'} onClick={() => onTab('abschluss')} badge={offene} urgent={offene > 0} />
+        {rolle === 'admin' ? (
+          <TabBtn icon="⚙️" label={<>Admin<br />Verwaltung</>} active={active === 'admin'} onClick={() => onTab('admin')} />
+        ) : (
+          <TabBtn icon="✓" label={<>Bewirtung<br />Abschließen</>} active={active === 'abschluss'} onClick={() => onTab('abschluss')} badge={offene} urgent={offene > 0} />
+        )}
       </nav>
 
       {drawerOpen && (
