@@ -97,10 +97,7 @@ export default function App() {
     return (
       <AuthGuard>
         <div className={s.app}>
-          <div className={s.content}>
-            <BuchhaltungScreen onOpenBeleg={openBeleg} />
-          </div>
-          <BuchhaltungNav />
+          <BuchhaltungScreen onOpenBeleg={openBeleg} />
           <DevOverlay />
         </div>
       </AuthGuard>
@@ -132,20 +129,3 @@ function DevOverlay() {
   return <DevRoleSwitcher />;
 }
 
-function BuchhaltungNav() {
-  const logout = useAuthStore(st => st.logout);
-  return (
-    <nav style={{
-      display: 'flex', justifyContent: 'space-around', alignItems: 'center',
-      height: 60, background: 'var(--ek-surface)', borderTop: '1px solid var(--ek-border)',
-      flexShrink: 0,
-    }}>
-      <button type="button" onClick={logout} style={{
-        background: 'none', border: 'none', cursor: 'pointer',
-        fontSize: 11, color: 'var(--ek-muted)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
-      }}>
-        <span style={{ fontSize: 20 }}>🚪</span>Abmelden
-      </button>
-    </nav>
-  );
-}
