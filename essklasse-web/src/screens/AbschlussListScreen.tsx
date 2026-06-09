@@ -2,7 +2,6 @@ import { useState, useMemo } from 'react';
 import { format } from 'date-fns';
 import { useBelegStore } from '../store/belegStore';
 import { useObjektStore } from '../store/objektStore';
-import { useAuthStore } from '../store/authStore';
 import { BelegCard } from '../components/BelegCard';
 import { AbschlussScreen } from './AbschlussScreen';
 import type { Bewirtungsbeleg } from '../types';
@@ -13,8 +12,6 @@ interface Props { onOpenBeleg: (b: Bewirtungsbeleg) => void; }
 export function AbschlussListScreen({ onOpenBeleg }: Props) {
   const belege        = useBelegStore(st => st.belege);
   const aktivesObjekt = useObjektStore(st => st.getAktivesObjekt());
-  const authUser      = useAuthStore(st => st.user);
-  const isUserRolle   = authUser?.rolle === 'user';
   const [abschlussBeleg, setAbschlussBeleg] = useState<Bewirtungsbeleg | null>(null);
 
   const offene = useMemo(() => {
@@ -23,12 +20,11 @@ export function AbschlussListScreen({ onOpenBeleg }: Props) {
     return belege.filter(b => {
       if (b.abgeschlossen) return false;
       if (aktivesObjekt && b.objektId !== aktivesObjekt.id) return false;
-      if (isUserRolle && b.erstelltVon !== authUser?.name) return false;
       if (b.cateringDatumVon < today) return true;
       if (b.cateringDatumVon === today && b.uhrzeitBis && b.uhrzeitBis < now) return true;
       return false;
     });
-  }, [belege, aktivesObjekt, isUserRolle, authUser?.name]);
+  }, [belege, aktivesObjekt]);
 
   if (abschlussBeleg) {
     return (

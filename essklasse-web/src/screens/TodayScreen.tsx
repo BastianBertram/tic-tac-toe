@@ -3,7 +3,6 @@ import { format, addDays, isToday } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { useBelegStore } from '../store/belegStore';
 import { useObjektStore } from '../store/objektStore';
-import { useAuthStore } from '../store/authStore';
 import { BelegCard, type BelegHighlight } from '../components/BelegCard';
 import { ObjektSwitcherButton } from '../components/ObjektSwitcher';
 import { OffeneBanner } from '../components/OffeneBanner';
@@ -36,8 +35,6 @@ function isFuture(beleg: Bewirtungsbeleg, now: string): boolean {
 export function TodayScreen({ onOpenBeleg, onAbschliessen, onTabAbschluss }: Props) {
   const belege        = useBelegStore(st => st.belege);
   const aktivesObjekt = useObjektStore(st => st.getAktivesObjekt());
-  const authUser      = useAuthStore(st => st.user);
-  const isUserRolle   = authUser?.rolle === 'user';
   // offset: Basis-Tag (0 = heute ist linker Button, 1 = morgen ist linker Button, …)
   const [offset, setOffset]   = useState(0);
   const [selected, setSelected] = useState<0 | 1>(0); // 0 = linker Button, 1 = rechter Button
@@ -69,14 +66,8 @@ export function TodayScreen({ onOpenBeleg, onAbschliessen, onTabAbschluss }: Pro
   const isSelectedToday = selected === 0 ? leftIsToday : rightIsToday;
 
   const belegeForObjekt = useMemo(
-    () => belege.filter(b => {
-      if (b.deleted) return false;
-      if (aktivesObjekt && b.objektId !== aktivesObjekt.id) return false;
-      // User sieht nur eigene Belege; Bereichsleitung sieht alle des Objekts
-      if (isUserRolle && b.erstelltVon !== authUser?.name) return false;
-      return true;
-    }),
-    [belege, aktivesObjekt, isUserRolle, authUser?.name]
+    () => belege.filter(b => !b.deleted && (!aktivesObjekt || b.objektId === aktivesObjekt.id)),
+    [belege, aktivesObjekt]
   );
 
   const leftBelege  = useMemo(() => belegeForObjekt.filter(b => b.cateringDatumVon === leftDateStr).sort(byUhrzeit),  [belegeForObjekt, leftDateStr]);
