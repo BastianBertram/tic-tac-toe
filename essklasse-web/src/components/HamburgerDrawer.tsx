@@ -17,6 +17,7 @@ export function HamburgerDrawer({ onClose, onAbgeschlossene }: Props) {
   const resetObjekte = useObjektStore(st => st.reset);
   const objekte      = useObjektStore(st => st.objekte);
   const aktiv        = useObjektStore(st => st.getAktivesObjekt());
+  const isBuchhaltung = user?.rolle === 'buchhaltung';
   const [loading, setLoading] = useState(false);
 
   async function handleLogout() {
@@ -53,8 +54,8 @@ export function HamburgerDrawer({ onClose, onAbgeschlossene }: Props) {
 
         <div className={s.divider} />
 
-        {/* Objekte */}
-        {objekte.length > 0 && (
+        {/* Objekte — nur für Nicht-Buchhaltung */}
+        {!isBuchhaltung && objekte.length > 0 && (
           <>
             <div className={s.objekteInfo}>
               <div className={s.objekteLabel}>Zugeordnete Objekte</div>
@@ -70,16 +71,19 @@ export function HamburgerDrawer({ onClose, onAbgeschlossene }: Props) {
           </>
         )}
 
-        {/* Abgeschlossene Bewirtungen */}
-        <button
-          className={d.abgeschlosseneBtn}
-          onClick={() => { onClose(); onAbgeschlossene(); }}
-          type="button"
-        >
-          ✅ Abgeschlossene Bewirtungen
-        </button>
-
-        <div className={s.divider} />
+        {/* Abgeschlossene Bewirtungen — nur für Nicht-Buchhaltung */}
+        {!isBuchhaltung && (
+          <>
+            <button
+              className={d.abgeschlosseneBtn}
+              onClick={() => { onClose(); onAbgeschlossene(); }}
+              type="button"
+            >
+              ✅ Abgeschlossene Bewirtungen
+            </button>
+            <div className={s.divider} />
+          </>
+        )}
 
         {/* Logout */}
         <button className={s.logoutBtn} onClick={handleLogout} disabled={loading} type="button">
