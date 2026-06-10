@@ -45,6 +45,8 @@ export function PositionEditor({ positionen, onChange }: Props) {
         <button className={s.addBtn} type="button" onClick={openNew}>+ Hinzufügen</button>
       </div>
 
+      <p className={s.hinweis}>⚠️ Bitte prüfen: Die KI-erkannten Positionen dienen nur als Hilfe. Maßgeblich ist immer der originale Bewirtungsschein — Positionen ggf. korrigieren, ergänzen oder löschen.</p>
+
       {positionen.length === 0 && <p className={s.empty}>Noch keine Positionen.</p>}
 
       {positionen.map(p => (

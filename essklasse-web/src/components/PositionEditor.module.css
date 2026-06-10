@@ -9,6 +9,11 @@
 }
 
 .empty { color: var(--ek-muted); font-size: 13px; font-style: italic; margin-bottom: 8px; }
+.hinweis {
+  font-size: 12px; color: #92610a; background: #fff8e1;
+  border: 1px solid #fcd99a; border-radius: 10px;
+  padding: 9px 12px; margin-bottom: 10px; line-height: 1.5;
+}
 
 .row {
   display: flex; align-items: center; gap: 10px;
