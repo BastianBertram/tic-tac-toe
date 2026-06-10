@@ -28,6 +28,9 @@ export interface ExtractedBeleg {
   kostenstelle?: string;
   kostentraeger?: string;
   wuensche?: string;
+  rechnungsanschriftName?: string;
+  rechnungsanschriftStrasse?: string;
+  rechnungsanschriftPlzOrt?: string;
   positionen?: ExtractedPosition[];
 }
 
@@ -61,6 +64,9 @@ JSON-Schema:
   "kostenstelle": "Kostenstelle",
   "kostentraeger": "Kostenträger",
   "wuensche": "Sonstige Wünsche/Bemerkungen",
+  "rechnungsanschriftName": "Name oder Firma der Rechnungsanschrift",
+  "rechnungsanschriftStrasse": "Straße und Hausnummer",
+  "rechnungsanschriftPlzOrt": "PLZ und Ort",
   "positionen": [
     { "kategorie": "Speisen/Snacks", "bezeichnung": "Belegte Brötchen KAT 1", "einheit": "1/2", "preis": 2.59, "menge": 20 }
   ]

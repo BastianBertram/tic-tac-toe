@@ -21,6 +21,7 @@ const INIT = {
   personenzahl: '', konto: '', kostenstelle: '', kostentraeger: '',
   positionen: [] as BelegPosition[], fotoDataUrls: [] as string[],
   wuensche: '', interneNotiz: '',
+  rechnungsanschriftName: '', rechnungsanschriftStrasse: '', rechnungsanschriftPlzOrt: '',
 };
 
 function initFromBeleg(b: Bewirtungsbeleg) {
@@ -31,6 +32,9 @@ function initFromBeleg(b: Bewirtungsbeleg) {
     konto: b.konto, kostenstelle: b.kostenstelle, kostentraeger: b.kostentraeger,
     positionen: b.positionen, fotoDataUrls: b.fotoDataUrls,
     wuensche: b.wuensche, interneNotiz: b.interneNotiz,
+    rechnungsanschriftName: b.rechnungsanschriftName ?? '',
+    rechnungsanschriftStrasse: b.rechnungsanschriftStrasse ?? '',
+    rechnungsanschriftPlzOrt: b.rechnungsanschriftPlzOrt ?? '',
   };
 }
 
@@ -73,7 +77,10 @@ export function NewBelegScreen({ onClose, editBeleg }: Props) {
       ...(data.konto            && { konto:            data.konto }),
       ...(data.kostenstelle     && { kostenstelle:     data.kostenstelle }),
       ...(data.kostentraeger    && { kostentraeger:    data.kostentraeger }),
-      ...(data.wuensche         && { wuensche:         data.wuensche }),
+      ...(data.wuensche                    && { wuensche:                    data.wuensche }),
+      ...(data.rechnungsanschriftName      && { rechnungsanschriftName:      data.rechnungsanschriftName }),
+      ...(data.rechnungsanschriftStrasse   && { rechnungsanschriftStrasse:   data.rechnungsanschriftStrasse }),
+      ...(data.rechnungsanschriftPlzOrt    && { rechnungsanschriftPlzOrt:    data.rechnungsanschriftPlzOrt }),
       ...(extractedPositionen.length > 0 && { positionen: extractedPositionen }),
     }));
   }
@@ -95,6 +102,9 @@ export function NewBelegScreen({ onClose, editBeleg }: Props) {
         konto: f.konto, kostenstelle: f.kostenstelle, kostentraeger: f.kostentraeger,
         positionen: f.positionen, fotoDataUrls: f.fotoDataUrls,
         wuensche: f.wuensche, interneNotiz: f.interneNotiz,
+        rechnungsanschriftName: f.rechnungsanschriftName,
+        rechnungsanschriftStrasse: f.rechnungsanschriftStrasse,
+        rechnungsanschriftPlzOrt: f.rechnungsanschriftPlzOrt,
       });
       setSaving(false);
       onClose();
@@ -120,6 +130,9 @@ export function NewBelegScreen({ onClose, editBeleg }: Props) {
       fotoDataUrls: f.fotoDataUrls,
       wuensche: f.wuensche,
       interneNotiz: f.interneNotiz,
+      rechnungsanschriftName: f.rechnungsanschriftName,
+      rechnungsanschriftStrasse: f.rechnungsanschriftStrasse,
+      rechnungsanschriftPlzOrt: f.rechnungsanschriftPlzOrt,
     }, currentUser?.name ?? currentUser?.email);
 
     setSaving(false);
@@ -213,6 +226,20 @@ export function NewBelegScreen({ onClose, editBeleg }: Props) {
           </div>
           <Field label="Personenzahl">
             <input type="number" min="0" value={f.personenzahl} onChange={e => set('personenzahl', e.target.value)} placeholder="0" />
+          </Field>
+        </div>
+
+        {/* ── RECHNUNGSANSCHRIFT ── */}
+        <div className={s.section}>
+          <div className={s.sectionTitle}>Rechnungsanschrift</div>
+          <Field label="Name / Firma">
+            <input value={f.rechnungsanschriftName} onChange={e => set('rechnungsanschriftName', e.target.value)} placeholder="Name oder Firmenbezeichnung" />
+          </Field>
+          <Field label="Straße / Hausnummer">
+            <input value={f.rechnungsanschriftStrasse} onChange={e => set('rechnungsanschriftStrasse', e.target.value)} placeholder="Musterstraße 1" />
+          </Field>
+          <Field label="PLZ / Ort">
+            <input value={f.rechnungsanschriftPlzOrt} onChange={e => set('rechnungsanschriftPlzOrt', e.target.value)} placeholder="30159 Hannover" />
           </Field>
         </div>
 

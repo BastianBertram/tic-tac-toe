@@ -97,6 +97,9 @@ export interface Bewirtungsbeleg {
   fotoDataUrls: string[];
   wuensche: string;
   interneNotiz: string;
+  rechnungsanschriftName?: string;
+  rechnungsanschriftStrasse?: string;
+  rechnungsanschriftPlzOrt?: string;
   erstelltAm: string;
   erstelltVon?: string;
   deleted?: boolean;
