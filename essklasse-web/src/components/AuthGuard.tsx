@@ -27,6 +27,19 @@ export function AuthGuard({ children }: Props) {
       return; // checked ist bereits true (Initialwert)
     }
 
+    // Im Dev-Modus ohne Backend: direkt als Demo-User anmelden.
+    // queueMicrotask hält den State-Update aus dem synchronen Effekt-Body heraus.
+    if (import.meta.env.DEV) {
+      queueMicrotask(() => {
+        setAuth(
+          { id: 'demo-user', name: 'Anna Schmidt', email: 'anna@hwk.de', rolle: 'user', objektIds: ['demo-1'] },
+          'dev-token',
+        );
+        setChecked(true);
+      });
+      return;
+    }
+
     // Magic-Link aus der E-Mail? → /auth/verify, sonst stille Sitzungs-Erneuerung.
     const token = new URLSearchParams(window.location.search).get('token');
     const request = token
@@ -69,14 +82,6 @@ export function AuthGuard({ children }: Props) {
   }
 
   if (!user) {
-    // Im Dev-Modus: Login überspringen, direkt als Demo-User einloggen
-    if (import.meta.env.DEV) {
-      setAuth(
-        { id: 'demo-user', name: 'Anna Schmidt', email: 'anna@hwk.de', rolle: 'user', objektIds: ['demo-1'] },
-        'dev-token'
-      );
-      return null;
-    }
     return <LoginScreen />;
   }
 

@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { format, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
+import { formatDatum } from '../utils/date';
 import type { Bewirtungsbeleg } from '../types';
 import { PdfViewer } from '../components/PdfViewer';
 import { useBelegStore } from '../store/belegStore';
@@ -22,7 +22,7 @@ export function DetailScreen({ beleg: init, onClose, onAbschliessen, onBearbeite
   const [pdfViewer, setPdfViewer] = useState<{ dataUrl: string; name: string } | null>(null);
   const [deleteStep, setDeleteStep] = useState<0 | 1 | null>(null);
 
-  const datum = format(parseISO(beleg.cateringDatumVon), 'dd.MM.yyyy', { locale: de });
+  const datum = formatDatum(beleg.cateringDatumVon, 'dd.MM.yyyy', { locale: de });
 
   function confirmDelete() { store.deleteBeleg(beleg.id); onClose(); }
 

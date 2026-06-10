@@ -18,7 +18,7 @@ export function AbschlussListScreen({ onOpenBeleg }: Props) {
     const now   = format(new Date(), 'HH:mm');
     const today = format(new Date(), 'yyyy-MM-dd');
     return belege.filter(b => {
-      if (b.abgeschlossen) return false;
+      if (b.deleted || b.abgeschlossen) return false;
       if (aktivesObjekt && b.objektId !== aktivesObjekt.id) return false;
       if (b.cateringDatumVon < today) return true;
       if (b.cateringDatumVon === today && b.uhrzeitBis && b.uhrzeitBis < now) return true;

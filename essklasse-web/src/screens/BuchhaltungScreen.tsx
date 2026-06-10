@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react';
-import { format, parseISO } from 'date-fns';
+import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { useBelegStore } from '../store/belegStore';
 import { useObjektStore } from '../store/objektStore';
 import { HamburgerDrawer } from '../components/HamburgerDrawer';
+import { formatDatum } from '../utils/date';
 import type { Bewirtungsbeleg } from '../types';
 import s from './BuchhaltungScreen.module.css';
 
@@ -25,7 +26,7 @@ function byDatumUhrzeit(a: Bewirtungsbeleg, b: Bewirtungsbeleg) {
 }
 
 function textMatch(b: Bewirtungsbeleg, q: string, objekte: ReturnType<typeof useObjektStore.getState>['objekte']) {
-  const datum = format(parseISO(b.cateringDatumVon), 'dd.MM.yyyy');
+  const datum = formatDatum(b.cateringDatumVon);
   const obj = objekte.find(o => o.id === b.objektId);
   return (
     datum.includes(q) ||
@@ -320,7 +321,7 @@ function BelegeRow({ beleg: b, objekte, onOpen, showRechnungBtn, onMarkRechnung 
   showRechnungBtn: boolean;
   onMarkRechnung: () => void;
 }) {
-  const datum = format(parseISO(b.cateringDatumVon), 'dd.MM.yyyy', { locale: de });
+  const datum = formatDatum(b.cateringDatumVon, 'dd.MM.yyyy', { locale: de });
   const objekt = objekte.find(o => o.id === b.objektId);
 
   return (

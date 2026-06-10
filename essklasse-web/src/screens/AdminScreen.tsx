@@ -148,7 +148,10 @@ function UserTab() {
   const emailError = emailTouched && !emailFormatOk
     ? 'Bitte eine gültige E-Mail-Adresse eingeben.'
     : null;
-  const canSave = form.vorname.trim() && form.nachname.trim() && emailFormatOk;
+  // user/bereichsleitung/buchhaltung müssen mind. ein Objekt zugeordnet bekommen
+  const needsObjekte = form.rolle === 'user' || form.rolle === 'buchhaltung' || form.rolle === 'bereichsleitung';
+  const objekteOk = !needsObjekte || form.objektIds.length > 0;
+  const canSave = form.vorname.trim() && form.nachname.trim() && emailFormatOk && objekteOk;
   function handleSave() {
     if (!canSave) return;
     if (form.rolle === 'geschaeftsfuehrung') {

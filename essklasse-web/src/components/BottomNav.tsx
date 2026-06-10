@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { useBelegStore } from '../store/belegStore';
+import { useObjektStore } from '../store/objektStore';
 import { useAuthStore } from '../store/authStore';
 import { format } from 'date-fns';
 import s from './BottomNav.module.css';
@@ -10,6 +11,7 @@ interface Props { active: Tab; onTab: (t: Tab) => void; onNew: () => void; onAbg
 
 export function BottomNav({ active, onTab, onNew, onAbgeschlossene }: Props) {
   const belege = useBelegStore(st => st.belege);
+  const aktivesObjekt = useObjektStore(st => st.getAktivesObjekt());
   const rolle = useAuthStore(st => st.user?.rolle);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
@@ -18,11 +20,12 @@ export function BottomNav({ active, onTab, onNew, onAbgeschlossene }: Props) {
     const today = format(new Date(), 'yyyy-MM-dd');
     return belege.filter(b => {
       if (b.deleted || b.abgeschlossen) return false;
+      if (aktivesObjekt && b.objektId !== aktivesObjekt.id) return false;
       if (b.cateringDatumVon < today) return true;
       if (b.cateringDatumVon === today && b.uhrzeitBis && b.uhrzeitBis < now) return true;
       return false;
     }).length;
-  }, [belege]);
+  }, [belege, aktivesObjekt]);
 
   return (
     <>

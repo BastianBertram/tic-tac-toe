@@ -14,9 +14,6 @@ interface BelegStore {
   markDoppelt: (id: string) => void;
   schliesseBeleg: (id: string, positionen: AbschlussPosition[], user?: string, abschlussfotos?: string[]) => void;
   markRechnungErstellt: (id: string, userName?: string, rechnungsnummer?: string) => void;
-  getBelegeByDate: (date: string) => Bewirtungsbeleg[];
-  getTodaysBelege: () => Bewirtungsbeleg[];
-  getDatesWithBelege: () => string[];
   getOffeneBelege: () => Bewirtungsbeleg[];  // abgelaufen, aber noch nicht abgeschlossen
 }
 
@@ -69,18 +66,12 @@ export const useBelegStore = create<BelegStore>()(
         set(s => ({
           belege: s.belege.map(b => b.id === id ? {
             ...b,
-            rechnungErstellt: !b.rechnungErstellt,
-            rechnungErstelltAm: !b.rechnungErstellt ? new Date().toISOString() : undefined,
-            rechnungErstelltVon: !b.rechnungErstellt ? userName : undefined,
-            rechnungsnummer: !b.rechnungErstellt ? (rechnungsnummer ?? b.rechnungsnummer) : b.rechnungsnummer,
+            rechnungErstellt: true,
+            rechnungErstelltAm: new Date().toISOString(),
+            rechnungErstelltVon: userName,
+            rechnungsnummer: rechnungsnummer ?? b.rechnungsnummer,
           } : b),
         })),
-
-      getBelegeByDate: (date) => get().belege.filter(b => !b.deleted && b.cateringDatumVon === date),
-
-      getTodaysBelege: () => get().getBelegeByDate(format(new Date(), 'yyyy-MM-dd')),
-
-      getDatesWithBelege: () => [...new Set(get().belege.filter(b => !b.deleted).map(b => b.cateringDatumVon))],
 
       getOffeneBelege: () => {
         const now = format(new Date(), 'HH:mm');

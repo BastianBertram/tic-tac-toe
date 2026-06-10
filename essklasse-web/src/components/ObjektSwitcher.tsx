@@ -42,6 +42,8 @@ function ObjektSheet({ onClose }: { onClose: () => void }) {
         <div className={s.list}>
           {objekte.map(obj => {
             const active = obj.id === aktiveObjektId;
+            const adresse = [obj.strasse, obj.plz && obj.ort ? `${obj.plz} ${obj.ort}` : '']
+              .filter(Boolean).join(', ') || obj.adresse;
             return (
               <button
                 key={obj.id}
@@ -54,7 +56,7 @@ function ObjektSheet({ onClose }: { onClose: () => void }) {
                 </div>
                 <div className={s.itemInfo}>
                   <div className={s.itemName}>{obj.name}</div>
-                  {obj.adresse && <div className={s.itemAddr}>{obj.adresse}</div>}
+                  {adresse && <div className={s.itemAddr}>{adresse}</div>}
                 </div>
                 {active && <span className={s.checkmark}>✓</span>}
               </button>

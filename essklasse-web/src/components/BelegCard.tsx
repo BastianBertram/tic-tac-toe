@@ -1,6 +1,6 @@
 import type { Bewirtungsbeleg } from '../types';
-import { format, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
+import { formatDatum } from '../utils/date';
 import s from './BelegCard.module.css';
 
 export type BelegHighlight = 'running' | 'next' | null;
@@ -13,7 +13,7 @@ interface Props {
 }
 
 export function BelegCard({ beleg, onClick, highlight = null, onAbschliessen }: Props) {
-  const datum = format(parseISO(beleg.cateringDatumVon), 'dd.MM.yyyy', { locale: de });
+  const datum = formatDatum(beleg.cateringDatumVon, 'dd.MM.yyyy', { locale: de });
 
   return (
     <div

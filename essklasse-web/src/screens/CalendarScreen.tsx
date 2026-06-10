@@ -28,7 +28,7 @@ export function CalendarScreen({ onOpenBeleg, onTabAbschluss }: Props) {
   const belege        = useBelegStore(st => st.belege);
   const aktivesObjekt = useObjektStore(st => st.getAktivesObjekt());
   const belegeForObjekt = useMemo(
-    () => belege.filter(b => !aktivesObjekt || b.objektId === aktivesObjekt.id),
+    () => belege.filter(b => !b.deleted && (!aktivesObjekt || b.objektId === aktivesObjekt.id)),
     [belege, aktivesObjekt]
   );
   const datesWithBelege = useMemo(
