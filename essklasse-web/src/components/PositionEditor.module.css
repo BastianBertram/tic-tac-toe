@@ -28,6 +28,7 @@
 .rowName { font-weight: 700; font-size: 14px; color: var(--ek-charcoal); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .rowMeta { color: var(--ek-muted); font-size: 12px; margin-top: 2px; }
 .rowTotal { color: var(--ek-red); font-weight: 800; font-size: 14px; }
+.rowMenge { color: var(--ek-red); font-weight: 800; font-size: 18px; flex-shrink: 0; min-width: 48px; text-align: right; }
 .delBtn { background: transparent; color: var(--ek-muted); font-size: 16px; padding: 4px; }
 
 .totalRow {
