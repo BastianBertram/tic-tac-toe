@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { extractFromPhoto, getApiKey, setApiKey, type ExtractedBeleg } from '../services/ocrService';
+import { extractFromPhoto, type ExtractedBeleg } from '../services/ocrService';
 import s from './PhotoCapture.module.css';
 
 interface Props {
@@ -23,8 +23,6 @@ export function PhotoCapture({ dataUrls, onChange, onExtracted, label = '📷 Be
   const galleryRef = useRef<HTMLInputElement>(null);
   const [scanning, setScanning] = useState(false);
   const [scanMsg, setScanMsg] = useState('');
-  const [showKeyModal, setShowKeyModal] = useState(false);
-  const [keyInput, setKeyInput] = useState('');
   const [dragOver, setDragOver] = useState(false);
 
   function handleDrop(e: React.DragEvent) {
@@ -46,11 +44,6 @@ export function PhotoCapture({ dataUrls, onChange, onExtracted, label = '📷 Be
   }
 
   async function runOcr(dataUrl: string) {
-    const key = getApiKey();
-    if (!key) {
-      setShowKeyModal(true);
-      return;
-    }
     setScanning(true);
     setScanMsg('📋 Beleg wird gelesen …');
     try {
@@ -60,8 +53,8 @@ export function PhotoCapture({ dataUrls, onChange, onExtracted, label = '📷 Be
       setTimeout(() => setScanMsg(''), 3000);
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
-      if (msg === 'NO_KEY') {
-        setShowKeyModal(true);
+      if (msg === 'AI_NOT_CONFIGURED') {
+        setScanMsg('ℹ️ KI-Auslesen ist serverseitig nicht aktiviert — bitte Daten manuell eintragen.');
       } else {
         const isQuota = msg.includes('529') || msg.includes('credit') || msg.includes('quota') || msg.includes('insufficient') || msg.includes('balance') || msg.includes('rate') || msg.includes('overloaded');
         if (isQuota) {
@@ -69,19 +62,11 @@ export function PhotoCapture({ dataUrls, onChange, onExtracted, label = '📷 Be
         } else {
           setScanMsg(`⚠️ Beleg konnte nicht gescannt werden — bitte Daten manuell eintragen. (${msg})`);
         }
-        setTimeout(() => setScanMsg(''), 8000);
       }
+      setTimeout(() => setScanMsg(''), 8000);
     } finally {
       setScanning(false);
     }
-  }
-
-  function saveKey() {
-    if (!keyInput.trim()) return;
-    setApiKey(keyInput.trim());
-    setShowKeyModal(false);
-    setScanMsg('🔑 API-Key gespeichert. Bitte Foto erneut aufnehmen.');
-    setTimeout(() => setScanMsg(''), 4000);
   }
 
   function remove(idx: number) {
@@ -185,36 +170,6 @@ export function PhotoCapture({ dataUrls, onChange, onExtracted, label = '📷 Be
         </div>
       ) : (
         <p className={s.hint}>Noch keine Fotos – Felder werden nach dem Fotografieren automatisch ausgefüllt.</p>
-      )}
-
-      {/* API-Key Modal */}
-      {showKeyModal && (
-        <div className={s.overlay} onClick={() => setShowKeyModal(false)}>
-          <div className={s.keyModal} onClick={e => e.stopPropagation()}>
-            <div className={s.keyModalTitle}>🔑 Anthropic API-Key einrichten</div>
-            <p className={s.keyModalText}>
-              Für die automatische Felderkennung wird ein Anthropic API-Key benötigt.
-              Der Key wird nur lokal in diesem Browser gespeichert.
-            </p>
-            <input
-              className={s.keyInput}
-              type="password"
-              placeholder="sk-ant-..."
-              value={keyInput}
-              onChange={e => setKeyInput(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && saveKey()}
-              autoFocus
-            />
-            <div className={s.keyModalBtns}>
-              <button className={s.keyCancel} onClick={() => setShowKeyModal(false)} type="button">
-                Überspringen
-              </button>
-              <button className={s.keySave} onClick={saveKey} type="button">
-                Speichern
-              </button>
-            </div>
-          </div>
-        </div>
       )}
     </div>
   );
