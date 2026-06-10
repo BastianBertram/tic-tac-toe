@@ -39,37 +39,40 @@
 }
 
 .toolbar {
-  display: flex;
-  gap: 8px;
-  padding: 10px 12px;
+  padding: 10px 14px;
   background: var(--ek-surface);
   border-bottom: 1px solid var(--ek-border);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
 .suche {
-  flex: 1;
   padding: 9px 12px;
-  border-radius: 10px;
-  border: 1.5px solid var(--ek-border);
-  background: var(--ek-bg);
-  font-size: 14px;
-  color: var(--ek-charcoal);
-  outline: none;
-}
-.suche:focus { border-color: var(--ek-red); }
-
-.sortSelect {
-  padding: 9px 10px;
-  border-radius: 10px;
+  border-radius: 9px;
   border: 1.5px solid var(--ek-border);
   background: var(--ek-bg);
   font-size: 13px;
-  font-weight: 700;
   color: var(--ek-charcoal);
-  outline: none;
-  flex-shrink: 0;
+  width: 100%;
+  box-sizing: border-box;
 }
-.sortSelect:focus { border-color: var(--ek-red); }
+
+.sortRow { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.sortLabel { font-size: 12px; color: var(--ek-muted); font-weight: 600; flex-shrink: 0; }
+
+.sortBtn {
+  padding: 6px 12px;
+  border-radius: 20px;
+  border: 1.5px solid var(--ek-border);
+  background: var(--ek-bg);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ek-muted);
+  cursor: pointer;
+}
+.sortBtnActive { background: var(--ek-charcoal); color: #fff; border-color: var(--ek-charcoal); }
 
 .list {
   flex: 1;

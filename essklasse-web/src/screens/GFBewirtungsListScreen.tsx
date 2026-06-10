@@ -86,16 +86,17 @@ export function GFBewirtungsListScreen({ kategorie, onClose }: Props) {
         <input
           className={s.suche}
           type="search"
-          placeholder="Suche nach Veranstaltung, Nr., Objekt …"
+          placeholder="🔍 Datum, Bestellnr., Veranstaltung, Besteller, Objekt…"
           value={suche}
           onChange={e => setSuche(e.target.value)}
         />
-        <select className={s.sortSelect} value={sort} onChange={e => setSort(e.target.value as SortKey)}>
-          <option value="datum-asc">Datum ↑</option>
-          <option value="datum-desc">Datum ↓</option>
-          <option value="nr-asc">Bestellnr. ↑</option>
-          <option value="nr-desc">Bestellnr. ↓</option>
-        </select>
+        <div className={s.sortRow}>
+          <span className={s.sortLabel}>Sortierung:</span>
+          <button type="button" className={`${s.sortBtn} ${sort === 'datum-asc'  ? s.sortBtnActive : ''}`} onClick={() => setSort('datum-asc')}>📅 Datum ↑</button>
+          <button type="button" className={`${s.sortBtn} ${sort === 'datum-desc' ? s.sortBtnActive : ''}`} onClick={() => setSort('datum-desc')}>📅 Datum ↓</button>
+          <button type="button" className={`${s.sortBtn} ${sort === 'nr-asc'     ? s.sortBtnActive : ''}`} onClick={() => setSort('nr-asc')}># Bestellnr. ↑</button>
+          <button type="button" className={`${s.sortBtn} ${sort === 'nr-desc'    ? s.sortBtnActive : ''}`} onClick={() => setSort('nr-desc')}># Bestellnr. ↓</button>
+        </div>
       </div>
 
       <div className={s.list}>
