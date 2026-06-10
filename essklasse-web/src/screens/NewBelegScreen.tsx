@@ -227,12 +227,12 @@ export function NewBelegScreen({ onClose, editBeleg }: Props) {
                 setF(prev => ({
                   ...prev,
                   cateringDatumVon: val,
-                  cateringDatumBis: prev.cateringDatumBis === prev.cateringDatumVon ? val : prev.cateringDatumBis,
+                  cateringDatumBis: prev.cateringDatumBis === prev.cateringDatumVon || prev.cateringDatumBis < val ? val : prev.cateringDatumBis,
                 }));
               }} />
             </Field>
             <Field label="Datum bis">
-              <input type="date" value={f.cateringDatumBis} onChange={e => set('cateringDatumBis', e.target.value)} />
+              <input type="date" value={f.cateringDatumBis} min={f.cateringDatumVon} onChange={e => set('cateringDatumBis', e.target.value)} />
             </Field>
           </div>
           <div className={s.twoCol}>
