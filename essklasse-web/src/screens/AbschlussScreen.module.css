@@ -83,7 +83,7 @@
 
 .posGruppe { margin-bottom: 10px; }
 .posGruppe:last-child { margin-bottom: 0; }
-.posGruppeTitle { font-size: 12px; font-weight: 700; color: var(--ek-muted); text-transform: uppercase; letter-spacing: .4px; margin: 10px 0 4px; }
+.posGruppeTitle { font-size: 11px; font-weight: 800; color: var(--ek-red); text-transform: uppercase; letter-spacing: .6px; padding: 4px 2px 6px; border-bottom: 1.5px solid var(--ek-red); margin: 10px 0 6px; }
 
 .posRow {
   display: grid; grid-template-columns: 1fr 52px 54px 40px 40px 52px 44px;
