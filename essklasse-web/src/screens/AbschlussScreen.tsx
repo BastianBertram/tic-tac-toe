@@ -51,8 +51,14 @@ export function AbschlussScreen({ beleg, onClose, onDone }: Props) {
       setScanMsg(`✅ ${extracted.length} Position(en) erkannt und übernommen`);
       setTimeout(() => setScanMsg(''), 4000);
     } catch (e: any) {
-      setScanMsg(`⚠️ ${e?.message ?? 'Fehler bei der Analyse'}`);
-      setTimeout(() => setScanMsg(''), 5000);
+      const msg = e?.message ?? '';
+      const isQuota = msg.includes('529') || msg.includes('credit') || msg.includes('quota') || msg.includes('insufficient') || msg.includes('balance') || msg.includes('rate') || msg.includes('overloaded');
+      if (isQuota) {
+        setScanMsg('❌ KI-Budget aufgebraucht — Bitte Mengen manuell eintragen.');
+      } else {
+        setScanMsg(`⚠️ Beleg konnte nicht gescannt werden — bitte Mengen manuell eintragen. (${msg})`);
+      }
+      setTimeout(() => setScanMsg(''), 8000);
     } finally {
       setScanning(false);
     }
