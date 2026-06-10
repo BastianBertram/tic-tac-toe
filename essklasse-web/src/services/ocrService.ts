@@ -1,10 +1,9 @@
 /**
- * OCR-Dienst: Liest einen fotografierten Bewirtungsbeleg mit Google Gemini 2.0 Flash aus
+ * OCR-Dienst: Liest einen fotografierten Bewirtungsbeleg mit Claude Vision aus
  * und gibt die extrahierten Felder zurück.
  *
  * API-Key wird in localStorage gespeichert (einmalig eingeben).
- * Alternativ: VITE_GEMINI_API_KEY in .env setzen.
- * Kostenloser Tier: 1500 Requests/Tag auf aistudio.google.com
+ * Alternativ: VITE_ANTHROPIC_API_KEY in .env setzen.
  */
 
 export interface ExtractedBeleg {
@@ -23,7 +22,7 @@ export interface ExtractedBeleg {
   wuensche?: string;
 }
 
-const PROMPT = `Du bist ein präziser OCR-Assistent für Bewirtungsbelege der HWK Hannover / EssKlasse Catering & Gastronomie.
+const SYSTEM_PROMPT = `Du bist ein präziser OCR-Assistent für Bewirtungsbelege der HWK Hannover / EssKlasse Catering & Gastronomie.
 
 Extrahiere alle erkennbaren Felder aus dem Bild des Bewirtungsbelegs und antworte NUR mit einem JSON-Objekt.
 Felder die nicht erkennbar sind, weglassen.
@@ -46,20 +45,18 @@ JSON-Schema:
   "kostenstelle": "Kostenstelle",
   "kostentraeger": "Kostenträger",
   "wuensche": "Sonstige Wünsche/Bemerkungen"
-}
-
-Antworte nur mit dem JSON-Objekt, ohne Erklärungen oder Markdown.`;
+}`;
 
 export function getApiKey(): string {
   return (
-    (import.meta as any).env?.VITE_GEMINI_API_KEY ||
-    localStorage.getItem('ek_gemini_key') ||
+    (import.meta as any).env?.VITE_ANTHROPIC_API_KEY ||
+    localStorage.getItem('ek_anthropic_key') ||
     ''
   );
 }
 
 export function setApiKey(key: string) {
-  localStorage.setItem('ek_gemini_key', key.trim());
+  localStorage.setItem('ek_anthropic_key', key.trim());
 }
 
 export async function extractFromPhoto(dataUrl: string): Promise<ExtractedBeleg> {
@@ -67,31 +64,44 @@ export async function extractFromPhoto(dataUrl: string): Promise<ExtractedBeleg>
   if (!apiKey) throw new Error('NO_KEY');
 
   const isPdf = dataUrl.startsWith('data:application/pdf');
-  const mimeType = isPdf ? 'application/pdf' : dataUrl.split(';')[0].split(':')[1];
-  const base64 = dataUrl.split(',')[1];
 
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-    {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        contents: [
-          {
-            parts: [
-              { inline_data: { mime_type: mimeType, data: base64 } },
-              { text: PROMPT },
-            ],
-          },
-        ],
-        generationConfig: {
-          responseMimeType: 'application/json',
-          maxOutputTokens: 1024,
-          temperature: 0,
-        },
-      }),
+  if (isPdf) {
+    throw new Error('PDF-Dateien werden von der OCR-Erkennung nicht unterstützt. Bitte als Foto aufnehmen.');
+  }
+
+  const base64 = dataUrl.split(',')[1];
+  const mediaType = dataUrl.split(';')[0].split(':')[1] as
+    'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif';
+
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'content-type': 'application/json',
+      'anthropic-dangerous-direct-browser-access': 'true',
     },
-  );
+    body: JSON.stringify({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 1024,
+      system: SYSTEM_PROMPT,
+      messages: [
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'image',
+              source: { type: 'base64', media_type: mediaType, data: base64 },
+            },
+            {
+              type: 'text',
+              text: 'Extrahiere alle Felder aus diesem Bewirtungsbeleg. Antworte nur mit dem JSON-Objekt, ohne Erklärungen.',
+            },
+          ],
+        },
+      ],
+    }),
+  });
 
   if (!response.ok) {
     const err = await response.text();
@@ -99,7 +109,7 @@ export async function extractFromPhoto(dataUrl: string): Promise<ExtractedBeleg>
   }
 
   const data = await response.json();
-  const text: string = data.candidates?.[0]?.content?.parts?.[0]?.text ?? '{}';
+  const text: string = data.content?.[0]?.text ?? '{}';
 
   const jsonMatch = text.match(/\{[\s\S]*\}/);
   if (!jsonMatch) throw new Error('Kein JSON in der Antwort gefunden.');
