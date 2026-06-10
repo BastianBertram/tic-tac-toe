@@ -5,12 +5,13 @@ import { LoginScreen }   from '../screens/LoginScreen';
 
 interface Props { children: React.ReactNode; }
 
-const BASE = (import.meta as any).env?.VITE_API_URL ?? 'http://localhost:3001';
+const BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:3001';
 
 export function AuthGuard({ children }: Props) {
   const { user, setAuth } = useAuthStore();
   const setObjekte        = useObjektStore(s => s.setObjekte);
-  const [checked, setChecked] = useState(false);
+  // Wenn schon ein User im Store ist, ist der Check bereits erledigt (kein Refresh nötig)
+  const [checked, setChecked] = useState(!!user);
 
   useEffect(() => {
     if (user) {
@@ -23,8 +24,7 @@ export function AuthGuard({ children }: Props) {
           { id: 'demo-2', name: 'Berufsschulzentrum Nord',   kuerzel: 'BSZ-N',  strasse: 'Podbielskistr. 22', plz: '30163', ort: 'Hannover', kostenstellen: ['KST-200'], aktiv: true },
         ]);
       }
-      setChecked(true);
-      return;
+      return; // checked ist bereits true (Initialwert)
     }
 
     fetch(`${BASE}/auth/refresh`, { method: 'POST', credentials: 'include' })
@@ -38,6 +38,7 @@ export function AuthGuard({ children }: Props) {
       })
       .catch(() => {})
       .finally(() => setChecked(true));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (!checked) {

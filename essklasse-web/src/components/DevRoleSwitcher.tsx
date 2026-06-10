@@ -1,7 +1,7 @@
-import { useAuthStore } from '../store/authStore';
+import { useAuthStore, type AuthUser } from '../store/authStore';
 import type { UserRolle } from '../types';
 
-const ROLES: { rolle: UserRolle; label: string; color: string; user: object }[] = [
+const ROLES: { rolle: UserRolle; label: string; color: string; user: AuthUser }[] = [
   {
     rolle: 'user',
     label: 'User',
@@ -38,7 +38,7 @@ export function DevRoleSwitcher() {
   const { user, setAuth } = useAuthStore();
 
   function switchRole(entry: typeof ROLES[0]) {
-    setAuth(entry.user as any, 'dev-token');
+    setAuth(entry.user, 'dev-token');
     window.location.reload();
   }
 

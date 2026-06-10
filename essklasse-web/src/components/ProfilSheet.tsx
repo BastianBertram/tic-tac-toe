@@ -3,7 +3,7 @@ import { useAuthStore } from '../store/authStore';
 import { useObjektStore } from '../store/objektStore';
 import s from './ProfilSheet.module.css';
 
-const BASE = (import.meta as any).env?.VITE_API_URL ?? 'http://localhost:3001';
+const BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:3001';
 
 export function ProfilButton() {
   const [open, setOpen] = useState(false);

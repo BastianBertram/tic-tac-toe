@@ -58,12 +58,12 @@ export function PhotoCapture({ dataUrls, onChange, onExtracted, label = '📷 Be
       onExtracted?.(extracted);
       setScanMsg('✅ Felder erfolgreich übernommen!');
       setTimeout(() => setScanMsg(''), 3000);
-    } catch (e: any) {
-      if (e?.message === 'NO_KEY') {
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      if (msg === 'NO_KEY') {
         setShowKeyModal(true);
       } else {
-        const msg = e?.message ?? '';
-        const isQuota = msg.includes('529') || msg.includes('529') || msg.includes('credit') || msg.includes('quota') || msg.includes('insufficient') || msg.includes('balance') || msg.includes('rate') || msg.includes('overloaded');
+        const isQuota = msg.includes('529') || msg.includes('credit') || msg.includes('quota') || msg.includes('insufficient') || msg.includes('balance') || msg.includes('rate') || msg.includes('overloaded');
         if (isQuota) {
           setScanMsg('❌ KI-Budget aufgebraucht — Bitte Daten manuell eintragen.');
         } else {

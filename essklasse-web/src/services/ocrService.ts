@@ -82,7 +82,7 @@ JSON-Schema:
 
 export function getApiKey(): string {
   return (
-    (import.meta as any).env?.VITE_ANTHROPIC_API_KEY ||
+    import.meta.env.VITE_ANTHROPIC_API_KEY ||
     localStorage.getItem('ek_anthropic_key') ||
     ''
   );

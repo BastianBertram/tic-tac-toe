@@ -2,7 +2,7 @@ import { useState } from 'react';
 import s from './LoginScreen.module.css';
 import { isValidEmail } from '../utils/email';
 
-const BASE = (import.meta as any).env?.VITE_API_URL ?? 'http://localhost:3001';
+const BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:3001';
 
 type Stage = 'email' | 'sent';
 
@@ -28,12 +28,13 @@ export function LoginScreen() {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error ?? 'Verbindung zum Server fehlgeschlagen.');
       setStage('sent');
-    } catch (err: any) {
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
       // In dev without backend: still show "sent" state for demo
-      if (err.message.includes('fetch') || err.message.includes('Failed')) {
+      if (message.includes('fetch') || message.includes('Failed')) {
         setStage('sent'); // Demo mode
       } else {
-        setError(err.message);
+        setError(message);
       }
     } finally {
       setLoading(false);

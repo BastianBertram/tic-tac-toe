@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { format, addDays, isToday } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { useBelegStore } from '../store/belegStore';
@@ -64,20 +64,16 @@ export function TodayScreen({ onOpenBeleg, onAbschliessen, onTabAbschluss }: Pro
   const selectedDate    = selected === 0 ? leftDate    : rightDate;
   const isSelectedToday = selected === 0 ? leftIsToday : rightIsToday;
 
-  const belegeForObjekt = useMemo(
-    () => belege.filter(b => !b.deleted && (!aktivesObjekt || b.objektId === aktivesObjekt.id)),
-    [belege, aktivesObjekt]
-  );
+  // React Compiler übernimmt die Memoisierung automatisch – kein manuelles useMemo nötig.
+  const belegeForObjekt = belege.filter(b => !b.deleted && (!aktivesObjekt || b.objektId === aktivesObjekt.id));
 
-  const leftBelege  = useMemo(() => belegeForObjekt.filter(b => b.cateringDatumVon === leftDateStr).sort(byUhrzeit),  [belegeForObjekt, leftDateStr]);
-  const rightBelege = useMemo(() => belegeForObjekt.filter(b => b.cateringDatumVon === rightDateStr).sort(byUhrzeit), [belegeForObjekt, rightDateStr]);
+  const leftBelege  = belegeForObjekt.filter(b => b.cateringDatumVon === leftDateStr).toSorted(byUhrzeit);
+  const rightBelege = belegeForObjekt.filter(b => b.cateringDatumVon === rightDateStr).toSorted(byUhrzeit);
   const selectedBelege = selected === 0 ? leftBelege : rightBelege;
 
-  const nextBelegId = useMemo(() => {
-    if (!isSelectedToday) return null;
-    const future = selectedBelege.filter(b => isFuture(b, nowTime));
-    return future[0]?.id ?? null;
-  }, [selectedBelege, nowTime, isSelectedToday]);
+  const nextBelegId = isSelectedToday
+    ? (selectedBelege.find(b => isFuture(b, nowTime))?.id ?? null)
+    : null;
 
   function getHighlight(beleg: Bewirtungsbeleg): BelegHighlight {
     if (!isSelectedToday) return null;

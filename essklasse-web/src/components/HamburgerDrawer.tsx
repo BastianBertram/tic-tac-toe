@@ -5,7 +5,7 @@ import type { UserRolle } from '../types';
 import s from './ProfilSheet.module.css';
 import d from './HamburgerDrawer.module.css';
 
-const BASE = (import.meta as any).env?.VITE_API_URL ?? 'http://localhost:3001';
+const BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:3001';
 
 interface Props {
   onClose: () => void;

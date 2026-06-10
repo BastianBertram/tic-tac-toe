@@ -48,8 +48,8 @@ export function AbschlussScreen({ beleg, onClose, onDone }: Props) {
       });
       setScanMsg(`✅ ${extracted.length} Position(en) erkannt und übernommen`);
       setTimeout(() => setScanMsg(''), 4000);
-    } catch (e: any) {
-      const msg = e?.message ?? '';
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
       const isQuota = msg.includes('529') || msg.includes('credit') || msg.includes('quota') || msg.includes('insufficient') || msg.includes('balance') || msg.includes('rate') || msg.includes('overloaded');
       if (isQuota) {
         setScanMsg('❌ KI-Budget aufgebraucht — Bitte Mengen manuell eintragen.');

@@ -59,8 +59,8 @@ export function PdfViewer({ dataUrl, filename, onClose, onDownload }: Props) {
         }
 
         setPages(canvases);
-      } catch (e: any) {
-        if (!cancelled) setError(e?.message ?? 'PDF konnte nicht geladen werden');
+      } catch (e) {
+        if (!cancelled) setError(e instanceof Error ? e.message : 'PDF konnte nicht geladen werden');
       } finally {
         if (!cancelled) setLoading(false);
       }
