@@ -144,6 +144,10 @@ export function AbschlussScreen({ beleg, onClose, onDone }: Props) {
           Weicht nichts ab, können Sie die voreingetragenen Werte übernehmen.
         </div>
 
+        <div className={s.hinweisKI}>
+          ⚠️ Bitte prüfen: Die KI-erkannten Positionen dienen nur als Hilfe. Maßgeblich ist immer der originale Bewirtungsschein — Positionen ggf. korrigieren, ergänzen oder löschen.
+        </div>
+
         {/* Positionen */}
         {beleg.positionen.length === 0 ? (
           <div className={s.noPosBox}>
