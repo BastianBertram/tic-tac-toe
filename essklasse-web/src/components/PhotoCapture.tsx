@@ -25,6 +25,13 @@ export function PhotoCapture({ dataUrls, onChange, onExtracted, label = '📷 Be
   const [scanMsg, setScanMsg] = useState('');
   const [showKeyModal, setShowKeyModal] = useState(false);
   const [keyInput, setKeyInput] = useState('');
+  const [dragOver, setDragOver] = useState(false);
+
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault();
+    setDragOver(false);
+    handleFiles(e.dataTransfer.files);
+  }
 
   async function handleFiles(files: FileList | null) {
     if (!files) return;
@@ -76,8 +83,20 @@ export function PhotoCapture({ dataUrls, onChange, onExtracted, label = '📷 Be
   }
 
   return (
-    <div className={s.wrapper}>
+    <div
+      className={`${s.wrapper} ${dragOver ? s.wrapperDrag : ''}`}
+      onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+      onDragLeave={() => setDragOver(false)}
+      onDrop={handleDrop}
+    >
       <div className={s.label}>{label}</div>
+
+      {dragOver && (
+        <div className={s.dropOverlay}>
+          <span className={s.dropIcon}>📄</span>
+          <span className={s.dropText}>Datei hier ablegen</span>
+        </div>
+      )}
 
       {/* Primärer Kamera-Button */}
       <button
