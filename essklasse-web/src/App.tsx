@@ -219,7 +219,7 @@ function RechnungNummerModal({ beleg, value, onChange, onConfirm, onCancel }: {
           Rechnung erstellen
         </div>
         <div style={{ fontSize: 13, color: 'var(--ek-muted)', marginBottom: 20 }}>
-          {beleg.veranstaltung || 'Bewirtung'}
+          {beleg.veranstaltung || 'Bewirtung'} · {beleg.bestellungsnummer}
         </div>
         <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: 'var(--ek-muted)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '.5px' }}>
           Rechnungsnummer <span style={{ color: '#e74c3c' }}>*</span>

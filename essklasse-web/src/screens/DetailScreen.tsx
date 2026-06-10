@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { format, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
 import type { Bewirtungsbeleg } from '../types';
+import { StatusBadge } from '../components/StatusBadge';
 import { PdfViewer } from '../components/PdfViewer';
 import { useBelegStore } from '../store/belegStore';
 import s from './DetailScreen.module.css';
@@ -18,10 +19,27 @@ function downloadDataUrl(url: string, filename: string) {
 export function DetailScreen({ beleg: init, onClose, onAbschliessen, onBearbeiten, onRechnungErstellen, canDelete = true }: Props) {
   const store = useBelegStore();
   const beleg = store.belege.find(b => b.id === init.id) ?? init;
+  const [retrying, setRetrying] = useState(false);
   const [lightbox, setLightbox] = useState<string | null>(null);
   const [pdfViewer, setPdfViewer] = useState<{ dataUrl: string; name: string } | null>(null);
 
   const datum = format(parseISO(beleg.cateringDatumVon), 'dd.MM.yyyy', { locale: de });
+
+  async function retrySync() {
+    setRetrying(true);
+    store.setSyncStatus(beleg.id, 'syncing');
+    try {
+      const { createSalesOrder } = await import('../services/bcService');
+      const token = (window as any).__bcToken ?? '';
+      if (!token) throw new Error('Kein Access Token – bitte zuerst anmelden.');
+      const result = await createSalesOrder(beleg, token);
+      store.setBcAuftragsnummer(beleg.id, result.auftragsnummer);
+    } catch (e: any) {
+      store.setSyncStatus(beleg.id, 'error', e?.message);
+      alert(e?.message ?? 'Fehler');
+    }
+    setRetrying(false);
+  }
 
   function del() {
     if (confirm('Beleg wirklich löschen?')) { store.deleteBeleg(beleg.id); onClose(); }
@@ -33,6 +51,7 @@ export function DetailScreen({ beleg: init, onClose, onAbschliessen, onBearbeite
         <button className={s.backBtn} onClick={onClose} type="button">← Zurück</button>
         <div className={s.titleWrap}>
           <span className={s.title}>{beleg.veranstaltung || 'Bewirtungsbeleg'}</span>
+          {beleg.bestellungsnummer && <span className={s.bestellNr}>{beleg.bestellungsnummer}</span>}
         </div>
         {canDelete && !beleg.abgeschlossen && (
           <button className={s.delBtn} onClick={del} type="button">🗑</button>
@@ -40,6 +59,19 @@ export function DetailScreen({ beleg: init, onClose, onAbschliessen, onBearbeite
       </div>
 
       <div className={s.scroll}>
+        {/* Status */}
+        <div className={s.statusRow}>
+          <StatusBadge status={beleg.syncStatus} />
+          {beleg.bcAuftragsnummer && (
+            <span className={s.orderNr}>✅ BC {beleg.bcAuftragsnummer}</span>
+          )}
+          {(beleg.syncStatus === 'local' || beleg.syncStatus === 'error') && (
+            <button className={s.retryBtn} onClick={retrySync} disabled={retrying} type="button">
+              {retrying ? '⏳' : '☁️ Erneut senden'}
+            </button>
+          )}
+        </div>
+        {beleg.bcFehler && <div className={s.errBox}>⚠️ {beleg.bcFehler}</div>}
 
         {/* Kopfdaten */}
         <div className={s.section}>
@@ -93,9 +125,9 @@ export function DetailScreen({ beleg: init, onClose, onAbschliessen, onBearbeite
                 <FileThumb
                   key={i}
                   url={url}
-                  filename={`beleg-abschluss-${i + 1}`}
+                  filename={`${beleg.bestellungsnummer ?? 'beleg'}-abschluss-${i + 1}`}
                   onOpenImage={() => setLightbox(url)}
-                  onOpenPdf={() => setPdfViewer({ dataUrl: url, name: `beleg-abschluss-${i+1}.pdf` })}
+                  onOpenPdf={() => setPdfViewer({ dataUrl: url, name: `${beleg.bestellungsnummer ?? 'beleg'}-abschluss-${i+1}.pdf` })}
                 />
               ))}
             </div>
@@ -111,9 +143,9 @@ export function DetailScreen({ beleg: init, onClose, onAbschliessen, onBearbeite
                 <FileThumb
                   key={i}
                   url={url}
-                  filename={`beleg-bestell-${i + 1}`}
+                  filename={`${beleg.bestellungsnummer ?? 'beleg'}-bestell-${i + 1}`}
                   onOpenImage={() => setLightbox(url)}
-                  onOpenPdf={() => setPdfViewer({ dataUrl: url, name: `beleg-bestell-${i+1}.pdf` })}
+                  onOpenPdf={() => setPdfViewer({ dataUrl: url, name: `${beleg.bestellungsnummer ?? 'beleg'}-bestell-${i+1}.pdf` })}
                 />
               ))}
             </div>

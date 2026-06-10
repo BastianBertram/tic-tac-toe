@@ -13,6 +13,10 @@ export function BottomNav({ active, onTab, onNew, onAbgeschlossene }: Props) {
   const rolle = useAuthStore(st => st.user?.rolle);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
+  const pending = useMemo(
+    () => belege.filter(b => !b.deleted && (b.syncStatus === 'local' || b.syncStatus === 'error')).length,
+    [belege]
+  );
   const offene = useMemo(() => {
     const now   = format(new Date(), 'HH:mm');
     const today = format(new Date(), 'yyyy-MM-dd');
@@ -42,7 +46,7 @@ export function BottomNav({ active, onTab, onNew, onAbgeschlossene }: Props) {
         </button>
 
         {/* Rechts: Kalender + Abschließen/Admin */}
-        <TabBtn icon="📅" label="Kalender" active={active === 'calendar'} onClick={() => onTab('calendar')} />
+        <TabBtn icon="📅" label="Kalender" active={active === 'calendar'} onClick={() => onTab('calendar')} badge={pending} />
         {rolle === 'admin' ? (
           <TabBtn icon="⚙️" label={<>Admin<br />Verwaltung</>} active={active === 'admin'} onClick={() => onTab('admin')} />
         ) : (
