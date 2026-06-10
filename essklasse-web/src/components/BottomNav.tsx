@@ -27,30 +27,31 @@ export function BottomNav({ active, onTab, onNew, onAbgeschlossene }: Props) {
     }).length;
   }, [belege, aktivesObjekt]);
 
+  const isGf = rolle === 'geschaeftsfuehrung';
+
   return (
     <>
       <nav className={s.nav}>
-        {/* Links: Hamburger + Kalender */}
         <button className={`${s.tab} ${drawerOpen ? s.tabActive : ''}`} onClick={() => setDrawerOpen(true)} type="button">
           <span className={s.hamburger}>
             <span /><span /><span />
           </span>
           <span className={s.tabLabel}>Menü</span>
         </button>
-        <TabBtn icon="📋" label="Heute" active={active === 'today'} onClick={() => onTab('today')} />
+        {!isGf && <TabBtn icon="📋" label="Heute" active={active === 'today'} onClick={() => onTab('today')} />}
 
-        {/* Mitte: FAB */}
-        <button className={s.fab} onClick={onNew} type="button" aria-label="Neuer Beleg">
-          <span className={s.fabPlus}>+</span>
-        </button>
+        {!isGf && (
+          <button className={s.fab} onClick={onNew} type="button" aria-label="Neuer Beleg">
+            <span className={s.fabPlus}>+</span>
+          </button>
+        )}
 
-        {/* Rechts: Kalender + Abschließen/Admin */}
-        <TabBtn icon="📅" label="Kalender" active={active === 'calendar'} onClick={() => onTab('calendar')} />
-        {rolle === 'admin' ? (
+        {!isGf && <TabBtn icon="📅" label="Kalender" active={active === 'calendar'} onClick={() => onTab('calendar')} />}
+        {!isGf && (rolle === 'admin' ? (
           <TabBtn icon="⚙️" label={<>Admin<br />Verwaltung</>} active={active === 'admin'} onClick={() => onTab('admin')} />
         ) : (
           <TabBtn icon="✓" label={<>Bewirtung<br />Abschließen</>} active={active === 'abschluss'} onClick={() => onTab('abschluss')} badge={offene} urgent={offene > 0} />
-        )}
+        ))}
       </nav>
 
       {drawerOpen && (
