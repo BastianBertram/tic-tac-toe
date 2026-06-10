@@ -14,7 +14,6 @@ import { AdminScreen } from './screens/AdminScreen';
 import { useAuthStore } from './store/authStore';
 import { useBelegStore } from './store/belegStore';
 import { DevRoleSwitcher } from './components/DevRoleSwitcher';
-import { DuplikatCheckModal } from './components/DuplikatCheckModal';
 import { seedAll } from './dev/seedData';
 import type { Bewirtungsbeleg } from './types';
 import s from './App.module.css';
@@ -42,16 +41,11 @@ export default function App() {
     }
   }, []);
 
-  // Duplikat-Prüfung + Rechnungsnummer-Modal
-  const [duplikatBeleg, setDuplikatBeleg] = useState<Bewirtungsbeleg | null>(null);
+  // Modal für Rechnungsnummer-Eingabe (Buchhaltung)
   const [rechnungModalBeleg, setRechnungModalBeleg] = useState<Bewirtungsbeleg | null>(null);
   const [rechnungsnummerInput, setRechnungsnummerInput] = useState('');
 
   function openRechnungModal(b: Bewirtungsbeleg) {
-    setDuplikatBeleg(b);
-  }
-  function proceedToRechnungModal(b: Bewirtungsbeleg) {
-    setDuplikatBeleg(null);
     setRechnungsnummerInput(b.rechnungsnummer ?? '');
     setRechnungModalBeleg(b);
   }
@@ -79,13 +73,6 @@ export default function App() {
             </div>
           )}
           <DevOverlay />
-          {duplikatBeleg && (
-            <DuplikatCheckModal
-              beleg={duplikatBeleg}
-              onProceed={() => proceedToRechnungModal(duplikatBeleg)}
-              onCancel={() => setDuplikatBeleg(null)}
-            />
-          )}
           {rechnungModalBeleg && (
             <RechnungNummerModal beleg={rechnungModalBeleg} value={rechnungsnummerInput}
               onChange={setRechnungsnummerInput} onConfirm={confirmRechnung} onCancel={() => setRechnungModalBeleg(null)} />

@@ -107,7 +107,6 @@ export interface Bewirtungsbeleg {
   erstelltAm: string;
   erstelltVon?: string;
   deleted?: boolean;
-  isDoppelt?: boolean;
   rechnungErstellt?: boolean;
   rechnungErstelltAm?: string;
   rechnungErstelltVon?: string;
