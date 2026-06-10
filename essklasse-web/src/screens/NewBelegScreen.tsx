@@ -1,11 +1,13 @@
 import { useState } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 import { format } from 'date-fns';
 import { useBelegStore } from '../store/belegStore';
 import { useObjektStore } from '../store/objektStore';
 import { useAuthStore } from '../store/authStore';
 import { PhotoCapture } from '../components/PhotoCapture';
 import { PositionEditor } from '../components/PositionEditor';
-import type { BelegPosition, Bewirtungsbeleg } from '../types';
+import type { BelegPosition, Bewirtungsbeleg, Kategorie } from '../types';
+import { KATEGORIEN as KATEGORIEN_LIST } from '../types';
 import type { ExtractedBeleg } from '../services/ocrService';
 import s from './NewBelegScreen.module.css';
 
@@ -48,21 +50,31 @@ export function NewBelegScreen({ onClose, editBeleg }: Props) {
   }
 
   function applyExtracted(data: ExtractedBeleg) {
+    const extractedPositionen: BelegPosition[] = (data.positionen ?? []).map(p => ({
+      id: uuidv4(),
+      kategorie: (KATEGORIEN_LIST.includes(p.kategorie as Kategorie) ? p.kategorie : 'Sonstiges') as Kategorie,
+      bezeichnung: p.bezeichnung,
+      einheit: p.einheit || 'Stk',
+      preis: p.preis ?? 0,
+      menge: p.menge ?? 1,
+    }));
+
     setF(prev => ({
       ...prev,
-      ...(data.besteller       && { besteller:       data.besteller }),
+      ...(data.besteller        && { besteller:        data.besteller }),
       ...(data.cateringDatumVon && { cateringDatumVon: data.cateringDatumVon }),
       ...(data.cateringDatumBis && { cateringDatumBis: data.cateringDatumBis }),
-      ...(data.uhrzeitVon      && { uhrzeitVon:      data.uhrzeitVon }),
-      ...(data.uhrzeitBis      && { uhrzeitBis:      data.uhrzeitBis }),
-      ...(data.veranstaltung   && { veranstaltung:   data.veranstaltung }),
-      ...(data.ort             && { ort:             data.ort }),
-      ...(data.raum            && { raum:            data.raum }),
-      ...(data.personenzahl    && { personenzahl:    String(data.personenzahl) }),
-      ...(data.konto           && { konto:           data.konto }),
-      ...(data.kostenstelle    && { kostenstelle:    data.kostenstelle }),
-      ...(data.kostentraeger   && { kostentraeger:   data.kostentraeger }),
-      ...(data.wuensche        && { wuensche:        data.wuensche }),
+      ...(data.uhrzeitVon       && { uhrzeitVon:       data.uhrzeitVon }),
+      ...(data.uhrzeitBis       && { uhrzeitBis:       data.uhrzeitBis }),
+      ...(data.veranstaltung    && { veranstaltung:    data.veranstaltung }),
+      ...(data.ort              && { ort:              data.ort }),
+      ...(data.raum             && { raum:             data.raum }),
+      ...(data.personenzahl     && { personenzahl:     String(data.personenzahl) }),
+      ...(data.konto            && { konto:            data.konto }),
+      ...(data.kostenstelle     && { kostenstelle:     data.kostenstelle }),
+      ...(data.kostentraeger    && { kostentraeger:    data.kostentraeger }),
+      ...(data.wuensche         && { wuensche:         data.wuensche }),
+      ...(extractedPositionen.length > 0 && { positionen: extractedPositionen }),
     }));
   }
 

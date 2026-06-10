@@ -6,6 +6,14 @@
  * Alternativ: VITE_ANTHROPIC_API_KEY in .env setzen.
  */
 
+export interface ExtractedPosition {
+  kategorie: string;
+  bezeichnung: string;
+  einheit: string;
+  preis: number;
+  menge: number;
+}
+
 export interface ExtractedBeleg {
   besteller?: string;
   cateringDatumVon?: string;   // YYYY-MM-DD
@@ -20,6 +28,7 @@ export interface ExtractedBeleg {
   kostenstelle?: string;
   kostentraeger?: string;
   wuensche?: string;
+  positionen?: ExtractedPosition[];
 }
 
 const SYSTEM_PROMPT = `Du bist ein präziser OCR-Assistent für Bewirtungsbelege der HWK Hannover / EssKlasse Catering & Gastronomie.
@@ -29,6 +38,10 @@ Felder die nicht erkennbar sind, weglassen.
 Datumsformat: YYYY-MM-DD
 Zeitformat: HH:MM (24h)
 Zahlen ohne Einheiten.
+
+Für Positionen/Leistungen: Extrahiere ALLE erkennbaren Positionen, auch handschriftliche.
+Weise jeder Position eine passende Kategorie zu aus: Heißgetränke, Kaltgetränke, Speisen/Snacks, Sonderbestellungen, Abräumservice, Buffetaufbau, Equipment, Sonstiges.
+Einheiten: Stk, Person, Std, Pauschale, kg, l, Packung
 
 JSON-Schema:
 {
@@ -44,7 +57,10 @@ JSON-Schema:
   "konto": "Kontonummer",
   "kostenstelle": "Kostenstelle",
   "kostentraeger": "Kostenträger",
-  "wuensche": "Sonstige Wünsche/Bemerkungen"
+  "wuensche": "Sonstige Wünsche/Bemerkungen",
+  "positionen": [
+    { "kategorie": "Speisen/Snacks", "bezeichnung": "Belegte Brötchen", "einheit": "Stk", "preis": 2.50, "menge": 10 }
+  ]
 }`;
 
 export function getApiKey(): string {
