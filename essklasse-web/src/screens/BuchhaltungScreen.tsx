@@ -118,7 +118,7 @@ export function BuchhaltungScreen({ onOpenBeleg, onRechnungErstellen }: Props) {
   const nowDate = format(now, 'yyyy-MM-dd');
   const nowTime = format(now, 'HH:mm');
 
-  const alleBase = useMemo(() => [...belege].sort(byBestellungsnr), [belege]);
+  const alleBase = useMemo(() => [...belege].filter(b => !b.deleted).sort(byBestellungsnr), [belege]);
 
   const ueberfaelligBase = useMemo(() =>
     belege.filter(b => {
