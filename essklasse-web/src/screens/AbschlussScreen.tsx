@@ -100,27 +100,22 @@ export function AbschlussScreen({ beleg, onClose, onDone }: Props) {
     <div className={s.screen}>
       {/* Header */}
       <div className={s.header}>
-        <button className={s.backBtn} onClick={onClose} type="button">✕</button>
-        <div className={s.headerCenter}>
-          <div className={s.headerTitle}>Bewirtung abschließen</div>
-          <div className={s.headerSub}>{beleg.veranstaltung || 'Bewirtung'}</div>
-        </div>
+        <button className={s.closeBtn} onClick={onClose} type="button">✕</button>
+        <img src="/logo.png" alt="EssKlasse" className={s.headerLogo} />
+        <button
+          className={s.abschliessenHdrBtn}
+          onClick={fotos.length > 0 ? handleAbschliessen : undefined}
+          disabled={fotos.length === 0}
+          type="button"
+        >
+          Abschließen
+        </button>
       </div>
 
       <div className={s.scroll}>
-        {/* Info-Banner */}
-        <div className={s.infoBanner}>
-          <div className={s.infoBannerIcon}>📋</div>
-          <div>
-            <div className={s.infoBannerTitle}>{beleg.veranstaltung || 'Bewirtung'}</div>
-            <div className={s.infoBannerMeta}>
-              {datum} · {beleg.uhrzeitVon}–{beleg.uhrzeitBis} · {beleg.raum || beleg.ort}
-            </div>
-          </div>
-        </div>
-
         {/* Finaler Bewirtungsbeleg-Foto — Pflichtfeld */}
-        <div className={s.fotoSection}>
+        <div className={s.section}>
+          <div className={s.sectionTitle}>Finaler Bewirtungsbeleg</div>
           <PhotoCapture
             dataUrls={fotos}
             onChange={handleFotosChange}
