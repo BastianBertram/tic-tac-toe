@@ -14,6 +14,8 @@ import { AdminScreen } from './screens/AdminScreen';
 import { useAuthStore } from './store/authStore';
 import { useBelegStore } from './store/belegStore';
 import { GFHomeScreen } from './screens/GFHomeScreen';
+import { GFBewirtungsListScreen } from './screens/GFBewirtungsListScreen';
+import type { GFKategorie } from './screens/GFBewirtungsListScreen';
 import { DevRoleSwitcher } from './components/DevRoleSwitcher';
 import { DuplikatCheckModal } from './components/DuplikatCheckModal';
 import { seedAll } from './dev/seedData';
@@ -112,18 +114,8 @@ export default function App() {
   if (rolle === 'geschaeftsfuehrung') {
     return (
       <AuthGuard>
-        <div className={s.app}>
-          <div className={s.content}>
-            <GFHomeScreen />
-          </div>
-          <BottomNav
-            active="gf-home"
-            onTab={setTab}
-            onNew={() => {}}
-            onAbgeschlossene={() => {}}
-          />
-          <DevOverlay />
-        </div>
+        <GFApp />
+        <DevOverlay />
       </AuthGuard>
     );
   }
@@ -215,6 +207,26 @@ export default function App() {
         <DevOverlay />
       </div>
     </AuthGuard>
+  );
+}
+
+function GFApp() {
+  const [kategorie, setKategorie] = useState<GFKategorie | null>(null);
+  return (
+    <div className={s.app}>
+      <div className={s.content}>
+        {kategorie
+          ? <GFBewirtungsListScreen kategorie={kategorie} onClose={() => setKategorie(null)} />
+          : <GFHomeScreen onKachelClick={setKategorie} />
+        }
+      </div>
+      <BottomNav
+        active="gf-home"
+        onTab={() => setKategorie(null)}
+        onNew={() => {}}
+        onAbgeschlossene={() => {}}
+      />
+    </div>
   );
 }
 

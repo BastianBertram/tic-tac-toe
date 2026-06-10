@@ -44,7 +44,10 @@
   align-items: center;
   gap: 6px;
   text-align: center;
+  cursor: pointer;
+  transition: opacity 0.15s;
 }
+.kachel:active { opacity: 0.7; }
 
 .kachelUrgent {
   border-color: #e8a020;
