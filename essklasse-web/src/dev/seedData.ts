@@ -73,7 +73,6 @@ function makeBeleg(overrides: Partial<Bewirtungsbeleg> & {
     interneNotiz: '',
     erstelltAm: s(3),
     erstelltVon: overrides.erstelltVon,
-    syncStatus: 'local',
     abgeschlossen: false,
     deleted: false,
     ...overrides,
@@ -213,7 +212,6 @@ export function seedAll() {
       abgeschlossenAm: s(6),
       abgeschlossenVon: 'Anna Schmidt',
       abschlussPositionen: abschluss(posWoche),
-      syncStatus: 'synced',
     }),
     // Letzte Woche – abgeschlossen + Rechnung erstellt
     makeBeleg({
@@ -239,7 +237,6 @@ export function seedAll() {
         pos('Speisen/Snacks','Fingerfood',    'Person', 12.00, 30),
         pos('Buffetaufbau',  'Buffet-Aufbau', 'Pauschale', 60.00, 1),
       ]),
-      syncStatus: 'synced',
       rechnungErstellt: true,
       rechnungErstelltAm: s(8),
       rechnungErstelltVon: 'Klaus Weber',

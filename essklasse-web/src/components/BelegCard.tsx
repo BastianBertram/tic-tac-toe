@@ -1,5 +1,4 @@
 import type { Bewirtungsbeleg } from '../types';
-import { StatusBadge } from './StatusBadge';
 import { format, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
 import s from './BelegCard.module.css';
@@ -47,7 +46,6 @@ export function BelegCard({ beleg, onClick, highlight = null, onAbschliessen }: 
           <div className={s.sub}>{beleg.besteller} · {datum}</div>
           {beleg.bestellungsnummer && <div className={s.bestellNr}>{beleg.bestellungsnummer}</div>}
         </div>
-        <StatusBadge status={beleg.syncStatus} />
       </div>
 
       <div className={s.meta}>
@@ -57,10 +55,6 @@ export function BelegCard({ beleg, onClick, highlight = null, onAbschliessen }: 
         {beleg.uhrzeitVon && <span>🕐 {beleg.uhrzeitVon}–{beleg.uhrzeitBis}</span>}
         {beleg.erstelltVon && <span>👤 {beleg.erstelltVon}</span>}
       </div>
-
-      {beleg.bcAuftragsnummer && (
-        <div className={s.orderNr}>✅ BC-Auftrag: {beleg.bcAuftragsnummer}</div>
-      )}
 
       <div className={s.footer}>
         <span className={s.posCnt}>{beleg.positionen.length} Position(en)</span>

@@ -1,5 +1,3 @@
-export type SyncStatus = 'local' | 'syncing' | 'synced' | 'error';
-
 export type Kategorie =
   | 'Heißgetränke'
   | 'Kaltgetränke'
@@ -101,10 +99,7 @@ export interface Bewirtungsbeleg {
   interneNotiz: string;
   erstelltAm: string;
   erstelltVon?: string;
-  syncStatus: SyncStatus;
   deleted?: boolean;
-  bcAuftragsnummer?: string;
-  bcFehler?: string;
   rechnungErstellt?: boolean;
   rechnungErstelltAm?: string;
   rechnungErstelltVon?: string;

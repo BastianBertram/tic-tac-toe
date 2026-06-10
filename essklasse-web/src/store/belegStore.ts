@@ -1,24 +1,21 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { v4 as uuidv4 } from 'uuid';
-import type { Bewirtungsbeleg, SyncStatus, AbschlussPosition } from '../types';
+import type { Bewirtungsbeleg, AbschlussPosition } from '../types';
 import { format } from 'date-fns';
 
 interface BelegStore {
   belege: Bewirtungsbeleg[];
   /** Laufender Zähler für Bestellungsnummern, pro Kalenderjahr */
   bestellungZaehler: Record<string, number>;  // key = "26", "27", …
-  addBeleg: (b: Omit<Bewirtungsbeleg, 'id' | 'erstelltAm' | 'syncStatus' | 'abgeschlossen' | 'bestellungsnummer'>, erstelltVon?: string) => string;
+  addBeleg: (b: Omit<Bewirtungsbeleg, 'id' | 'erstelltAm' | 'abgeschlossen' | 'bestellungsnummer'>, erstelltVon?: string) => string;
   updateBeleg: (id: string, partial: Partial<Bewirtungsbeleg>) => void;
   deleteBeleg: (id: string) => void;
-  setSyncStatus: (id: string, status: SyncStatus, fehler?: string) => void;
-  setBcAuftragsnummer: (id: string, nr: string) => void;
   schliesseBeleg: (id: string, positionen: AbschlussPosition[], user?: string, abschlussfotos?: string[]) => void;
   markRechnungErstellt: (id: string, userName?: string, rechnungsnummer?: string) => void;
   getBelegeByDate: (date: string) => Bewirtungsbeleg[];
   getTodaysBelege: () => Bewirtungsbeleg[];
   getDatesWithBelege: () => string[];
-  getPendingBelege: () => Bewirtungsbeleg[];
   getOffeneBelege: () => Bewirtungsbeleg[];  // abgelaufen, aber noch nicht abgeschlossen
 }
 
@@ -40,7 +37,6 @@ export const useBelegStore = create<BelegStore>()(
             ...b, id, bestellungsnummer,
             erstelltAm: new Date().toISOString(),
             ...(erstelltVon ? { erstelltVon } : {}),
-            syncStatus: 'local',
             abgeschlossen: false,
           }, ...s.belege],
         }));
@@ -52,12 +48,6 @@ export const useBelegStore = create<BelegStore>()(
 
       deleteBeleg: (id) =>
         set(s => ({ belege: s.belege.map(b => b.id === id ? { ...b, deleted: true } : b) })),
-
-      setSyncStatus: (id, status, fehler) =>
-        set(s => ({ belege: s.belege.map(b => b.id === id ? { ...b, syncStatus: status, bcFehler: fehler } : b) })),
-
-      setBcAuftragsnummer: (id, nr) =>
-        set(s => ({ belege: s.belege.map(b => b.id === id ? { ...b, bcAuftragsnummer: nr, syncStatus: 'synced' } : b) })),
 
       schliesseBeleg: (id, positionen, user, abschlussfotos) =>
         set(s => ({
@@ -87,8 +77,6 @@ export const useBelegStore = create<BelegStore>()(
       getTodaysBelege: () => get().getBelegeByDate(format(new Date(), 'yyyy-MM-dd')),
 
       getDatesWithBelege: () => [...new Set(get().belege.filter(b => !b.deleted).map(b => b.cateringDatumVon))],
-
-      getPendingBelege: () => get().belege.filter(b => !b.deleted && (b.syncStatus === 'local' || b.syncStatus === 'error')),
 
       getOffeneBelege: () => {
         const now = format(new Date(), 'HH:mm');
