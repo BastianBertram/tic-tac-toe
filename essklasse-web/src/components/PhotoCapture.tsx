@@ -62,8 +62,14 @@ export function PhotoCapture({ dataUrls, onChange, onExtracted, label = '📷 Be
       if (e?.message === 'NO_KEY') {
         setShowKeyModal(true);
       } else {
-        setScanMsg(`⚠️ ${e?.message ?? 'Fehler beim Lesen'}`);
-        setTimeout(() => setScanMsg(''), 5000);
+        const msg = e?.message ?? '';
+        const isQuota = msg.includes('529') || msg.includes('529') || msg.includes('credit') || msg.includes('quota') || msg.includes('insufficient') || msg.includes('balance') || msg.includes('rate') || msg.includes('overloaded');
+        if (isQuota) {
+          setScanMsg('❌ KI-Budget aufgebraucht — Bitte Daten manuell eintragen.');
+        } else {
+          setScanMsg(`⚠️ Beleg konnte nicht gescannt werden — bitte Daten manuell eintragen. (${msg})`);
+        }
+        setTimeout(() => setScanMsg(''), 8000);
       }
     } finally {
       setScanning(false);
