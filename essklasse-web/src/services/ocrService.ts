@@ -33,15 +33,18 @@ export interface ExtractedBeleg {
 
 const SYSTEM_PROMPT = `Du bist ein präziser OCR-Assistent für Bewirtungsbelege der HWK Hannover / EssKlasse Catering & Gastronomie.
 
-Extrahiere alle erkennbaren Felder aus dem Bild des Bewirtungsbelegs und antworte NUR mit einem JSON-Objekt.
+Das Dokument ist ein vorgedrucktes Bestellformular. Es enthält eine Tabelle mit vielen vorgedruckten Produktzeilen.
+Jede Zeile hat Spalten für: Produktgruppe, Produkt, Einheit, Preis, Menge/Anzahl, Bestellt, Zurück.
+
+WICHTIG: Extrahiere NUR Zeilen, bei denen eine Menge oder Anzahl handschriftlich oder gedruckt eingetragen wurde (Wert > 0).
+Leere Zeilen ohne Mengeneintrag ignorieren.
+Lies ALLE Seiten des Dokuments sorgfältig durch.
+
+Weise jeder Position eine passende Kategorie zu aus: Heißgetränke, Kaltgetränke, Speisen/Snacks, Sonderbestellungen, Abräumservice, Buffetaufbau, Equipment, Sonstiges.
+
 Felder die nicht erkennbar sind, weglassen.
 Datumsformat: YYYY-MM-DD
 Zeitformat: HH:MM (24h)
-Zahlen ohne Einheiten.
-
-Für Positionen/Leistungen: Extrahiere ALLE erkennbaren Positionen, auch handschriftliche.
-Weise jeder Position eine passende Kategorie zu aus: Heißgetränke, Kaltgetränke, Speisen/Snacks, Sonderbestellungen, Abräumservice, Buffetaufbau, Equipment, Sonstiges.
-Einheiten: Stk, Person, Std, Pauschale, kg, l, Packung
 
 JSON-Schema:
 {
@@ -59,7 +62,7 @@ JSON-Schema:
   "kostentraeger": "Kostenträger",
   "wuensche": "Sonstige Wünsche/Bemerkungen",
   "positionen": [
-    { "kategorie": "Speisen/Snacks", "bezeichnung": "Belegte Brötchen", "einheit": "Stk", "preis": 2.50, "menge": 10 }
+    { "kategorie": "Speisen/Snacks", "bezeichnung": "Belegte Brötchen KAT 1", "einheit": "1/2", "preis": 2.59, "menge": 20 }
   ]
 }`;
 
