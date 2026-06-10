@@ -150,6 +150,7 @@ export interface ExtractedAbschlussPosition {
   ausgeliefert?: number;
   zurueckVoll?: number;
   zurueckLeer?: number;
+  berechnen?: number;
   pfand?: number;
 }
 
@@ -176,13 +177,13 @@ Analysiere diesen abgeschlossenen Bewirtungsbeleg und extrahiere für jede Posit
 Die folgenden Positionen wurden bestellt:
 ${posListe}
 
-Suche im Dokument nach den Spalten: Ausgeliefert, Zurück Voll, Zurück Leer, Pfand.
+Suche im Dokument nach den Spalten: Ausgeliefert, Zurück Voll, Zurück Leer, Berechnen, Pfand.
 Ordne die gefundenen Werte den Positionen zu (Fuzzy-Matching auf Bezeichnung).
 Felder die nicht erkennbar sind, weglassen.
 
 Antworte NUR mit einem JSON-Array:
 [
-  { "bezeichnung": "exakt wie oben", "ausgeliefert": 2, "zurueckVoll": 0, "zurueckLeer": 1, "pfand": 0 }
+  { "bezeichnung": "exakt wie oben", "ausgeliefert": 2, "zurueckVoll": 0, "zurueckLeer": 1, "berechnen": 1, "pfand": 0 }
 ]`;
 
   const response = await fetch('https://api.anthropic.com/v1/messages', {

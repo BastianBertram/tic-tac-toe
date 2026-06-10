@@ -23,6 +23,7 @@ export function AbschlussScreen({ beleg, onClose, onDone }: Props) {
   const [zurueckVoll,  setZurueckVoll]  = useState<Record<string, string>>(Object.fromEntries(beleg.positionen.map(p => [p.id, ''])));
   const [zurueckLeer,  setZurueckLeer]  = useState<Record<string, string>>(Object.fromEntries(beleg.positionen.map(p => [p.id, ''])));
   const [pfand,        setPfand]        = useState<Record<string, string>>(Object.fromEntries(beleg.positionen.map(p => [p.id, ''])));
+  const [berechnen,    setBerechnen]    = useState<Record<string, string>>(Object.fromEntries(beleg.positionen.map(p => [p.id, ''])));
   const [scanning,     setScanning]     = useState(false);
   const [scanMsg,      setScanMsg]      = useState('');
   const [done, setDone] = useState(false);
@@ -45,6 +46,7 @@ export function AbschlussScreen({ beleg, onClose, onDone }: Props) {
         if (ex.zurueckVoll  != null) setZurueckVoll(prev => ({ ...prev, [pos.id]: String(ex.zurueckVoll) }));
         if (ex.zurueckLeer  != null) setZurueckLeer(prev => ({ ...prev, [pos.id]: String(ex.zurueckLeer) }));
         if (ex.pfand        != null) setPfand(prev => ({ ...prev, [pos.id]: String(ex.pfand) }));
+        if (ex.berechnen    != null) setBerechnen(prev => ({ ...prev, [pos.id]: String(ex.berechnen) }));
       });
       setScanMsg(`✅ ${extracted.length} Position(en) erkannt und übernommen`);
       setTimeout(() => setScanMsg(''), 4000);
@@ -58,21 +60,13 @@ export function AbschlussScreen({ beleg, onClose, onDone }: Props) {
 
   function setMenge(id: string, val: string) { setMengen(prev => ({ ...prev, [id]: val })); }
 
-  function berechnen(id: string): string {
-    const tats = parseFloat(mengen[id] ?? '0') || 0;
-    const voll = parseFloat(zurueckVoll[id] ?? '0') || 0;
-    const leer = parseFloat(zurueckLeer[id] ?? '0') || 0;
-    const result = tats - voll - leer;
-    return result > 0 ? String(result) : '0';
-  }
-
   function handleAbschliessen() {
     const positionen: AbschlussPosition[] = beleg.positionen.map(p => ({
       positionId: p.id,
       tatsaechlicheMenge: parseFloat(mengen[p.id] ?? String(p.menge)) || 0,
       zurueckVoll:  parseFloat(zurueckVoll[p.id] ?? '0') || 0,
       zurueckLeer:  parseFloat(zurueckLeer[p.id] ?? '0') || 0,
-      berechnen:    parseFloat(berechnen(p.id)) || 0,
+      berechnen:    parseFloat(berechnen[p.id] ?? '0') || 0,
       pfand:        parseFloat(pfand[p.id] ?? '0') || 0,
     }));
     schliesseBeleg(beleg.id, positionen, user?.name ?? user?.email, fotos);
@@ -197,7 +191,10 @@ export function AbschlussScreen({ beleg, onClose, onDone }: Props) {
                         />
                       </div>
                       <div className={s.posCell}>
-                        <div className={s.berechnenVal}>{berechnen(p.id)}</div>
+                        <input type="number" min="0" step="1" className={s.mengeInput}
+                          value={berechnen[p.id]} placeholder="0"
+                          onChange={e => setBerechnen(prev => ({ ...prev, [p.id]: e.target.value }))}
+                        />
                       </div>
                       <div className={s.posCell}>
                         <input type="number" min="0" step="1" className={s.mengeInput}
