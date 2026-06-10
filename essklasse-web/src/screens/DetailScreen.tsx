@@ -88,6 +88,7 @@ export function DetailScreen({ beleg: init, onClose, onAbschliessen, onBearbeite
         {beleg.abschlussfotos && beleg.abschlussfotos.length > 0 && (
           <div className={`${s.section} ${s.sectionAbschluss}`}>
             <div className={s.sectionTitle}>📋 Finaler Bewirtungsbeleg ({beleg.abschlussfotos.length})</div>
+            <div className={s.hinweisRechnung}>ℹ️ Dieser Beleg wird für die Rechnungserstellung verwendet.</div>
             <div className={s.photoGrid}>
               {beleg.abschlussfotos.map((url, i) => (
                 <FileThumb
