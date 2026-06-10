@@ -49,8 +49,8 @@ export function DetailScreen({ beleg: init, onClose, onAbschliessen, onBearbeite
             </div>
             <div className={s.modalBody}>
               {deleteStep === 0
-                ? `„${beleg.veranstaltung || 'Bewirtungsbeleg'}" wird unwiderruflich gelöscht.`
-                : 'Dieser Schritt kann nicht rückgängig gemacht werden. Der Beleg wird dauerhaft entfernt.'}
+                ? `„${beleg.veranstaltung || 'Bewirtungsbeleg'}" wird gelöscht. Bitte beachte: Buchhaltung und Bereichsleitung können den gelöschten Beleg weiterhin einsehen und ggf. Rückfragen stellen.`
+                : 'Wirklich fortfahren? Der Beleg bleibt für Buchhaltung und Bereichsleitung sichtbar und kann nicht wiederhergestellt werden.'}
             </div>
             <div className={s.modalActions}>
               <button type="button" className={s.cancelBtn} onClick={() => setDeleteStep(null)}>Abbrechen</button>
