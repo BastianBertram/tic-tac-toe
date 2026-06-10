@@ -158,3 +158,8 @@
   width: 100%; padding: 16px; font-size: 17px; font-weight: 700;
   background: var(--ek-red); color: #fff; border-radius: 14px;
 }
+
+.scanMsg { margin-top: 8px; padding: 10px 14px; border-radius: 10px; font-size: 13px; font-weight: 600; }
+.scanInfo { background: #fff8e1; color: #92610a; border: 1px solid #fcd99a; }
+.scanOk   { background: #e8f5ee; color: var(--ek-green-dark); border: 1px solid #c3dfc9; }
+.scanErr  { background: #fdf0f0; color: var(--ek-red); border: 1px solid #f5c6c6; }

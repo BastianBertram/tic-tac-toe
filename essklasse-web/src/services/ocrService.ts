@@ -144,3 +144,70 @@ export async function extractFromPhoto(dataUrl: string): Promise<ExtractedBeleg>
 
   return JSON.parse(jsonMatch[0]) as ExtractedBeleg;
 }
+
+export interface ExtractedAbschlussPosition {
+  bezeichnung: string;
+  ausgeliefert?: number;
+  zurueckVoll?: number;
+  zurueckLeer?: number;
+  pfand?: number;
+}
+
+export async function extractAbschluss(
+  dataUrl: string,
+  positionen: { bezeichnung: string }[],
+): Promise<ExtractedAbschlussPosition[]> {
+  const apiKey = getApiKey();
+  if (!apiKey) throw new Error('NO_KEY');
+
+  const isPdf = dataUrl.startsWith('data:application/pdf');
+  const base64 = dataUrl.split(',')[1];
+  const mediaType = dataUrl.split(';')[0].split(':')[1];
+  const contentBlock = isPdf
+    ? { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: base64 } }
+    : { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } };
+
+  const posListe = positionen.map(p => `- "${p.bezeichnung}"`).join('\n');
+
+  const prompt = `Du bist ein OCR-Assistent für Bewirtungsbelege der EssKlasse / HWK Hannover.
+
+Analysiere diesen abgeschlossenen Bewirtungsbeleg und extrahiere für jede Position die tatsächlichen Mengen.
+
+Die folgenden Positionen wurden bestellt:
+${posListe}
+
+Suche im Dokument nach den Spalten: Ausgeliefert, Zurück Voll, Zurück Leer, Pfand.
+Ordne die gefundenen Werte den Positionen zu (Fuzzy-Matching auf Bezeichnung).
+Felder die nicht erkennbar sind, weglassen.
+
+Antworte NUR mit einem JSON-Array:
+[
+  { "bezeichnung": "exakt wie oben", "ausgeliefert": 2, "zurueckVoll": 0, "zurueckLeer": 1, "pfand": 0 }
+]`;
+
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'content-type': 'application/json',
+      'anthropic-dangerous-direct-browser-access': 'true',
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 2048,
+      messages: [{ role: 'user', content: [contentBlock, { type: 'text', text: prompt }] }],
+    }),
+  });
+
+  if (!response.ok) {
+    const err = await response.text();
+    throw new Error(`API-Fehler ${response.status}: ${err}`);
+  }
+
+  const data = await response.json();
+  const text: string = data.content?.[0]?.text ?? '[]';
+  const jsonMatch = text.match(/\[[\s\S]*\]/);
+  if (!jsonMatch) return [];
+  return JSON.parse(jsonMatch[0]) as ExtractedAbschlussPosition[];
+}

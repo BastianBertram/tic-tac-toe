@@ -4,6 +4,7 @@ import { de } from 'date-fns/locale';
 import { useBelegStore } from '../store/belegStore';
 import { useAuthStore }  from '../store/authStore';
 import { PhotoCapture } from '../components/PhotoCapture';
+import { extractAbschluss } from '../services/ocrService';
 import type { Bewirtungsbeleg, AbschlussPosition } from '../types';
 import s from './AbschlussScreen.module.css';
 
@@ -22,7 +23,38 @@ export function AbschlussScreen({ beleg, onClose, onDone }: Props) {
   const [zurueckVoll,  setZurueckVoll]  = useState<Record<string, string>>(Object.fromEntries(beleg.positionen.map(p => [p.id, ''])));
   const [zurueckLeer,  setZurueckLeer]  = useState<Record<string, string>>(Object.fromEntries(beleg.positionen.map(p => [p.id, ''])));
   const [pfand,        setPfand]        = useState<Record<string, string>>(Object.fromEntries(beleg.positionen.map(p => [p.id, ''])));
+  const [scanning,     setScanning]     = useState(false);
+  const [scanMsg,      setScanMsg]      = useState('');
   const [done, setDone] = useState(false);
+
+  async function handleFotosChange(urls: string[]) {
+    setFotos(urls);
+    const newUrl = urls.find(u => !fotos.includes(u));
+    if (!newUrl) return;
+    setScanning(true);
+    setScanMsg('📋 Beleg wird analysiert …');
+    try {
+      const extracted = await extractAbschluss(newUrl, beleg.positionen);
+      extracted.forEach(ex => {
+        const pos = beleg.positionen.find(p =>
+          p.bezeichnung.toLowerCase().includes(ex.bezeichnung.toLowerCase()) ||
+          ex.bezeichnung.toLowerCase().includes(p.bezeichnung.toLowerCase())
+        );
+        if (!pos) return;
+        if (ex.ausgeliefert != null) setMengen(prev => ({ ...prev, [pos.id]: String(ex.ausgeliefert) }));
+        if (ex.zurueckVoll  != null) setZurueckVoll(prev => ({ ...prev, [pos.id]: String(ex.zurueckVoll) }));
+        if (ex.zurueckLeer  != null) setZurueckLeer(prev => ({ ...prev, [pos.id]: String(ex.zurueckLeer) }));
+        if (ex.pfand        != null) setPfand(prev => ({ ...prev, [pos.id]: String(ex.pfand) }));
+      });
+      setScanMsg(`✅ ${extracted.length} Position(en) erkannt und übernommen`);
+      setTimeout(() => setScanMsg(''), 4000);
+    } catch (e: any) {
+      setScanMsg(`⚠️ ${e?.message ?? 'Fehler bei der Analyse'}`);
+      setTimeout(() => setScanMsg(''), 5000);
+    } finally {
+      setScanning(false);
+    }
+  }
 
   function setMenge(id: string, val: string) { setMengen(prev => ({ ...prev, [id]: val })); }
 
@@ -91,12 +123,17 @@ export function AbschlussScreen({ beleg, onClose, onDone }: Props) {
         <div className={s.fotoSection}>
           <PhotoCapture
             dataUrls={fotos}
-            onChange={setFotos}
+            onChange={handleFotosChange}
             label="📋 Finaler Bewirtungsbeleg (Pflichtfeld)"
           />
           {fotos.length === 0 && (
             <div className={s.fotoHinweis}>
               ⚠️ Bitte fotografieren oder laden Sie den überarbeiteten Bewirtungsbeleg hoch, bevor Sie abschließen.
+            </div>
+          )}
+          {scanMsg && (
+            <div className={`${s.scanMsg} ${scanMsg.startsWith('✅') ? s.scanOk : scanMsg.startsWith('⚠️') ? s.scanErr : s.scanInfo}`}>
+              {scanMsg}
             </div>
           )}
         </div>
