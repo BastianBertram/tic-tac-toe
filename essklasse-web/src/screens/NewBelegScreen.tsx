@@ -75,7 +75,7 @@ export function NewBelegScreen({ onClose, editBeleg }: Props) {
       ...prev,
       ...(data.besteller        && { besteller:        data.besteller }),
       ...(data.cateringDatumVon && { cateringDatumVon: data.cateringDatumVon }),
-      ...(data.cateringDatumBis && { cateringDatumBis: data.cateringDatumBis }),
+      cateringDatumBis: data.cateringDatumBis || data.cateringDatumVon || prev.cateringDatumBis,
       ...(data.uhrzeitVon       && { uhrzeitVon:       data.uhrzeitVon }),
       ...(data.uhrzeitBis       && { uhrzeitBis:       data.uhrzeitBis }),
       ...(data.veranstaltung    && { veranstaltung:    data.veranstaltung }),
@@ -222,7 +222,14 @@ export function NewBelegScreen({ onClose, editBeleg }: Props) {
           </Field>
           <div className={s.twoCol}>
             <Field label="Datum von">
-              <input type="date" value={f.cateringDatumVon} onChange={e => set('cateringDatumVon', e.target.value)} />
+              <input type="date" value={f.cateringDatumVon} onChange={e => {
+                const val = e.target.value;
+                setF(prev => ({
+                  ...prev,
+                  cateringDatumVon: val,
+                  cateringDatumBis: prev.cateringDatumBis === prev.cateringDatumVon ? val : prev.cateringDatumBis,
+                }));
+              }} />
             </Field>
             <Field label="Datum bis">
               <input type="date" value={f.cateringDatumBis} onChange={e => set('cateringDatumBis', e.target.value)} />
