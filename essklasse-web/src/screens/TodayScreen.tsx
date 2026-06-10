@@ -3,6 +3,7 @@ import { format, addDays, isToday } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { useBelegStore } from '../store/belegStore';
 import { useObjektStore } from '../store/objektStore';
+import { useAuthStore } from '../store/authStore';
 import { BelegCard, type BelegHighlight } from '../components/BelegCard';
 import { ObjektSwitcherButton } from '../components/ObjektSwitcher';
 import { OffeneBanner } from '../components/OffeneBanner';
@@ -35,6 +36,7 @@ function isFuture(beleg: Bewirtungsbeleg, now: string): boolean {
 export function TodayScreen({ onOpenBeleg, onAbschliessen, onTabAbschluss }: Props) {
   const belege        = useBelegStore(st => st.belege);
   const aktivesObjekt = useObjektStore(st => st.getAktivesObjekt());
+  const rolle = useAuthStore(st => st.user?.rolle);
   // offset: Basis-Tag (0 = heute ist linker Button, 1 = morgen ist linker Button, …)
   const [offset, setOffset]   = useState(0);
   const [selected, setSelected] = useState<0 | 1>(0); // 0 = linker Button, 1 = rechter Button
@@ -91,9 +93,11 @@ export function TodayScreen({ onOpenBeleg, onAbschliessen, onTabAbschluss }: Pro
       <div className={s.header}>
         <img src="/logo.webp" alt="EssKlasse" className={s.logo} />
         <span className={s.headerSection}>📋 Heute</span>
-        <div className={s.headerRight}>
-          <ObjektSwitcherButton />
-        </div>
+        {rolle !== 'geschaeftsfuehrung' && (
+          <div className={s.headerRight}>
+            <ObjektSwitcherButton />
+          </div>
+        )}
       </div>
 
       <OffeneBanner onTabSwitch={onTabAbschluss} />
