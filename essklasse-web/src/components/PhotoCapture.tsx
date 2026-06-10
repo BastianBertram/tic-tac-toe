@@ -185,15 +185,16 @@ export function PhotoCapture({ dataUrls, onChange, onExtracted, label = '📷 Be
       {showKeyModal && (
         <div className={s.overlay} onClick={() => setShowKeyModal(false)}>
           <div className={s.keyModal} onClick={e => e.stopPropagation()}>
-            <div className={s.keyModalTitle}>🔑 Anthropic API-Key einrichten</div>
+            <div className={s.keyModalTitle}>🔑 Google Gemini API-Key einrichten</div>
             <p className={s.keyModalText}>
-              Für die automatische Felderkennung wird ein Anthropic API-Key benötigt.
+              Für die automatische Felderkennung wird ein Google Gemini API-Key benötigt.
+              Kostenlos unter aistudio.google.com erhältlich (1500 Req./Tag).
               Der Key wird nur lokal in diesem Browser gespeichert.
             </p>
             <input
               className={s.keyInput}
               type="password"
-              placeholder="sk-ant-..."
+              placeholder="AIza..."
               value={keyInput}
               onChange={e => setKeyInput(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && saveKey()}
