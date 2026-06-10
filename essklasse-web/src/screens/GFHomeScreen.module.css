@@ -7,18 +7,22 @@
 }
 
 .header {
+  position: relative;
   display: flex;
   align-items: center;
+  justify-content: space-between;
   padding: 12px 16px;
   border-bottom: 1px solid var(--ek-border);
   background: var(--ek-surface);
-  gap: 12px;
 }
 
 .logo { height: 28px; }
 
 .headerTitle {
-  font-size: 15px;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 17px;
   font-weight: 800;
   color: var(--ek-charcoal);
 }

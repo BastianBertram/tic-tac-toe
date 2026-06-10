@@ -41,13 +41,13 @@ export function GFHomeScreen() {
     <div className={s.screen}>
       <div className={s.header}>
         <img src="/logo.webp" alt="EssKlasse" className={s.logo} />
-        <span className={s.headerTitle}>Home</span>
+        <span className={s.headerTitle}>🏠 Home</span>
       </div>
       <div className={s.grid}>
-        <Kachel icon="📅" value={stats.dieseWoche}     label="Geplant diese Woche" />
-        <Kachel icon="📆" value={stats.naechsteWoche}  label="Geplant nächste Woche" />
+        <Kachel icon="📅" value={stats.dieseWoche}     label="Geplante Bewirtungen diese Woche" />
+        <Kachel icon="📆" value={stats.naechsteWoche}  label="Geplante Bewirtungen nächste Woche" />
         <Kachel icon="⚠️" value={stats.ueberfaellig}   label="Überfällige Bewirtungen" urgent={stats.ueberfaellig > 0} />
-        <Kachel icon="🧾" value={stats.rechnungsbereit} label="Bereit zur Rechnungserstellung" />
+        <Kachel icon="🧾" value={stats.rechnungsbereit} label="Bewirtungen bereit zur Rechnungserstellung" />
       </div>
     </div>
   );
