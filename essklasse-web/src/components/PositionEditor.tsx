@@ -79,7 +79,7 @@ export function PositionEditor({ positionen, onChange }: Props) {
 
       {/* Löschen-Bestätigung */}
       {confirmDeleteId && (
-        <div className={s.overlay} onClick={() => setConfirmDeleteId(null)}>
+        <div className={s.overlay} style={{ zIndex: 400 }} onClick={() => setConfirmDeleteId(null)}>
           <div className={s.modal} onClick={e => e.stopPropagation()}>
             <div className={s.modalHeader}>
               <span>Position löschen?</span>
