@@ -179,7 +179,7 @@ export function NewBelegScreen({ onClose, editBeleg }: Props) {
 
         {/* ── KOPFDATEN ── */}
         <div className={s.section}>
-          <div className={s.sectionTitle}>Kopfdaten</div>
+          <div className={s.sectionTitle}>Bestellerdaten</div>
 
           <Field label="Besteller / Auftraggeber *">
             <input value={f.besteller} onChange={e => set('besteller', e.target.value)} placeholder="Name des Bestellers" />
