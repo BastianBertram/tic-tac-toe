@@ -18,6 +18,7 @@ export function PositionEditor({ positionen, onChange }: Props) {
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<Omit<BelegPosition, 'id'>>(EMPTY);
   const [editId, setEditId] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   function openNew() { setDraft(EMPTY); setEditId(null); setOpen(true); }
   function openEdit(p: BelegPosition) { setDraft({ ...p }); setEditId(p.id); setOpen(true); }
@@ -33,7 +34,9 @@ export function PositionEditor({ positionen, onChange }: Props) {
   }
 
   function remove(id: string) {
-    if (confirm('Position löschen?')) onChange(positionen.filter(p => p.id !== id));
+    onChange(positionen.filter(p => p.id !== id));
+    setConfirmDeleteId(null);
+    setOpen(false);
   }
 
   const total = positionen.reduce((acc, p) => acc + p.preis * p.menge, 0);
@@ -71,6 +74,31 @@ export function PositionEditor({ positionen, onChange }: Props) {
         <div className={s.totalRow}>
           <span>Gesamt</span>
           <span className={s.totalVal}>{total.toFixed(2)} €</span>
+        </div>
+      )}
+
+      {/* Löschen-Bestätigung */}
+      {confirmDeleteId && (
+        <div className={s.overlay} onClick={() => setConfirmDeleteId(null)}>
+          <div className={s.modal} onClick={e => e.stopPropagation()}>
+            <div className={s.modalHeader}>
+              <span>Position löschen?</span>
+              <button onClick={() => setConfirmDeleteId(null)} type="button" className={s.closeBtn}>✕</button>
+            </div>
+            <p style={{ color: 'var(--ek-muted)', fontSize: 14, margin: '8px 0 16px' }}>
+              Diese Position wird unwiderruflich entfernt.
+            </p>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button className={s.deleteBtn} style={{ flex: 1 }} type="button"
+                onClick={() => remove(confirmDeleteId)}>
+                🗑 Löschen
+              </button>
+              <button className={s.saveBtn} style={{ flex: 1 }} type="button"
+                onClick={() => setConfirmDeleteId(null)}>
+                Abbrechen
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -120,7 +148,7 @@ export function PositionEditor({ positionen, onChange }: Props) {
 
             <button className={s.saveBtn} type="button" onClick={save}>Speichern</button>
             {editId && (
-              <button className={s.deleteBtn} type="button" onClick={() => { remove(editId); setOpen(false); }}>
+              <button className={s.deleteBtn} type="button" onClick={() => setConfirmDeleteId(editId)}>
                 🗑 Position löschen
               </button>
             )}
