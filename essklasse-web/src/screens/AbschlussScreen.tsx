@@ -148,6 +148,8 @@ export function AbschlussScreen({ beleg, onClose, onDone }: Props) {
             <p>Keine Positionen vorhanden — Bewirtung kann direkt abgeschlossen werden.</p>
           </div>
         ) : (
+          <div className={s.section}>
+          <div className={s.sectionTitle}>Positionen / Leistungen</div>
           <div className={s.posListe}>
             <div className={s.posHeader}>
               <div className={s.posHeaderName}>Positionen</div>
@@ -208,6 +210,7 @@ export function AbschlussScreen({ beleg, onClose, onDone }: Props) {
                 })}
               </div>
             ))}
+          </div>
           </div>
         )}
 
