@@ -13,7 +13,7 @@ const EMPTY: Omit<BelegPosition, 'id'> = {
 
 export function PositionEditor({ positionen, onChange }: Props) {
   const rolle = useAuthStore(st => st.user?.rolle);
-  const showPreise = rolle === 'buchhaltung' || rolle === 'admin';
+  const showPreise = rolle === 'buchhaltung' || rolle === 'admin' || rolle === 'geschaeftsfuehrung';
 
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<Omit<BelegPosition, 'id'>>(EMPTY);
