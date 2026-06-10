@@ -19,6 +19,12 @@ export function DuplikatCheckModal({ beleg, onProceed, onCancel }: Props) {
   const [duplikate, setDuplikate] = useState<Bewirtungsbeleg[]>([]);
 
   useEffect(() => {
+    // Wenn dieser Beleg selbst schon eine Rechnungsnummer hat → sofort warnen
+    if (beleg.rechnungsnummer) {
+      setDuplikate([beleg]);
+      setState('found');
+      return;
+    }
     const candidates = belege.filter(b => !b.deleted && b.rechnungErstellt && b.id !== beleg.id);
     checkDuplikate(beleg, candidates).then(found => {
       if (found.length === 0) {
@@ -69,13 +75,15 @@ export function DuplikatCheckModal({ beleg, onProceed, onCancel }: Props) {
                 <span className={s.dupBestellung}>(Auftrag: {d.bestellungsnummer})</span>
                 <span className={s.dupDetails}>{d.veranstaltung ?? ''} · {d.cateringDatumVon}</span>
               </div>
-              <button
-                type="button"
-                className={s.deleteBtn}
-                onClick={() => handleDelete(d.id)}
-              >
-                Löschen
-              </button>
+              {d.id !== beleg.id && (
+                <button
+                  type="button"
+                  className={s.deleteBtn}
+                  onClick={() => handleDelete(d.id)}
+                >
+                  Löschen
+                </button>
+              )}
             </div>
           ))}
         </div>

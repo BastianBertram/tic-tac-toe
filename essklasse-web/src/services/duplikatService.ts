@@ -4,12 +4,27 @@ function getApiKey(): string {
   return localStorage.getItem('ek_api_key') ?? (import.meta.env.VITE_ANTHROPIC_API_KEY as string) ?? '';
 }
 
+/** Rule-based pre-check: same date + besteller, or same date + kostenstelle + raum */
+function ruleBasedDuplikate(beleg: Bewirtungsbeleg, candidates: Bewirtungsbeleg[]): Bewirtungsbeleg[] {
+  return candidates.filter(c => {
+    const sameDate = c.cateringDatumVon === beleg.cateringDatumVon;
+    if (!sameDate) return false;
+    const sameBesteller = beleg.besteller && c.besteller && c.besteller.toLowerCase() === beleg.besteller.toLowerCase();
+    const sameKostenstelle = beleg.kostenstelle && c.kostenstelle && c.kostenstelle === beleg.kostenstelle;
+    const sameRaum = beleg.raum && c.raum && c.raum.toLowerCase() === beleg.raum.toLowerCase();
+    return sameBesteller || (sameKostenstelle && sameRaum);
+  });
+}
+
 export async function checkDuplikate(
   beleg: Bewirtungsbeleg,
   candidates: Bewirtungsbeleg[],
 ): Promise<Bewirtungsbeleg[]> {
-  if (candidates.length === 0) return [];
+  // Rule-based: schnell und zuverlässig für offensichtliche Fälle
+  const ruleHits = ruleBasedDuplikate(beleg, candidates);
+  if (ruleHits.length > 0) return ruleHits;
 
+  if (candidates.length === 0) return [];
   const apiKey = getApiKey();
   if (!apiKey) return [];
 
@@ -19,7 +34,8 @@ export async function checkDuplikate(
     )
     .join('\n');
 
-  const prompt = `Du prüfst ob ein Bewirtungsbeleg wahrscheinlich ein Duplikat einer bereits abgerechneten Bewirtung ist.
+  const prompt = `Du prüfst ob ein Bewirtungsbeleg ein Duplikat einer bereits abgerechneten Bewirtung ist.
+Gib im Zweifel lieber zu viele als zu wenige Treffer zurück — der Buchhaltungs-User entscheidet dann selbst.
 
 AKTUELLER BELEG (noch keine Rechnung):
 Datum: ${beleg.cateringDatumVon}
@@ -33,10 +49,10 @@ Personen: ${beleg.personenzahl}
 BEREITS ABGERECHNETE BELEGE:
 ${kandidatenText}
 
-Antworte NUR mit einem JSON-Array der IDs von wahrscheinlichen Duplikaten (leeres Array wenn keine):
+Antworte NUR mit einem JSON-Array der IDs von möglichen Duplikaten (leeres Array wenn keine):
 ["id1", "id2"]
 
-Kriterien: gleiches Datum + ähnliche Veranstaltung + gleicher Besteller oder Raum. Sei konservativ — nur bei hoher Wahrscheinlichkeit zurückgeben.`;
+Kriterien (eines davon reicht): gleiches Datum + ähnlicher Veranstaltungsname, oder gleiches Datum + gleicher Besteller, oder gleiches Datum + gleiche Kostenstelle.`;
 
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
