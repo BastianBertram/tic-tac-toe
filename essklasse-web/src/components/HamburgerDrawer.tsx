@@ -30,6 +30,7 @@ export function HamburgerDrawer({ onClose, onAbgeschlossene }: Props) {
   const aktiv             = useObjektStore(st => st.getAktivesObjekt());
   const isBuchhaltung     = user?.rolle === 'buchhaltung';
   const isAdmin           = user?.rolle === 'admin';
+  const isGf              = user?.rolle === 'geschaeftsfuehrung';
   const [loading, setLoading] = useState(false);
 
   function handleRolleSwitch(rolle: UserRolle) {
@@ -75,8 +76,8 @@ export function HamburgerDrawer({ onClose, onAbgeschlossene }: Props) {
 
         <div className={s.divider} />
 
-        {/* Objekte — nur für User (nicht Admin, nicht Buchhaltung) */}
-        {!isBuchhaltung && !isAdmin && objekte.length > 0 && (
+        {/* Objekte — nur für User (nicht Admin, nicht Buchhaltung, nicht GF) */}
+        {!isBuchhaltung && !isAdmin && !isGf && objekte.length > 0 && (
           <>
             <div className={s.objekteInfo}>
               <div className={s.objekteLabel}>Zugeordnete Objekte</div>
@@ -92,8 +93,8 @@ export function HamburgerDrawer({ onClose, onAbgeschlossene }: Props) {
           </>
         )}
 
-        {/* Abgeschlossene Bewirtungen — nur für User */}
-        {!isBuchhaltung && !isAdmin && (
+        {/* Abgeschlossene Bewirtungen — nur für User (nicht GF) */}
+        {!isBuchhaltung && !isAdmin && !isGf && (
           <>
             <button
               className={d.abgeschlosseneBtn}
