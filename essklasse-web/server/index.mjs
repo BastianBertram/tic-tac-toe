@@ -10,6 +10,7 @@
  *       ALLOWED_ORIGIN (default http://localhost:5173)
  */
 import { createServer } from 'node:http';
+import { handleAuth } from './auth.mjs';
 
 const PORT           = Number(process.env.PORT ?? 3001);
 const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN ?? 'http://localhost:5173';
@@ -115,12 +116,14 @@ function readJsonBody(req) {
   });
 }
 
-function send(res, status, payload) {
+function send(res, status, payload, extraHeaders = {}) {
   const body = JSON.stringify(payload);
   res.writeHead(status, {
     'Content-Type': 'application/json',
     'Access-Control-Allow-Origin': ALLOWED_ORIGIN,
+    'Access-Control-Allow-Credentials': 'true',
     'Vary': 'Origin',
+    ...extraHeaders,
   });
   res.end(body);
 }
@@ -226,6 +229,7 @@ const server = createServer(async (req, res) => {
       'Access-Control-Allow-Origin': ALLOWED_ORIGIN,
       'Access-Control-Allow-Methods': 'POST, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type',
+      'Access-Control-Allow-Credentials': 'true',
       'Access-Control-Max-Age': '86400',
       'Vary': 'Origin',
     });
@@ -239,6 +243,20 @@ const server = createServer(async (req, res) => {
     return send(res, 200, { ok: true, aiConfigured: Boolean(API_KEY) });
   }
 
+  // ── Auth routes (no Anthropic key required) ──
+  if (req.method === 'POST' && url.startsWith('/auth/')) {
+    try {
+      const body = await readJsonBody(req);
+      const result = handleAuth(url, body, req, { allowedOrigin: ALLOWED_ORIGIN });
+      if (!result) return send(res, 404, { error: 'Not found' });
+      const headers = result.setCookie ? { 'Set-Cookie': result.setCookie } : {};
+      return send(res, result.status, result.payload, headers);
+    } catch (e) {
+      return send(res, e?.status ?? 400, { error: e?.message ?? 'Bad request' });
+    }
+  }
+
+  // ── AI routes (require Anthropic key) ──
   const handler = ROUTES[url];
   if (req.method !== 'POST' || !handler) {
     return send(res, 404, { error: 'Not found' });

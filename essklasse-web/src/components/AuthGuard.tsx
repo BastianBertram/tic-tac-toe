@@ -27,17 +27,30 @@ export function AuthGuard({ children }: Props) {
       return; // checked ist bereits true (Initialwert)
     }
 
-    fetch(`${BASE}/auth/refresh`, { method: 'POST', credentials: 'include' })
+    // Magic-Link aus der E-Mail? → /auth/verify, sonst stille Sitzungs-Erneuerung.
+    const token = new URLSearchParams(window.location.search).get('token');
+    const request = token
+      ? fetch(`${BASE}/auth/verify`, {
+          method: 'POST', credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token }),
+        })
+      : fetch(`${BASE}/auth/refresh`, { method: 'POST', credentials: 'include' });
+
+    request
       .then(r => r.ok ? r.json() : null)
       .then(data => {
         if (data?.accessToken) {
           setAuth(data.user, data.accessToken);
-          // Objekte nach erfolgreichem Refresh laden
           if (data.objekte) setObjekte(data.objekte);
         }
       })
       .catch(() => {})
-      .finally(() => setChecked(true));
+      .finally(() => {
+        // Token aus der URL entfernen, damit er nicht im Verlauf / beim Reload bleibt.
+        if (token) window.history.replaceState({}, '', window.location.pathname);
+        setChecked(true);
+      });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

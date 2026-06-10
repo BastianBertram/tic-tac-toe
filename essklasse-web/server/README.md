@@ -28,15 +28,43 @@ needed (Node 20.6+; the repo is on 25.x).
 
 ## Endpoints
 
-| Method | Path                   | Body                              | Returns                  |
-| ------ | ---------------------- | --------------------------------- | ------------------------ |
-| GET    | `/health`              | —                                 | `{ ok, aiConfigured }`   |
-| POST   | `/api/ai/ocr-beleg`    | `{ dataUrl }`                     | `{ data: ExtractedBeleg }` |
-| POST   | `/api/ai/ocr-abschluss`| `{ dataUrl, positionen[] }`       | `{ data: [...] }`        |
-| POST   | `/api/ai/duplikat`     | `{ beleg, candidates[] }`         | `{ ids: string[] }`      |
+| Method | Path                   | Body                              | Returns                       |
+| ------ | ---------------------- | --------------------------------- | ----------------------------- |
+| GET    | `/health`              | —                                 | `{ ok, aiConfigured }`        |
+| POST   | `/api/ai/ocr-beleg`    | `{ dataUrl }`                     | `{ data: ExtractedBeleg }`    |
+| POST   | `/api/ai/ocr-abschluss`| `{ dataUrl, positionen[] }`       | `{ data: [...] }`             |
+| POST   | `/api/ai/duplikat`     | `{ beleg, candidates[] }`         | `{ ids: string[] }`           |
+| POST   | `/auth/login`          | `{ email }`                       | `{ ok, devLink? }` (always 200) |
+| POST   | `/auth/verify`         | `{ token }`                       | `{ accessToken, user, objekte }` + sets cookie |
+| POST   | `/auth/refresh`        | — (refresh cookie)                | `{ accessToken, user, objekte }` |
+| POST   | `/auth/logout`         | — (refresh cookie)                | `{ ok }` + clears cookie      |
 
 When `ANTHROPIC_API_KEY` is unset the AI endpoints return `503 AI_NOT_CONFIGURED`
 and the frontend falls back to manual entry.
+
+## Auth (magic link) — SCAFFOLD
+
+`server/auth.mjs` implements passwordless magic-link login the frontend already
+speaks. It is **dev-grade**: in-memory user/token/session stores and no real
+email — the login link is logged to the server console and (in non-production)
+returned as `devLink` in the `/auth/login` response.
+
+Dev flow:
+1. `POST /auth/login { email }` with a known demo email
+   (`anna@hwk-hannover.de`, `buchhaltung@hwk-hannover.de`, `max@hwk-hannover.de`).
+2. Open the `devLink` (or copy it from the server log). It points at
+   `${ALLOWED_ORIGIN}/?token=…`; `AuthGuard` calls `/auth/verify`, stores the
+   session, and strips the token from the URL.
+3. Subsequent loads call `/auth/refresh` using the `HttpOnly` cookie.
+
+Note: in DEV mode (`import.meta.env.DEV`) `AuthGuard` still auto-logs in as a
+demo user, so to exercise the real flow run a production build (`npm run
+build && npm run preview`) or temporarily remove that dev shortcut.
+
+Before production, replace the in-memory stores with a DB, plug in a real email
+provider, issue a signed JWT access token that protected routes verify, and set
+`NODE_ENV=production` (switches the cookie to `SameSite=None; Secure`, which
+requires HTTPS).
 
 ## Env
 
@@ -44,11 +72,5 @@ and the frontend falls back to manual entry.
 | ------------------- | ------------------------ | -------------------------------------- |
 | `ANTHROPIC_API_KEY` | —                        | Required for AI. Never use a `VITE_` name. |
 | `PORT`              | `3001`                   | Frontend `VITE_API_URL` must match.    |
-| `ALLOWED_ORIGIN`    | `http://localhost:5173`  | CORS origin for the browser.           |
-
-## Note on auth
-
-The frontend also calls `/auth/login` and `/auth/refresh` (magic-link auth).
-Those are a separate concern and are **not** implemented here yet — the app
-degrades to demo mode when they 404. Add them to this server when wiring up real
-authentication.
+| `ALLOWED_ORIGIN`    | `http://localhost:5173`  | CORS origin + magic-link base.         |
+| `NODE_ENV`          | —                        | `production` hardens cookies / hides `devLink`. |
