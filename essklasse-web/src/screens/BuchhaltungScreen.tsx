@@ -9,7 +9,7 @@ import s from './BuchhaltungScreen.module.css';
 
 type BuchTab = 'alle' | 'ueberfaellig' | 'bereit' | 'erledigt';
 type SortOpt = 'datum' | 'bestellnr' | 'bestellnr-desc' | 'rechnungsnr' | 'rechnungsnr-desc';
-type StatusFilter = 'offen' | 'abgeschlossen' | 'rechnung' | 'geloescht';
+type StatusFilter = 'offen' | 'abgeschlossen' | 'rechnung' | 'geloescht' | 'doppelt';
 
 interface Props { onOpenBeleg: (b: Bewirtungsbeleg) => void; onRechnungErstellen: (b: Bewirtungsbeleg) => void; }
 
@@ -69,8 +69,9 @@ function applyAlleControls(
   if (opts.statusFilter !== 'alle') {
     out = out.filter(b => {
       const f = opts.statusFilter;
-      if (f === 'geloescht')     return b.deleted;
-      if (f === 'rechnung')      return !b.deleted && b.rechnungErstellt;
+      if (f === 'geloescht')     return !!b.deleted;
+      if (f === 'doppelt')       return !!b.isDoppelt;
+      if (f === 'rechnung')      return !b.deleted && !!b.rechnungErstellt;
       if (f === 'abgeschlossen') return !b.deleted && b.abgeschlossen && !b.rechnungErstellt;
       if (f === 'offen')         return !b.deleted && !b.abgeschlossen;
       return true;
@@ -100,6 +101,7 @@ const STATUS_FILTER_CONFIG: { id: StatusFilterOpt; label: string; activeClass: s
   { id: 'abgeschlossen', label: 'Abgeschlossen',   activeClass: 'filterChipActiveAbgeschlossen' },
   { id: 'rechnung',      label: '✅ Rechnung',     activeClass: 'filterChipActiveRechnung' },
   { id: 'geloescht',     label: 'Gelöscht',        activeClass: 'filterChipActiveGeloescht' },
+  { id: 'doppelt',       label: 'Doppelte Belege', activeClass: 'filterChipActiveDoppelt' },
 ];
 
 export function BuchhaltungScreen({ onOpenBeleg, onRechnungErstellen }: Props) {

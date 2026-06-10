@@ -37,6 +37,7 @@
 .filterChipActiveAbgeschlossen { background: #eafaf1; color: #27ae60; border-color: #27ae60; }
 .filterChipActiveRechnung     { background: #d5f5e3; color: #1e8449; border-color: #1e8449; }
 .filterChipActiveGeloescht    { background: #f0f0f0; color: #666;    border-color: #aaa; }
+.filterChipActiveDoppelt      { background: #fdf3f3; color: #c0392b; border-color: #c0392b; }
 
 .sortRow { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .sortLabel { font-size: 12px; color: var(--ek-muted); font-weight: 600; flex-shrink: 0; }
