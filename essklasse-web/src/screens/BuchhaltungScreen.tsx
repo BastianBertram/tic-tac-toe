@@ -8,14 +8,11 @@ import type { Bewirtungsbeleg } from '../types';
 import s from './BuchhaltungScreen.module.css';
 
 type BuchTab = 'alle' | 'ueberfaellig' | 'bereit' | 'erledigt';
-type SortOpt = 'datum' | 'bestellnr' | 'bestellnr-desc' | 'rechnungsnr' | 'rechnungsnr-desc';
+type SortOpt = 'datum' | 'rechnungsnr' | 'rechnungsnr-desc';
 type StatusFilter = 'offen' | 'abgeschlossen' | 'rechnung' | 'geloescht';
 
 interface Props { onOpenBeleg: (b: Bewirtungsbeleg) => void; onRechnungErstellen: (b: Bewirtungsbeleg) => void; }
 
-function byBestellungsnr(a: Bewirtungsbeleg, b: Bewirtungsbeleg) {
-  return (a.bestellungsnummer ?? '').localeCompare(b.bestellungsnummer ?? '');
-}
 function byRechnungsnr(a: Bewirtungsbeleg, b: Bewirtungsbeleg) {
   return (a.rechnungsnummer ?? '').localeCompare(b.rechnungsnummer ?? '');
 }
@@ -29,7 +26,6 @@ function textMatch(b: Bewirtungsbeleg, q: string, objekte: ReturnType<typeof use
   const obj = objekte.find(o => o.id === b.objektId);
   return (
     datum.includes(q) ||
-    (b.bestellungsnummer ?? '').toLowerCase().includes(q) ||
     (b.rechnungsnummer ?? '').toLowerCase().includes(q) ||
     (b.veranstaltung ?? '').toLowerCase().includes(q) ||
     (b.besteller ?? '').toLowerCase().includes(q) ||
@@ -50,11 +46,9 @@ function applyControls(
     const q = opts.search.trim().toLowerCase();
     out = out.filter(b => textMatch(b, q, objekte));
   }
-  if (opts.sort === 'datum') out.sort(byDatumUhrzeit);
-  else if (opts.sort === 'bestellnr-desc') out.sort((a, b) => byBestellungsnr(b, a));
-  else if (opts.sort === 'rechnungsnr') out.sort(byRechnungsnr);
+  if (opts.sort === 'rechnungsnr') out.sort(byRechnungsnr);
   else if (opts.sort === 'rechnungsnr-desc') out.sort((a, b) => byRechnungsnr(b, a));
-  else out.sort(byBestellungsnr);
+  else out.sort(byDatumUhrzeit);
   return out;
 }
 
@@ -82,7 +76,7 @@ function applyAlleControls(
     out = out.filter(b => textMatch(b, q, objekte));
   }
 
-  out.sort(byBestellungsnr);
+  out.sort(byDatumUhrzeit);
   return out;
 }
 
@@ -118,7 +112,7 @@ export function BuchhaltungScreen({ onOpenBeleg, onRechnungErstellen }: Props) {
   const nowDate = format(now, 'yyyy-MM-dd');
   const nowTime = format(now, 'HH:mm');
 
-  const alleBase = useMemo(() => [...belege].sort(byBestellungsnr), [belege]);
+  const alleBase = useMemo(() => [...belege].sort(byDatumUhrzeit), [belege]);
 
   const ueberfaelligBase = useMemo(() =>
     belege.filter(b => {
@@ -223,18 +217,6 @@ export function BuchhaltungScreen({ onOpenBeleg, onRechnungErstellen }: Props) {
                 onClick={() => setCtrl(c => ({ ...c, sort: 'datum' }))}>
                 📅 Bewirtungsdatum
               </button>
-              <button type="button"
-                className={`${s.sortBtn} ${ctrl.sort === 'bestellnr' ? s.sortBtnActive : ''}`}
-                onClick={() => setCtrl(c => ({ ...c, sort: 'bestellnr' }))}>
-                # Bestellnr. ↑
-              </button>
-              {tab === 'erledigt' && (
-                <button type="button"
-                  className={`${s.sortBtn} ${ctrl.sort === 'bestellnr-desc' ? s.sortBtnActive : ''}`}
-                  onClick={() => setCtrl(c => ({ ...c, sort: 'bestellnr-desc' }))}>
-                  # Bestellnr. ↓
-                </button>
-              )}
               {tab === 'erledigt' && (
                 <button type="button"
                   className={`${s.sortBtn} ${ctrl.sort === 'rechnungsnr' ? s.sortBtnActive : ''}`}
@@ -325,7 +307,6 @@ function BelegeRow({ beleg: b, objekte, onOpen, showRechnungBtn, onMarkRechnung 
     <div className={`${s.row} ${b.deleted ? s.rowDeleted : b.rechnungErstellt ? s.rowErledigt : !b.abgeschlossen ? s.rowOffen : ''}`}>
       <div className={s.rowMain} onClick={onOpen}>
         <div className={s.rowTop}>
-          <span className={s.rowNr}>{b.bestellungsnummer ?? '–'}</span>
           {b.rechnungsnummer && <span className={s.rowRechnungNr}>🧾 {b.rechnungsnummer}</span>}
           {b.deleted
             ? <span className={s.chipDeleted}>Bewirtung gelöscht</span>

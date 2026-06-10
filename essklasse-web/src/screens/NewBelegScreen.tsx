@@ -38,12 +38,10 @@ export function NewBelegScreen({ onClose, editBeleg }: Props) {
 
   const [f, setF] = useState(editBeleg ? initFromBeleg(editBeleg) : INIT);
   const [saving, setSaving] = useState(false);
-  const [savedOrderNr, setSavedOrderNr] = useState<string | null>(null);
   const [selectedObjektId, setSelectedObjektId] = useState<string>(editBeleg?.objektId ?? aktivesObjekt?.id ?? '');
   const addBeleg = useBelegStore(s => s.addBeleg);
   const currentUser = useAuthStore(st => st.user);
   const updateBeleg = useBelegStore(s => s.updateBeleg);
-  const setSyncStatus = useBelegStore(s => s.setSyncStatus);
 
   function set<K extends keyof typeof INIT>(key: K, val: (typeof INIT)[K]) {
     setF(prev => ({ ...prev, [key]: val }));
@@ -112,41 +110,9 @@ export function NewBelegScreen({ onClose, editBeleg }: Props) {
       interneNotiz: f.interneNotiz,
     }, currentUser?.name ?? currentUser?.email);
 
-    // Try BC sync (will be skipped if not configured)
-    try {
-      const { createSalesOrder } = await import('../services/bcService');
-      const beleg = useBelegStore.getState().belege.find(b => b.id === id)!;
-      setSyncStatus(id, 'syncing');
-      // Access token would come from MSAL in production:
-      const token = (window as any).__bcToken ?? '';
-      if (token) {
-        const result = await createSalesOrder(beleg, token);
-        useBelegStore.getState().setBcAuftragsnummer(id, result.auftragsnummer);
-        setSavedOrderNr(result.auftragsnummer);
-      } else {
-        setSyncStatus(id, 'local');
-      }
-    } catch (e: any) {
-      setSyncStatus(id, 'error', e?.message ?? 'Fehler');
-    }
-
     setSaving(false);
-    if (!savedOrderNr) onClose();
+    onClose();
   }
-
-  if (savedOrderNr) {
-    return (
-      <div className={s.successScreen}>
-        <div className={s.successIcon}>✅</div>
-        <h2>Beleg übertragen!</h2>
-        <p className={s.successLabel}>BC-Auftragsnummer</p>
-        <div className={s.orderNr}>{savedOrderNr}</div>
-        <button className={s.doneBtn} onClick={onClose}>Fertig</button>
-        <button className={s.newBtn} onClick={() => { setF(INIT); setSavedOrderNr(null); }}>
-          Weiteren Beleg anlegen
-        </button>
-      </div>
-    );
   }
 
   return (
@@ -275,7 +241,7 @@ export function NewBelegScreen({ onClose, editBeleg }: Props) {
 
         {/* Bottom save button */}
         <button className={s.saveBtn} onClick={handleSave} disabled={saving} type="button">
-          {saving ? '⏳ Wird gespeichert …' : '☁️ Beleg speichern & übertragen'}
+          {saving ? '⏳ Wird gespeichert …' : '💾 Beleg speichern'}
         </button>
       </div>
     </div>

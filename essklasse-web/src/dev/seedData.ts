@@ -55,7 +55,6 @@ function makeBeleg(overrides: Partial<Bewirtungsbeleg> & {
   const year = overrides.datum.slice(2, 4);
   return {
     id: uuidv4(),
-    bestellungsnummer: `A${year}${String(Math.floor(Math.random() * 9999999)).padStart(7, '0')}`,
     cateringDatumVon: overrides.datum,
     cateringDatumBis: overrides.datum,
     uhrzeitVon:  overrides.uhrzeitVon  ?? '09:00',
@@ -73,7 +72,7 @@ function makeBeleg(overrides: Partial<Bewirtungsbeleg> & {
     interneNotiz: '',
     erstelltAm: s(3),
     erstelltVon: overrides.erstelltVon,
-    syncStatus: 'local',
+    
     abgeschlossen: false,
     deleted: false,
     ...overrides,
@@ -213,7 +212,7 @@ export function seedAll() {
       abgeschlossenAm: s(6),
       abgeschlossenVon: 'Anna Schmidt',
       abschlussPositionen: abschluss(posWoche),
-      syncStatus: 'synced',
+      
     }),
     // Letzte Woche – abgeschlossen + Rechnung erstellt
     makeBeleg({
@@ -239,7 +238,7 @@ export function seedAll() {
         pos('Speisen/Snacks','Fingerfood',    'Person', 12.00, 30),
         pos('Buffetaufbau',  'Buffet-Aufbau', 'Pauschale', 60.00, 1),
       ]),
-      syncStatus: 'synced',
+      
       rechnungErstellt: true,
       rechnungErstelltAm: s(8),
       rechnungErstelltVon: 'Klaus Weber',
@@ -254,15 +253,12 @@ export function seedAll() {
   const toAdd = newBelege.filter(b => !existingKeys.has(`${b.cateringDatumVon}|${b.veranstaltung}`));
 
   if (toAdd.length) {
-    useBelegStore.setState(st => ({
-      belege: [...toAdd, ...st.belege],
-      bestellungZaehler: { ...st.bestellungZaehler, '26': (st.bestellungZaehler['26'] ?? 0) + toAdd.length },
-    }));
+    useBelegStore.setState(st => ({ belege: [...toAdd, ...st.belege] }));
   }
 
   return { belege: toAdd.length, users: newUsers.length, objekte: OBJEKTE.length };
 }
 
 export function clearAll() {
-  useBelegStore.setState({ belege: [], bestellungZaehler: {} });
+  useBelegStore.setState({ belege: [] });
 }

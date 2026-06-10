@@ -74,10 +74,6 @@ export function TodayScreen({ onOpenBeleg, onAbschliessen, onTabAbschluss }: Pro
   const rightBelege = useMemo(() => belegeForObjekt.filter(b => b.cateringDatumVon === rightDateStr).sort(byUhrzeit), [belegeForObjekt, rightDateStr]);
   const selectedBelege = selected === 0 ? leftBelege : rightBelege;
 
-  const pendingCount = useMemo(
-    () => belege.filter(b => b.syncStatus === 'local' || b.syncStatus === 'error').length,
-    [belege]
-  );
 
   const nextBelegId = useMemo(() => {
     if (!isSelectedToday) return null;
@@ -103,7 +99,6 @@ export function TodayScreen({ onOpenBeleg, onAbschliessen, onTabAbschluss }: Pro
         <span className={s.headerSection}>📋 Heute</span>
         <div className={s.headerRight}>
           <ObjektSwitcherButton />
-          {pendingCount > 0 && <div className={s.syncBadge}>☁️ {pendingCount}</div>}
         </div>
       </div>
 
