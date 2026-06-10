@@ -237,6 +237,9 @@ function RechnungNummerModal({ beleg, value, onChange, onConfirm, onCancel }: {
         <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: 'var(--ek-muted)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '.5px' }}>
           Rechnungsnummer <span style={{ color: '#e74c3c' }}>*</span>
         </label>
+        <div style={{ fontSize: 12, color: '#1a5c30', background: '#eafaf1', border: '1px solid #a9dfbf', borderRadius: 8, padding: '8px 12px', marginBottom: 12 }}>
+          ℹ️ Bitte die Rechnungsnummer aus <strong>Business Central</strong> eintragen.
+        </div>
         <input
           autoFocus
           type="text"
