@@ -6,7 +6,7 @@ import { format } from 'date-fns';
 import s from './BottomNav.module.css';
 import { HamburgerDrawer } from './HamburgerDrawer';
 
-export type Tab = 'today' | 'calendar' | 'abschluss' | 'admin';
+export type Tab = 'today' | 'calendar' | 'abschluss' | 'admin' | 'gf-home';
 interface Props { active: Tab; onTab: (t: Tab) => void; onNew: () => void; onAbgeschlossene: () => void; }
 
 export function BottomNav({ active, onTab, onNew, onAbgeschlossene }: Props) {
@@ -40,9 +40,20 @@ export function BottomNav({ active, onTab, onNew, onAbgeschlossene }: Props) {
         </button>
         <TabBtn icon="📋" label="Heute" active={active === 'today'} onClick={() => onTab('today')} hidden={isGf} />
 
-        <button className={s.fab} onClick={onNew} type="button" aria-label="Neuer Beleg" style={isGf ? { visibility: 'hidden', pointerEvents: 'none' } : undefined}>
-          <span className={s.fabPlus}>+</span>
-        </button>
+        {isGf ? (
+          <button
+            className={`${s.fab} ${active === 'gf-home' ? s.fabHome : ''}`}
+            onClick={() => onTab('gf-home')}
+            type="button"
+            aria-label="Home"
+          >
+            <span className={s.fabHomeIcon}>🏠</span>
+          </button>
+        ) : (
+          <button className={s.fab} onClick={onNew} type="button" aria-label="Neuer Beleg">
+            <span className={s.fabPlus}>+</span>
+          </button>
+        )}
 
         <TabBtn icon="📅" label="Kalender" active={active === 'calendar'} onClick={() => onTab('calendar')} hidden={isGf} />
         {rolle === 'admin' ? (

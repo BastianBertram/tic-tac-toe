@@ -13,6 +13,7 @@ import { BuchhaltungScreen } from './screens/BuchhaltungScreen';
 import { AdminScreen } from './screens/AdminScreen';
 import { useAuthStore } from './store/authStore';
 import { useBelegStore } from './store/belegStore';
+import { GFHomeScreen } from './screens/GFHomeScreen';
 import { DevRoleSwitcher } from './components/DevRoleSwitcher';
 import { DuplikatCheckModal } from './components/DuplikatCheckModal';
 import { seedAll } from './dev/seedData';
@@ -101,6 +102,26 @@ export default function App() {
       <AuthGuard>
         <div className={s.app}>
           <AdminScreen />
+          <DevOverlay />
+        </div>
+      </AuthGuard>
+    );
+  }
+
+  // ── Geschäftsführung ──
+  if (rolle === 'geschaeftsfuehrung') {
+    return (
+      <AuthGuard>
+        <div className={s.app}>
+          <div className={s.content}>
+            <GFHomeScreen />
+          </div>
+          <BottomNav
+            active="gf-home"
+            onTab={setTab}
+            onNew={() => {}}
+            onAbgeschlossene={() => {}}
+          />
           <DevOverlay />
         </div>
       </AuthGuard>
