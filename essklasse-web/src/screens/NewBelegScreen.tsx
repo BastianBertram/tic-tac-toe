@@ -47,6 +47,8 @@ function initFromBeleg(b: Bewirtungsbeleg) {
 export function NewBelegScreen({ onClose, editBeleg }: Props) {
   const aktivesObjekt = useObjektStore(st => st.getAktivesObjekt());
   const objekte       = useObjektStore(st => st.objekte);
+  const currentRolle  = useAuthStore(st => st.user?.rolle);
+  const showRechnung  = currentRolle !== 'user';
 
   const [f, setF] = useState(editBeleg ? initFromBeleg(editBeleg) : INIT);
   const [saving, setSaving] = useState(false);
@@ -248,7 +250,7 @@ export function NewBelegScreen({ onClose, editBeleg }: Props) {
         </div>
 
         {/* ── RECHNUNGSANSCHRIFT ── */}
-        <div className={s.section}>
+        {showRechnung && <div className={s.section}>
           <div className={s.sectionTitle}>Rechnungsanschrift</div>
           <Field label="Firma">
             <input value={f.rechnungsanschriftFirma} onChange={e => set('rechnungsanschriftFirma', e.target.value)} placeholder="Firmenbezeichnung" />
@@ -273,7 +275,7 @@ export function NewBelegScreen({ onClose, editBeleg }: Props) {
               <input value={f.rechnungsanschriftTelefon} onChange={e => set('rechnungsanschriftTelefon', e.target.value)} placeholder="0511 …" />
             </Field>
           </div>
-        </div>
+        </div>}
 
         {/* ── KOSTENZUORDNUNG ── */}
         <div className={s.section}>
