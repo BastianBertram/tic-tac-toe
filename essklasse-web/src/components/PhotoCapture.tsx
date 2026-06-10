@@ -140,6 +140,14 @@ export function PhotoCapture({ dataUrls, onChange, onExtracted, label = '📷 Be
         onChange={e => handleFiles(e.target.files)}
       />
 
+      {/* Drag-and-Drop Hinweis */}
+      {!scanning && (
+        <div className={s.dropHint}>
+          <span className={s.dropHintIcon}>📎</span>
+          Bild oder PDF hier reinziehen
+        </div>
+      )}
+
       {/* Scan-Status */}
       {scanMsg && (
         <div className={`${s.scanMsg} ${scanMsg.startsWith('✅') ? s.scanOk : scanMsg.startsWith('⚠️') ? s.scanErr : s.scanInfo}`}>
