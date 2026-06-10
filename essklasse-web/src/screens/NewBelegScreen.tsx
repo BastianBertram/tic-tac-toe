@@ -249,8 +249,11 @@ export function NewBelegScreen({ onClose, editBeleg }: Props) {
             </Field>
             <Field label="Uhrzeit bis">
               <input type="time" value={f.uhrzeitBis}
-                min={f.cateringDatumVon === f.cateringDatumBis ? f.uhrzeitVon : undefined}
-                onChange={e => set('uhrzeitBis', e.target.value)} />
+                onChange={e => {
+                  const val = e.target.value;
+                  const sameDay = f.cateringDatumVon === f.cateringDatumBis;
+                  set('uhrzeitBis', sameDay && f.uhrzeitVon && val < f.uhrzeitVon ? f.uhrzeitVon : val);
+                }} />
             </Field>
           </div>
           <div className={s.twoCol}>
