@@ -1,0 +1,76 @@
+.overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.55);
+  display: flex; align-items: flex-end; justify-content: center;
+  z-index: 600; padding: 0 0 env(safe-area-inset-bottom);
+}
+
+.sheet {
+  background: var(--ek-surface); border-radius: 20px 20px 0 0;
+  padding: 24px 20px 32px; width: 100%; max-width: 480px;
+  box-shadow: 0 -4px 32px rgba(0,0,0,.2);
+}
+
+/* Loading state */
+.spinner {
+  width: 32px; height: 32px; border-radius: 50%;
+  border: 3px solid var(--ek-border); border-top-color: var(--ek-red);
+  animation: spin .8s linear infinite; margin: 0 auto 12px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.checkingText {
+  text-align: center; font-size: 14px; color: var(--ek-muted); font-weight: 600;
+}
+
+/* Found state */
+.step {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .6px; color: var(--ek-muted); margin-bottom: 8px;
+}
+.title {
+  font-size: 18px; font-weight: 800; color: var(--ek-charcoal); margin-bottom: 10px;
+}
+.body {
+  font-size: 14px; color: var(--ek-muted); line-height: 1.5; margin-bottom: 16px;
+}
+
+.dupList {
+  display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px;
+}
+.dupRow {
+  display: flex; align-items: center; gap: 10px;
+  background: #fdf3f3; border: 1px solid #f5c6c6;
+  border-radius: 10px; padding: 10px 12px;
+}
+.dupInfo {
+  flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0;
+}
+.dupRechnung {
+  font-size: 14px; font-weight: 800; color: var(--ek-charcoal);
+}
+.dupBestellung {
+  font-size: 12px; color: var(--ek-muted); font-weight: 600;
+}
+.dupDetails {
+  font-size: 11px; color: var(--ek-muted); white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis;
+}
+.deleteBtn {
+  flex-shrink: 0; padding: 6px 12px; border-radius: 8px;
+  background: #c0392b; color: #fff; font-size: 12px; font-weight: 700;
+  cursor: pointer; border: none;
+}
+.deleteBtn:hover { background: #a93226; }
+
+.actions { display: flex; gap: 10px; }
+.cancelBtn {
+  flex: 1; padding: 14px; border-radius: 12px;
+  background: var(--ek-surface2); color: var(--ek-muted);
+  border: 1px solid var(--ek-border); font-size: 14px; font-weight: 700; cursor: pointer;
+}
+.proceedBtn {
+  flex: 2; padding: 14px; border-radius: 12px;
+  background: linear-gradient(135deg, #2d8a4e, #3aab62); color: #fff;
+  font-size: 14px; font-weight: 800; cursor: pointer; border: none;
+  box-shadow: 0 4px 16px rgba(45,138,78,.3);
+}

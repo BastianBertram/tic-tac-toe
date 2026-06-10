@@ -11,6 +11,7 @@ interface BelegStore {
   addBeleg: (b: Omit<Bewirtungsbeleg, 'id' | 'erstelltAm' | 'abgeschlossen' | 'bestellungsnummer'>, erstelltVon?: string) => string;
   updateBeleg: (id: string, partial: Partial<Bewirtungsbeleg>) => void;
   deleteBeleg: (id: string) => void;
+  markDoppelt: (id: string) => void;
   schliesseBeleg: (id: string, positionen: AbschlussPosition[], user?: string, abschlussfotos?: string[]) => void;
   markRechnungErstellt: (id: string, userName?: string, rechnungsnummer?: string) => void;
   getBelegeByDate: (date: string) => Bewirtungsbeleg[];
@@ -48,6 +49,9 @@ export const useBelegStore = create<BelegStore>()(
 
       deleteBeleg: (id) =>
         set(s => ({ belege: s.belege.map(b => b.id === id ? { ...b, deleted: true } : b) })),
+
+      markDoppelt: (id) =>
+        set(s => ({ belege: s.belege.map(b => b.id === id ? { ...b, isDoppelt: true } : b) })),
 
       schliesseBeleg: (id, positionen, user, abschlussfotos) =>
         set(s => ({
