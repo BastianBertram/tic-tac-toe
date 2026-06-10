@@ -278,7 +278,7 @@ export function NewBelegScreen({ onClose, editBeleg }: Props) {
         </div>}
 
         {/* ── KOSTENZUORDNUNG ── */}
-        <div className={s.section}>
+        {showRechnung && <div className={s.section}>
           <div className={s.sectionTitle}>Kostenzuordnung</div>
           <Field label="Konto">
             <input value={f.konto} onChange={e => set('konto', e.target.value)} placeholder="Kundennummer / Konto" />
@@ -291,7 +291,7 @@ export function NewBelegScreen({ onClose, editBeleg }: Props) {
               <input value={f.kostentraeger} onChange={e => set('kostentraeger', e.target.value)} placeholder="KTR" />
             </Field>
           </div>
-        </div>
+        </div>}
 
         {/* ── POSITIONEN ── */}
         <div className={s.section}>
