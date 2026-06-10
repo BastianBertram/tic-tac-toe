@@ -267,7 +267,7 @@ export function NewBelegScreen({ onClose, editBeleg }: Props) {
           </Field>
           <div className={s.twoCol}>
             <Field label="Teilnehmer">
-              <input type="number" min="0" value={f.rechnungsanschriftTeilnehmer} onChange={e => set('rechnungsanschriftTeilnehmer', e.target.value)} placeholder="0" />
+              <input value={f.rechnungsanschriftTeilnehmer} onChange={e => set('rechnungsanschriftTeilnehmer', e.target.value)} placeholder="Namen der Teilnehmer" />
             </Field>
             <Field label="Telefon für Rückfragen">
               <input value={f.rechnungsanschriftTelefon} onChange={e => set('rechnungsanschriftTelefon', e.target.value)} placeholder="0511 …" />
