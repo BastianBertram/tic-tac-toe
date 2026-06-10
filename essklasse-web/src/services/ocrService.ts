@@ -64,14 +64,12 @@ export async function extractFromPhoto(dataUrl: string): Promise<ExtractedBeleg>
   if (!apiKey) throw new Error('NO_KEY');
 
   const isPdf = dataUrl.startsWith('data:application/pdf');
-
-  if (isPdf) {
-    throw new Error('PDF-Dateien werden von der OCR-Erkennung nicht unterstützt. Bitte als Foto aufnehmen.');
-  }
-
   const base64 = dataUrl.split(',')[1];
-  const mediaType = dataUrl.split(';')[0].split(':')[1] as
-    'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif';
+  const mediaType = dataUrl.split(';')[0].split(':')[1];
+
+  const contentBlock = isPdf
+    ? { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: base64 } }
+    : { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } };
 
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -89,10 +87,7 @@ export async function extractFromPhoto(dataUrl: string): Promise<ExtractedBeleg>
         {
           role: 'user',
           content: [
-            {
-              type: 'image',
-              source: { type: 'base64', media_type: mediaType, data: base64 },
-            },
+            contentBlock,
             {
               type: 'text',
               text: 'Extrahiere alle Felder aus diesem Bewirtungsbeleg. Antworte nur mit dem JSON-Objekt, ohne Erklärungen.',
