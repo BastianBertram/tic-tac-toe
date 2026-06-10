@@ -114,3 +114,20 @@
 }
 .lightboxDownload:hover { background: rgba(255,255,255,.25); }
 
+.modalOverlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.55);
+  display: flex; align-items: flex-end; justify-content: center;
+  z-index: 500; padding: 0 0 env(safe-area-inset-bottom);
+}
+.modalSheet {
+  background: var(--ek-surface); border-radius: 20px 20px 0 0;
+  padding: 24px 20px 32px; width: 100%; max-width: 480px;
+  box-shadow: 0 -4px 32px rgba(0,0,0,.2);
+}
+.modalStep { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(--ek-muted); margin-bottom: 8px; }
+.modalTitle { font-size: 18px; font-weight: 800; color: var(--ek-charcoal); margin-bottom: 10px; }
+.modalBody  { font-size: 14px; color: var(--ek-muted); line-height: 1.5; margin-bottom: 24px; }
+.modalActions { display: flex; gap: 10px; }
+.cancelBtn { flex: 1; padding: 14px; border-radius: 12px; background: var(--ek-surface2); color: var(--ek-muted); border: 1px solid var(--ek-border); font-size: 14px; font-weight: 700; cursor: pointer; }
+.dangerBtn { flex: 2; padding: 14px; border-radius: 12px; background: #c0392b; color: #fff; font-size: 14px; font-weight: 800; cursor: pointer; box-shadow: 0 4px 16px rgba(192,57,43,.3); }
+

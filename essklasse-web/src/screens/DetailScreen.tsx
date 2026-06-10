@@ -20,12 +20,11 @@ export function DetailScreen({ beleg: init, onClose, onAbschliessen, onBearbeite
   const beleg = store.belege.find(b => b.id === init.id) ?? init;
   const [lightbox, setLightbox] = useState<string | null>(null);
   const [pdfViewer, setPdfViewer] = useState<{ dataUrl: string; name: string } | null>(null);
+  const [deleteStep, setDeleteStep] = useState<0 | 1 | null>(null);
 
   const datum = format(parseISO(beleg.cateringDatumVon), 'dd.MM.yyyy', { locale: de });
 
-  function del() {
-    if (confirm('Beleg wirklich löschen?')) { store.deleteBeleg(beleg.id); onClose(); }
-  }
+  function confirmDelete() { store.deleteBeleg(beleg.id); onClose(); }
 
   return (
     <div className={s.screen}>
@@ -36,9 +35,33 @@ export function DetailScreen({ beleg: init, onClose, onAbschliessen, onBearbeite
           {beleg.bestellungsnummer && <span className={s.bestellNr}>{beleg.bestellungsnummer}</span>}
         </div>
         {canDelete && !beleg.abgeschlossen && (
-          <button className={s.delBtn} onClick={del} type="button">🗑</button>
+          <button className={s.delBtn} onClick={() => setDeleteStep(0)} type="button">🗑</button>
         )}
       </div>
+
+      {/* Zweistufiger Lösch-Dialog */}
+      {deleteStep !== null && (
+        <div className={s.modalOverlay} onClick={() => setDeleteStep(null)}>
+          <div className={s.modalSheet} onClick={e => e.stopPropagation()}>
+            <div className={s.modalStep}>Schritt {deleteStep + 1} von 2</div>
+            <div className={s.modalTitle}>
+              {deleteStep === 0 ? 'Beleg löschen?' : 'Wirklich endgültig löschen?'}
+            </div>
+            <div className={s.modalBody}>
+              {deleteStep === 0
+                ? `„${beleg.veranstaltung || 'Bewirtungsbeleg'}" wird unwiderruflich gelöscht.`
+                : 'Dieser Schritt kann nicht rückgängig gemacht werden. Der Beleg wird dauerhaft entfernt.'}
+            </div>
+            <div className={s.modalActions}>
+              <button type="button" className={s.cancelBtn} onClick={() => setDeleteStep(null)}>Abbrechen</button>
+              <button type="button" className={s.dangerBtn}
+                onClick={() => deleteStep === 0 ? setDeleteStep(1) : confirmDelete()}>
+                {deleteStep === 0 ? 'Weiter →' : 'Ja, endgültig löschen'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className={s.scroll}>
         {/* Kopfdaten */}
