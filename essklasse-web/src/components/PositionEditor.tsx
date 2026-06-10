@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { KATEGORIEN, EINHEITEN } from '../types';
 import type { BelegPosition, Kategorie } from '../types';
+import { useAuthStore } from '../store/authStore';
 import s from './PositionEditor.module.css';
 
 interface Props { positionen: BelegPosition[]; onChange: (p: BelegPosition[]) => void; }
@@ -11,6 +12,9 @@ const EMPTY: Omit<BelegPosition, 'id'> = {
 };
 
 export function PositionEditor({ positionen, onChange }: Props) {
+  const rolle = useAuthStore(st => st.user?.rolle);
+  const showPreise = rolle === 'buchhaltung' || rolle === 'admin';
+
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<Omit<BelegPosition, 'id'>>(EMPTY);
   const [editId, setEditId] = useState<string | null>(null);
@@ -48,15 +52,18 @@ export function PositionEditor({ positionen, onChange }: Props) {
           <div className={s.kat}>{p.kategorie.substring(0, 4)}</div>
           <div className={s.rowInfo}>
             <div className={s.rowName}>{p.bezeichnung}</div>
-            <div className={s.rowMeta}>{p.menge} {p.einheit} · {p.preis.toFixed(2)} €</div>
+            {showPreise
+              ? <div className={s.rowMeta}>{p.menge} {p.einheit} · {p.preis.toFixed(2)} €</div>
+              : <div className={s.rowMeta}>{p.menge} Stk</div>
+            }
           </div>
-          <div className={s.rowTotal}>{(p.preis * p.menge).toFixed(2)} €</div>
+          {showPreise && <div className={s.rowTotal}>{(p.preis * p.menge).toFixed(2)} €</div>}
           <button className={s.delBtn} type="button"
             onClick={e => { e.stopPropagation(); remove(p.id); }}>🗑</button>
         </div>
       ))}
 
-      {positionen.length > 0 && (
+      {positionen.length > 0 && showPreise && (
         <div className={s.totalRow}>
           <span>Gesamt</span>
           <span className={s.totalVal}>{total.toFixed(2)} €</span>
@@ -87,11 +94,13 @@ export function PositionEditor({ positionen, onChange }: Props) {
             </select>
 
             <div className={s.twoCol}>
-              <div>
-                <label className={s.fieldLabel}>Preis (€)</label>
-                <input type="number" min="0" step="0.01" value={draft.preis}
-                  onChange={e => setDraft({ ...draft, preis: parseFloat(e.target.value) || 0 })} />
-              </div>
+              {showPreise && (
+                <div>
+                  <label className={s.fieldLabel}>Preis (€)</label>
+                  <input type="number" min="0" step="0.01" value={draft.preis}
+                    onChange={e => setDraft({ ...draft, preis: parseFloat(e.target.value) || 0 })} />
+                </div>
+              )}
               <div>
                 <label className={s.fieldLabel}>Menge</label>
                 <input type="number" min="0" step="1" value={draft.menge}
@@ -99,9 +108,11 @@ export function PositionEditor({ positionen, onChange }: Props) {
               </div>
             </div>
 
-            <div className={s.lineTotal}>
-              Zeilensumme: <strong style={{ color: 'var(--light)' }}>{(draft.preis * draft.menge).toFixed(2)} €</strong>
-            </div>
+            {showPreise && (
+              <div className={s.lineTotal}>
+                Zeilensumme: <strong style={{ color: 'var(--light)' }}>{(draft.preis * draft.menge).toFixed(2)} €</strong>
+              </div>
+            )}
 
             <button className={s.saveBtn} type="button" onClick={save}>Speichern</button>
           </div>
