@@ -15,20 +15,21 @@
   padding: 9px 12px; margin-bottom: 10px; line-height: 1.5;
 }
 
+.gruppe { margin-bottom: 14px; }
+.gruppeHeader {
+  font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .6px;
+  color: var(--ek-red); padding: 4px 2px 6px;
+  border-bottom: 1.5px solid var(--ek-red);
+  margin-bottom: 6px;
+}
+
 .row {
   display: flex; align-items: center; gap: 10px;
   background: var(--ek-surface2); border-radius: 12px; padding: 12px;
-  margin-bottom: 8px; cursor: pointer; border: 1px solid var(--ek-border);
+  margin-bottom: 6px; cursor: pointer; border: 1px solid var(--ek-border);
   transition: background .1s;
 }
 .row:hover { background: #f0ede8; }
-.kat {
-  width: 40px; height: 40px;
-  background: linear-gradient(135deg, var(--ek-red), var(--ek-red-soft));
-  border-radius: 10px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 10px; color: #fff; font-weight: 800; text-align: center; flex-shrink: 0;
-}
 .rowInfo { flex: 1; min-width: 0; }
 .rowName { font-weight: 700; font-size: 14px; color: var(--ek-charcoal); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .rowMeta { color: var(--ek-muted); font-size: 12px; margin-top: 2px; }

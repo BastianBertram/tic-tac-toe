@@ -49,19 +49,23 @@ export function PositionEditor({ positionen, onChange }: Props) {
 
       {positionen.length === 0 && <p className={s.empty}>Noch keine Positionen.</p>}
 
-      {positionen.map(p => (
-        <div key={p.id} className={s.row} onClick={() => openEdit(p)}>
-          <div className={s.kat}>{p.kategorie.substring(0, 4)}</div>
-          <div className={s.rowInfo}>
-            <div className={s.rowName}>{p.bezeichnung}</div>
-            {showPreise && <div className={s.rowMeta}>{p.einheit} · {p.preis.toFixed(2)} €</div>}
-          </div>
-          {showPreise
-            ? <div className={s.rowTotal}>{(p.preis * p.menge).toFixed(2)} €</div>
-            : <div className={s.rowMenge}>{p.menge} Stk</div>
-          }
-          <button className={s.delBtn} type="button"
-            onClick={e => { e.stopPropagation(); remove(p.id); }}>🗑</button>
+      {KATEGORIEN.filter(kat => positionen.some(p => p.kategorie === kat)).map(kat => (
+        <div key={kat} className={s.gruppe}>
+          <div className={s.gruppeHeader}>{kat}</div>
+          {positionen.filter(p => p.kategorie === kat).map(p => (
+            <div key={p.id} className={s.row} onClick={() => openEdit(p)}>
+              <div className={s.rowInfo}>
+                <div className={s.rowName}>{p.bezeichnung}</div>
+                {showPreise && <div className={s.rowMeta}>{p.einheit} · {p.preis.toFixed(2)} €</div>}
+              </div>
+              {showPreise
+                ? <div className={s.rowTotal}>{(p.preis * p.menge).toFixed(2)} €</div>
+                : <div className={s.rowMenge}>{p.menge} Stk</div>
+              }
+              <button className={s.delBtn} type="button"
+                onClick={e => { e.stopPropagation(); remove(p.id); }}>🗑</button>
+            </div>
+          ))}
         </div>
       ))}
 
