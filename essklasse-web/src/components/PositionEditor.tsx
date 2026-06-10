@@ -62,8 +62,6 @@ export function PositionEditor({ positionen, onChange }: Props) {
                 ? <div className={s.rowTotal}>{(p.preis * p.menge).toFixed(2)} €</div>
                 : <div className={s.rowMenge}>{p.menge} Stk</div>
               }
-              <button className={s.delBtn} type="button"
-                onClick={e => { e.stopPropagation(); remove(p.id); }}>🗑</button>
             </div>
           ))}
         </div>
@@ -121,6 +119,11 @@ export function PositionEditor({ positionen, onChange }: Props) {
             )}
 
             <button className={s.saveBtn} type="button" onClick={save}>Speichern</button>
+            {editId && (
+              <button className={s.deleteBtn} type="button" onClick={() => { remove(editId); setOpen(false); }}>
+                🗑 Position löschen
+              </button>
+            )}
           </div>
         </div>
       )}
