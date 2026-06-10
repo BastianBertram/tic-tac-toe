@@ -104,9 +104,9 @@ export function DetailScreen({ beleg: init, onClose, onAbschliessen, onBearbeite
 
         {/* Bestellfotos (original) */}
         {beleg.fotoDataUrls.length > 0 && (
-          <div className={s.section}>
-            <div className={s.sectionTitle}>📷 Bestellfotos ({beleg.fotoDataUrls.length})</div>
-            <div className={s.photoGrid}>
+          <div className={`${s.section} ${s.sectionSmall}`}>
+            <div className={s.sectionTitleSmall}>📷 Ursprünglicher Bewirtungsbeleg ({beleg.fotoDataUrls.length})</div>
+            <div className={s.photoGridSmall}>
               {beleg.fotoDataUrls.map((url, i) => (
                 <FileThumb
                   key={i}

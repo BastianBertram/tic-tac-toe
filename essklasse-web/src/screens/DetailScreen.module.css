@@ -59,7 +59,12 @@
 .sectionAbschluss { border-color: #27ae60; }
 .sectionAbschluss .sectionTitle { color: #1a5c30; }
 
+.sectionSmall { padding: 10px 12px; opacity: .75; }
+.sectionTitleSmall { color: var(--ek-muted); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; margin-bottom: 8px; padding-bottom: 4px; border-bottom: 1px solid var(--ek-border); }
+
 .photoGrid { display: flex; flex-wrap: wrap; gap: 8px; }
+.photoGridSmall { display: flex; flex-wrap: wrap; gap: 6px; }
+.photoGridSmall > * { width: calc(33.33% - 4px) !important; }
 .photo {
   width: calc(50% - 4px); aspect-ratio: 4/3; object-fit: cover;
   border-radius: 10px; cursor: pointer;
