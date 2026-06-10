@@ -72,7 +72,6 @@ function makeBeleg(overrides: Partial<Bewirtungsbeleg> & {
     wuensche: '',
     interneNotiz: '',
     erstelltAm: s(3),
-    erstelltVon: overrides.erstelltVon,
     abgeschlossen: false,
     deleted: false,
     ...overrides,
@@ -245,7 +244,6 @@ export function seedAll() {
   ];
 
   const existing = useBelegStore.getState().belege;
-  const existingBelegIds = new Set(existing.map(b => b.id));
   // Nur hinzufügen, nicht doppeln – prüfe via Veranstaltungsname+Datum
   const existingKeys = new Set(existing.map(b => `${b.cateringDatumVon}|${b.veranstaltung}`));
   const toAdd = newBelege.filter(b => !existingKeys.has(`${b.cateringDatumVon}|${b.veranstaltung}`));

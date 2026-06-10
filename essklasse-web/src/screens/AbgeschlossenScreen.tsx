@@ -1,4 +1,4 @@
-import { format, subDays, parseISO } from 'date-fns';
+import { format, subDays } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { useBelegStore } from '../store/belegStore';
 import type { Bewirtungsbeleg } from '../types';

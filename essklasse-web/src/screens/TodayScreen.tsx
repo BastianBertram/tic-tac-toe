@@ -62,7 +62,6 @@ export function TodayScreen({ onOpenBeleg, onAbschliessen, onTabAbschluss }: Pro
   }
 
   const selectedDate    = selected === 0 ? leftDate    : rightDate;
-  const selectedDateStr = selected === 0 ? leftDateStr : rightDateStr;
   const isSelectedToday = selected === 0 ? leftIsToday : rightIsToday;
 
   const belegeForObjekt = useMemo(

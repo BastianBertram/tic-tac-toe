@@ -19,8 +19,8 @@ export function AuthGuard({ children }: Props) {
       const stored = useObjektStore.getState().objekte;
       if (stored.length === 0) {
         setObjekte([
-          { id: 'demo-1', name: 'HWK Hannover Hauptgebäude', adresse: 'Berliner Allee 17, 30175 Hannover', kuerzel: 'HWK-01' },
-          { id: 'demo-2', name: 'Berufsschulzentrum Nord',   adresse: 'Podbielskistr. 22, 30163 Hannover', kuerzel: 'BSZ-N' },
+          { id: 'demo-1', name: 'HWK Hannover Hauptgebäude', kuerzel: 'HWK-01', strasse: 'Berliner Allee 17', plz: '30175', ort: 'Hannover', kostenstellen: ['KST-100'], aktiv: true },
+          { id: 'demo-2', name: 'Berufsschulzentrum Nord',   kuerzel: 'BSZ-N',  strasse: 'Podbielskistr. 22', plz: '30163', ort: 'Hannover', kostenstellen: ['KST-200'], aktiv: true },
         ]);
       }
       setChecked(true);

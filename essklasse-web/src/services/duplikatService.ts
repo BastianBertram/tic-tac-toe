@@ -1,8 +1,5 @@
 import type { Bewirtungsbeleg } from '../types';
-
-function getApiKey(): string {
-  return localStorage.getItem('ek_api_key') ?? (import.meta.env.VITE_ANTHROPIC_API_KEY as string) ?? '';
-}
+import { getApiKey } from './ocrService';
 
 /** Rule-based pre-check: same date + besteller, or same date + kostenstelle + raum */
 function ruleBasedDuplikate(beleg: Bewirtungsbeleg, candidates: Bewirtungsbeleg[]): Bewirtungsbeleg[] {

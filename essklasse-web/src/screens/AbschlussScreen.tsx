@@ -1,6 +1,4 @@
 import { useState } from 'react';
-import { format, parseISO } from 'date-fns';
-import { de } from 'date-fns/locale';
 import { useBelegStore } from '../store/belegStore';
 import { useAuthStore }  from '../store/authStore';
 import { PhotoCapture } from '../components/PhotoCapture';
@@ -24,7 +22,7 @@ export function AbschlussScreen({ beleg, onClose, onDone }: Props) {
   const [zurueckLeer,  setZurueckLeer]  = useState<Record<string, string>>(Object.fromEntries(beleg.positionen.map(p => [p.id, ''])));
   const [pfand,        setPfand]        = useState<Record<string, string>>(Object.fromEntries(beleg.positionen.map(p => [p.id, ''])));
   const [berechnen,    setBerechnen]    = useState<Record<string, string>>(Object.fromEntries(beleg.positionen.map(p => [p.id, ''])));
-  const [scanning,     setScanning]     = useState(false);
+  const [,             setScanning]     = useState(false);
   const [scanMsg,      setScanMsg]      = useState('');
   const [done, setDone] = useState(false);
 
@@ -78,8 +76,6 @@ export function AbschlussScreen({ beleg, onClose, onDone }: Props) {
     schliesseBeleg(beleg.id, positionen, user?.name ?? user?.email, fotos);
     setDone(true);
   }
-
-  const datum = format(parseISO(beleg.cateringDatumVon), 'dd.MM.yyyy', { locale: de });
 
   if (done) {
     return (
