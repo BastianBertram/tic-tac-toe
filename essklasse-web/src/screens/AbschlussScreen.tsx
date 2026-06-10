@@ -101,7 +101,7 @@ export function AbschlussScreen({ beleg, onClose, onDone }: Props) {
       {/* Header */}
       <div className={s.header}>
         <button className={s.closeBtn} onClick={onClose} type="button">✕</button>
-        <img src="/logo.png" alt="EssKlasse" className={s.headerLogo} />
+        <img src="/logo.webp" alt="EssKlasse" className={s.headerLogo} />
         <button
           className={s.abschliessenHdrBtn}
           onClick={fotos.length > 0 ? handleAbschliessen : undefined}
@@ -115,7 +115,6 @@ export function AbschlussScreen({ beleg, onClose, onDone }: Props) {
       <div className={s.scroll}>
         {/* Finaler Bewirtungsbeleg-Foto — Pflichtfeld */}
         <div className={s.section}>
-          <div className={s.sectionTitle}>Finaler Bewirtungsbeleg</div>
           <PhotoCapture
             dataUrls={fotos}
             onChange={handleFotosChange}
