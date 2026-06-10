@@ -62,14 +62,21 @@
 }
 .deleteBtn:hover { background: #a93226; }
 
-.actions { display: flex; gap: 10px; }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; }
 .cancelBtn {
-  flex: 1; padding: 14px; border-radius: 12px;
+  flex: 1; min-width: 80px; padding: 14px; border-radius: 12px;
   background: var(--ek-surface2); color: var(--ek-muted);
   border: 1px solid var(--ek-border); font-size: 14px; font-weight: 700; cursor: pointer;
 }
+.deleteCurrentBtn {
+  flex: 2; min-width: 120px; padding: 14px; border-radius: 12px;
+  background: #c0392b; color: #fff;
+  border: none; font-size: 14px; font-weight: 700; cursor: pointer;
+  box-shadow: 0 4px 16px rgba(192,57,43,.25);
+}
+.deleteCurrentBtn:hover { background: #a93226; }
 .proceedBtn {
-  flex: 2; padding: 14px; border-radius: 12px;
+  flex: 2; min-width: 120px; padding: 14px; border-radius: 12px;
   background: linear-gradient(135deg, #2d8a4e, #3aab62); color: #fff;
   font-size: 14px; font-weight: 800; cursor: pointer; border: none;
   box-shadow: 0 4px 16px rgba(45,138,78,.3);

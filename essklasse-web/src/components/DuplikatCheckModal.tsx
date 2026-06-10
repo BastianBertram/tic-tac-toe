@@ -37,15 +37,10 @@ export function DuplikatCheckModal({ beleg, onProceed, onCancel }: Props) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  function handleDelete(id: string) {
-    deleteBeleg(id);
-    markDoppelt(id);
-    const remaining = duplikate.filter(d => d.id !== id);
-    if (remaining.length === 0) {
-      onProceed();
-    } else {
-      setDuplikate(remaining);
-    }
+  function handleDeleteCurrent() {
+    deleteBeleg(beleg.id);
+    markDoppelt(beleg.id);
+    onCancel();
   }
 
   if (state === 'checking') {
@@ -75,20 +70,12 @@ export function DuplikatCheckModal({ beleg, onProceed, onCancel }: Props) {
                 <span className={s.dupBestellung}>(Auftrag: {d.bestellungsnummer})</span>
                 <span className={s.dupDetails}>{d.veranstaltung ?? ''} · {d.cateringDatumVon}</span>
               </div>
-              {d.id !== beleg.id && (
-                <button
-                  type="button"
-                  className={s.deleteBtn}
-                  onClick={() => handleDelete(d.id)}
-                >
-                  Löschen
-                </button>
-              )}
             </div>
           ))}
         </div>
         <div className={s.actions}>
           <button type="button" className={s.cancelBtn} onClick={onCancel}>Abbrechen</button>
+          <button type="button" className={s.deleteCurrentBtn} onClick={handleDeleteCurrent}>Diesen Beleg löschen</button>
           <button type="button" className={s.proceedBtn} onClick={onProceed}>Trotzdem erstellen</button>
         </div>
       </div>
