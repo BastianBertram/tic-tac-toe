@@ -212,10 +212,12 @@ function RechnungNummerModal({ beleg, value, onChange, onConfirm, onCancel }: {
   const belege = useBelegStore(st => st.belege);
 
   const trimmed = value.trim();
-  const isDuplicate = trimmed.length > 0 && belege.some(
+  const validFormat = /^R\d{2,}$/i.test(trimmed);
+  const isDuplicate = validFormat && belege.some(
     b => b.id !== beleg.id && b.rechnungsnummer?.toLowerCase() === trimmed.toLowerCase()
   );
-  const canSubmit = trimmed.length > 0 && !isDuplicate;
+  const hasError = trimmed.length > 0 && (!validFormat || isDuplicate);
+  const canSubmit = validFormat && !isDuplicate;
 
   return (
     <div style={{
@@ -252,17 +254,19 @@ function RechnungNummerModal({ beleg, value, onChange, onConfirm, onCancel }: {
             padding: '12px 14px', borderRadius: 10,
             border: '1.5px solid var(--ek-border)',
             background: 'var(--ek-bg)', fontSize: 15,
-            color: 'var(--ek-charcoal)', marginBottom: isDuplicate ? 8 : 20,
-            outline: isDuplicate ? '1.5px solid #e74c3c' : !trimmed ? '1.5px solid #e74c3c' : 'none',
+            color: 'var(--ek-charcoal)', marginBottom: hasError ? 8 : 20,
+            outline: hasError ? '1.5px solid #e74c3c' : !trimmed ? '1.5px solid #e74c3c' : 'none',
           }}
         />
-        {isDuplicate && (
+        {hasError && (
           <div style={{
             marginBottom: 16, padding: '8px 12px', borderRadius: 8,
             background: '#fdecea', color: '#e74c3c',
             fontSize: 12, fontWeight: 600, border: '1px solid #f5c6c6',
           }}>
-            ⚠️ Diese Rechnungsnummer ist bereits vergeben.
+            {isDuplicate
+              ? '⚠️ Diese Rechnungsnummer ist bereits vergeben.'
+              : '⚠️ Ungültiges Format — die Rechnungsnummer muss mit „R" beginnen und mindestens zwei Ziffern enthalten (z.B. R260001).'}
           </div>
         )}
         <div style={{ display: 'flex', gap: 10 }}>
