@@ -31,8 +31,8 @@ export function BottomNav({ active, onTab, onNew, onAbgeschlossene }: Props) {
 
   return (
     <>
-      <nav className={s.nav} style={isGf ? { justifyContent: 'flex-start' } : undefined}>
-        <button className={`${s.tab} ${drawerOpen ? s.tabActive : ''}`} onClick={() => setDrawerOpen(true)} type="button">
+      <nav className={s.nav}>
+        <button className={`${s.tab} ${drawerOpen ? s.tabActive : ''}`} onClick={() => setDrawerOpen(true)} type="button" style={isGf ? { flex: 'none' } : undefined}>
           <span className={s.hamburger}>
             <span /><span /><span />
           </span>
