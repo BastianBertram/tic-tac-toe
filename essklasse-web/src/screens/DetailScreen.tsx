@@ -98,7 +98,7 @@ export function DetailScreen({ beleg: init, onClose, onAbschliessen, onBearbeite
                   {positionen.map(p => (
                     <div key={p.id} className={s.posRow}>
                       <div className={s.posName}>{p.bezeichnung}</div>
-                      <div className={s.posName}>{p.menge} {p.einheit}</div>
+                      <div className={s.posName}>{p.menge} Stk</div>
                     </div>
                   ))}
                 </div>
