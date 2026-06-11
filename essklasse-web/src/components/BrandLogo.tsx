@@ -7,8 +7,15 @@ interface Props {
   alt?: string;
 }
 
-/** Zeigt das in den Einstellungen hinterlegte Unternehmenslogo, sonst das Standard-Logo. */
-export function BrandLogo({ className, style, alt = 'EssKlasse' }: Props) {
+/** Pfad zum mitgelieferten EssKlasse-Logo (als Option auswählbar). */
+export const ESSKLASSE_LOGO = '/logo.webp';
+
+/**
+ * Zeigt das in den Einstellungen hinterlegte Logo.
+ * Standard ist „kein Logo" → es wird nichts gerendert.
+ */
+export function BrandLogo({ className, style, alt = 'Logo' }: Props) {
   const logoDataUrl = useSettingsStore(st => st.logoDataUrl);
-  return <img src={logoDataUrl ?? '/logo.webp'} alt={alt} className={className} style={style} />;
+  if (!logoDataUrl) return null;
+  return <img src={logoDataUrl} alt={alt} className={className} style={style} />;
 }

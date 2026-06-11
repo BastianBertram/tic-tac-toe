@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { BrandLogo } from '../components/BrandLogo';
+import { BrandLogo, ESSKLASSE_LOGO } from '../components/BrandLogo';
 import { v4 as uuidv4 } from 'uuid';
 import { useUserStore } from '../store/userStore';
 import { useObjektStore } from '../store/objektStore';
@@ -658,7 +658,8 @@ const MAX_LOGO_BYTES = 800 * 1024; // ~800 KB Schutz für localStorage
 function EinstellungenTab() {
   const { themeId, setTheme, logoDataUrl, setLogo, firmenname, setFirmenname } = useSettingsStore();
   const [logoError, setLogoError] = useState<string | null>(null);
-  const [confirmReset, setConfirmReset] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const istEssKlasse = logoDataUrl === ESSKLASSE_LOGO;
 
   function handleLogoFile(file: File | undefined) {
     setLogoError(null);
@@ -683,19 +684,22 @@ function EinstellungenTab() {
       <div className={s.formCard}>
         <div className={s.formTitle}>Unternehmenslogo</div>
         <p className={s.settingsHint}>
-          Wird in der Kopfzeile, beim Login und in allen Bereichen der App angezeigt.
-          Empfohlen: PNG/SVG mit transparentem Hintergrund, max. 800 KB.
+          Wird in der Kopfzeile und in allen Bereichen der App angezeigt.
+          Standard ist <strong>kein Logo</strong>. Empfohlen: PNG/SVG mit transparentem
+          Hintergrund, max. 800 KB.
         </p>
 
         <div className={s.logoPreviewBox}>
-          <BrandLogo className={s.logoPreview} />
+          {logoDataUrl
+            ? <BrandLogo className={s.logoPreview} />
+            : <span className={s.logoEmpty}>Kein Logo</span>}
         </div>
 
         {logoError && <div className={s.fieldError}>{logoError}</div>}
 
         <div className={s.settingsBtnRow}>
           <label className={s.uploadBtn}>
-            {logoDataUrl ? '🖼 Logo ersetzen' : '⬆️ Logo hochladen'}
+            {logoDataUrl && !istEssKlasse ? '🖼 Logo ersetzen' : '⬆️ Logo hochladen'}
             <input
               type="file"
               accept="image/png,image/jpeg,image/webp,image/svg+xml"
@@ -703,9 +707,14 @@ function EinstellungenTab() {
               onChange={e => { handleLogoFile(e.target.files?.[0]); e.target.value = ''; }}
             />
           </label>
+          {!istEssKlasse && (
+            <button type="button" className={s.resetBtn} onClick={() => { setLogoError(null); setLogo(ESSKLASSE_LOGO); }}>
+              🍅 EssKlasse-Logo
+            </button>
+          )}
           {logoDataUrl && (
-            <button type="button" className={s.resetBtn} onClick={() => setConfirmReset(true)}>
-              ↩︎ Standard wiederherstellen
+            <button type="button" className={s.deleteBtn} onClick={() => setConfirmDelete(true)}>
+              🗑 Logo löschen
             </button>
           )}
         </div>
@@ -748,14 +757,14 @@ function EinstellungenTab() {
         />
       </div>
 
-      {confirmReset && (
+      {confirmDelete && (
         <ConfirmModal
           steps={[
-            { title: 'Standard-Logo wiederherstellen?', body: 'Das hochgeladene Logo wird entfernt und das mitgelieferte EssKlasse-Logo wieder angezeigt.', confirmLabel: 'Weiter →' },
-            { title: 'Wirklich zurücksetzen?', body: 'Das aktuell hinterlegte Logo geht verloren und müsste erneut hochgeladen werden.', confirmLabel: 'Ja, zurücksetzen', danger: true },
+            { title: 'Logo löschen?', body: 'Das aktuelle Logo wird entfernt. Die App zeigt anschließend kein Logo mehr an.', confirmLabel: 'Weiter →' },
+            { title: 'Wirklich löschen?', body: 'Ein hochgeladenes Logo geht dabei verloren und müsste erneut hochgeladen werden.', confirmLabel: 'Ja, löschen', danger: true },
           ]}
-          onConfirmed={() => { setLogo(null); setConfirmReset(false); }}
-          onCancel={() => setConfirmReset(false)}
+          onConfirmed={() => { setLogo(null); setConfirmDelete(false); }}
+          onCancel={() => setConfirmDelete(false)}
         />
       )}
     </div>

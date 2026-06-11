@@ -5,7 +5,7 @@ import { DEFAULT_THEME_ID, applyTheme } from '../theme';
 interface SettingsStore {
   /** ID des aktiven Themes (Mood) */
   themeId: string;
-  /** Hochgeladenes Logo als Data-URL; null = Standard-Logo (/logo.webp) */
+  /** Aktives Logo: Data-URL (hochgeladen) oder '/logo.webp' (EssKlasse). null = kein Logo (Standard). */
   logoDataUrl: string | null;
   /** Anzeigename des Unternehmens (optional, für Login/Branding) */
   firmenname: string;

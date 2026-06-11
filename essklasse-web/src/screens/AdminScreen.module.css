@@ -376,3 +376,20 @@
   color: var(--ek-gray);
   text-align: center;
 }
+
+.logoEmpty {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ek-muted);
+  letter-spacing: 0.3px;
+}
+.deleteBtn {
+  padding: 11px 16px;
+  border-radius: 10px;
+  background: var(--ek-surface);
+  border: 1.5px solid #e2b6b0;
+  color: #c0392b;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
