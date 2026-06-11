@@ -129,11 +129,10 @@ export function generateErsatzBelegPdf(b: ErsatzBelegInput): string {
 
   // ── Positionen ──
   lines.push({ x: MARGIN, size: 13, bold: true, text: 'Positionen / Leistungen', gapBefore: 30 });
-  const colMenge = 360, colEinheit = 410, colPreis = 470, colSumme = 525;
+  const colMenge = 400, colPreis = 470, colSumme = 525;
   lines.push({ x: MARGIN, size: 9, bold: true, text: 'Bezeichnung' });
   // Spaltenüberschriften auf gleicher Höhe → über zusätzliche Felder am selben Y (gapBefore 0)
   lines.push({ x: colMenge, size: 9, bold: true, text: 'Menge', gapBefore: -11 });
-  lines.push({ x: colEinheit, size: 9, bold: true, text: 'Einheit', gapBefore: -11 });
   if (showPreise) {
     lines.push({ x: colPreis, size: 9, bold: true, text: 'Preis', gapBefore: -11 });
     lines.push({ x: colSumme, size: 9, bold: true, text: 'Summe', gapBefore: -11 });
@@ -149,9 +148,8 @@ export function generateErsatzBelegPdf(b: ErsatzBelegInput): string {
     }
     const summe = p.preis * p.menge;
     gesamt += summe;
-    lines.push({ x: MARGIN + 6, size: 10, text: trunc(p.bezeichnung, 52) });
-    lines.push({ x: colMenge, size: 10, text: String(p.menge), gapBefore: -12.5 });
-    lines.push({ x: colEinheit, size: 10, text: trunc(p.einheit, 8), gapBefore: -12.5 });
+    lines.push({ x: MARGIN + 6, size: 10, text: trunc(p.bezeichnung, 58) });
+    lines.push({ x: colMenge, size: 10, text: `${p.menge} Stk`, gapBefore: -12.5 });
     if (showPreise) {
       lines.push({ x: colPreis, size: 10, text: p.preis.toFixed(2), gapBefore: -12.5 });
       lines.push({ x: colSumme, size: 10, text: summe.toFixed(2), gapBefore: -12.5 });
