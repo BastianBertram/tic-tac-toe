@@ -6,7 +6,7 @@ import { format } from 'date-fns';
 import s from './BottomNav.module.css';
 import { HamburgerDrawer } from './HamburgerDrawer';
 
-export type Tab = 'today' | 'calendar' | 'abschluss' | 'admin' | 'gf-home';
+export type Tab = 'today' | 'calendar' | 'abschluss' | 'admin' | 'gf-home' | 'gf-statistik';
 interface Props { active: Tab; onTab: (t: Tab) => void; onNew: () => void; onAbgeschlossene: () => void; }
 
 export function BottomNav({ active, onTab, onNew, onAbgeschlossene }: Props) {
@@ -55,7 +55,10 @@ export function BottomNav({ active, onTab, onNew, onAbgeschlossene }: Props) {
           </button>
         )}
 
-        <TabBtn icon="📅" label="Kalender" active={active === 'calendar'} onClick={() => onTab('calendar')} hidden={isGf} />
+        {isGf
+          ? <TabBtn icon="📊" label="Statistik" active={active === 'gf-statistik'} onClick={() => onTab('gf-statistik')} />
+          : <TabBtn icon="📅" label="Kalender" active={active === 'calendar'} onClick={() => onTab('calendar')} />
+        }
         {rolle === 'admin' ? (
           <TabBtn icon="⚙️" label={<>Admin<br />Verwaltung</>} active={active === 'admin'} onClick={() => onTab('admin')} hidden={isGf} />
         ) : (
