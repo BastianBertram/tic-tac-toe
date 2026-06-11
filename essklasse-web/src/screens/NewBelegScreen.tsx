@@ -62,6 +62,26 @@ export function NewBelegScreen({ onClose, editBeleg }: Props) {
     setF(prev => ({ ...prev, [key]: val }));
   }
 
+  // Ein Bewirtungsbeleg muss hochgeladen werden – es sei denn, alle Bestelldaten
+  // sind ausgefüllt UND mindestens eine Position wurde hinzugefügt.
+  const bestelldatenFelder: [string, boolean][] = [
+    ['Besteller', !!f.besteller.trim()],
+    ['Veranstaltung', !!f.veranstaltung.trim()],
+    ['Datum von', !!f.cateringDatumVon],
+    ['Datum bis', !!f.cateringDatumBis],
+    ['Uhrzeit von', !!f.uhrzeitVon],
+    ['Uhrzeit bis', !!f.uhrzeitBis],
+    ['Ort', !!f.ort.trim()],
+    ['Raum', !!f.raum.trim()],
+    ['Personenzahl', (parseInt(f.personenzahl) || 0) > 0],
+  ];
+  const hatPositionen      = f.positionen.length > 0;
+  const bestelldatenOffen  = bestelldatenFelder.filter(([, ok]) => !ok).map(([name]) => name);
+  const manuellVollstaendig = bestelldatenOffen.length === 0 && hatPositionen;
+  const hatDokument        = f.fotoDataUrls.length > 0;
+  const belegOk            = hatDokument || manuellVollstaendig;
+  const fehlendManuell     = [...bestelldatenOffen, ...(hatPositionen ? [] : ['mindestens eine Position'])];
+
   function applyExtracted(data: ExtractedBeleg) {
     const extractedPositionen: BelegPosition[] = (data.positionen ?? []).map(p => ({
       id: uuidv4(),
@@ -100,9 +120,11 @@ export function NewBelegScreen({ onClose, editBeleg }: Props) {
 
   async function handleSave() {
     if (!selectedObjektId) return alert('Bitte ein Objekt auswählen.');
-    if (f.fotoDataUrls.length === 0) return alert('Bitte ein Foto aufnehmen oder eine Datei hochladen.');
     if (!f.besteller.trim()) return alert('Besteller/Auftraggeber fehlt.');
     if (!f.veranstaltung.trim()) return alert('Veranstaltung/Anlass fehlt.');
+    if (!belegOk) {
+      return alert('Bitte einen Bewirtungsbeleg hochladen – oder alle Bestelldaten ausfüllen und mindestens eine Position hinzufügen.');
+    }
     const gewaehltes = objekte.find(o => o.id === selectedObjektId) ?? aktivesObjekt;
     setSaving(true);
 
@@ -178,6 +200,19 @@ export function NewBelegScreen({ onClose, editBeleg }: Props) {
             onChange={v => set('fotoDataUrls', v)}
             onExtracted={applyExtracted}
           />
+          {!hatDokument && (
+            <div style={{
+              marginTop: 10, padding: '10px 12px', borderRadius: 10, fontSize: 12.5, lineHeight: 1.45,
+              border: `1px solid ${manuellVollstaendig ? '#a9dfbf' : '#f5d6a8'}`,
+              background: manuellVollstaendig ? '#eafaf1' : '#fff8ec',
+              color: manuellVollstaendig ? '#1a5c30' : '#8a5a00',
+            }}>
+              {manuellVollstaendig
+                ? '✓ Kein Upload nötig – alle Bestelldaten sind ausgefüllt und Positionen vorhanden.'
+                : <>📎 <strong>Bewirtungsbeleg hochladen</strong> – oder alle Bestelldaten ausfüllen und mindestens eine Position hinzufügen.
+                    <br />Noch offen: {fehlendManuell.join(', ')}.</>}
+            </div>
+          )}
         </div>
 
         {/* ── OBJEKT-AUSWAHL ── */}
