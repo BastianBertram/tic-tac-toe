@@ -17,6 +17,8 @@ import { GFHomeScreen } from './screens/GFHomeScreen';
 import { GFBewirtungsListScreen } from './screens/GFBewirtungsListScreen';
 import type { GFKategorie } from './screens/GFBewirtungsListScreen';
 import { GFStatistikScreen } from './screens/GFStatistikScreen';
+import { GFStatistikDetailScreen } from './screens/GFStatistikDetailScreen';
+import type { StatKategorie } from './screens/GFStatistikDetailScreen';
 import { DevRoleSwitcher } from './components/DevRoleSwitcher';
 import { DuplikatCheckModal } from './components/DuplikatCheckModal';
 import { seedAll } from './dev/seedData';
@@ -212,15 +214,17 @@ export default function App() {
 }
 
 function GFApp() {
-  const [gfTab, setGfTab]           = useState<'gf-home' | 'gf-statistik'>('gf-home');
-  const [kategorie, setKategorie]   = useState<GFKategorie | null>(null);
-  const [detailBeleg, setDetailBeleg] = useState<Bewirtungsbeleg | null>(null);
+  const [gfTab, setGfTab]               = useState<'gf-home' | 'gf-statistik'>('gf-home');
+  const [kategorie, setKategorie]       = useState<GFKategorie | null>(null);
+  const [detailBeleg, setDetailBeleg]   = useState<Bewirtungsbeleg | null>(null);
+  const [statDetail, setStatDetail]     = useState<StatKategorie | null>(null);
 
   function handleTab(t: Tab) {
     if (t === 'gf-home' || t === 'gf-statistik') {
       setGfTab(t);
       setKategorie(null);
       setDetailBeleg(null);
+      setStatDetail(null);
     }
   }
 
@@ -232,11 +236,19 @@ function GFApp() {
     );
   }
 
+  if (statDetail) {
+    return (
+      <div className={s.app}>
+        <GFStatistikDetailScreen kategorie={statDetail} onClose={() => setStatDetail(null)} />
+      </div>
+    );
+  }
+
   return (
     <div className={s.app}>
       <div className={s.content}>
         {gfTab === 'gf-statistik'
-          ? <GFStatistikScreen />
+          ? <GFStatistikScreen onKachelClick={setStatDetail} />
           : kategorie
             ? <GFBewirtungsListScreen kategorie={kategorie} onClose={() => setKategorie(null)} onOpenBeleg={setDetailBeleg} />
             : <GFHomeScreen onKachelClick={setKategorie} />
