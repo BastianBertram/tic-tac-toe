@@ -208,7 +208,7 @@ Antworte NUR mit einem JSON-Array der IDs von möglichen Duplikaten (leeres Arra
 Kriterien (eines davon reicht): gleiches Datum + ähnlicher Veranstaltungsname, oder gleiches Datum + gleicher Besteller, oder gleiches Datum + gleiche Kostenstelle.`;
 
   const text = await callClaude({
-    model: 'claude-haiku-4-5-20251001',
+    model: 'claude-haiku-4-5',
     max_tokens: 256,
     messages: [{ role: 'user', content: prompt }],
   });
