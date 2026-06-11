@@ -10,6 +10,7 @@ import { PositionEditor } from '../components/PositionEditor';
 import type { BelegPosition, Bewirtungsbeleg, Kategorie } from '../types';
 import { KATEGORIEN as KATEGORIEN_LIST } from '../types';
 import type { ExtractedBeleg } from '../services/ocrService';
+import { generateErsatzBelegPdf } from '../services/belegPdf';
 import s from './NewBelegScreen.module.css';
 
 interface Props { onClose: () => void; editBeleg?: Bewirtungsbeleg; }
@@ -128,6 +129,31 @@ export function NewBelegScreen({ onClose, editBeleg }: Props) {
     const gewaehltes = objekte.find(o => o.id === selectedObjektId) ?? aktivesObjekt;
     setSaving(true);
 
+    // Kein Original-Beleg hochgeladen, aber alle Bestelldaten + Positionen manuell
+    // erfasst → Ersatz-Bewirtungsbeleg als PDF erzeugen und als Dokument ablegen.
+    let fotoDataUrls = f.fotoDataUrls;
+    if (!hatDokument && manuellVollstaendig) {
+      const ersatzPdf = generateErsatzBelegPdf({
+        objektName: gewaehltes?.name ?? '',
+        besteller: f.besteller, veranstaltung: f.veranstaltung,
+        cateringDatumVon: f.cateringDatumVon, cateringDatumBis: f.cateringDatumBis,
+        uhrzeitVon: f.uhrzeitVon, uhrzeitBis: f.uhrzeitBis,
+        ort: f.ort, raum: f.raum, personenzahl: parseInt(f.personenzahl) || 0,
+        konto: f.konto, kostenstelle: f.kostenstelle, kostentraeger: f.kostentraeger,
+        wuensche: f.wuensche,
+        rechnungsanschriftFirma: f.rechnungsanschriftFirma,
+        rechnungsanschriftZuHaenden: f.rechnungsanschriftZuHaenden,
+        rechnungsanschriftStrasse: f.rechnungsanschriftStrasse,
+        rechnungsanschriftPlzOrt: f.rechnungsanschriftPlzOrt,
+        rechnungsanschriftAnlass: f.rechnungsanschriftAnlass,
+        rechnungsanschriftTeilnehmer: f.rechnungsanschriftTeilnehmer,
+        rechnungsanschriftTelefon: f.rechnungsanschriftTelefon,
+        positionen: f.positionen,
+        showPreise: showRechnung,
+      });
+      fotoDataUrls = [ersatzPdf];
+    }
+
     if (editBeleg) {
       updateBeleg(editBeleg.id, {
         objektId: gewaehltes?.id ?? '', objektName: gewaehltes?.name ?? '',
@@ -135,7 +161,7 @@ export function NewBelegScreen({ onClose, editBeleg }: Props) {
         uhrzeitVon: f.uhrzeitVon, uhrzeitBis: f.uhrzeitBis, veranstaltung: f.veranstaltung,
         ort: f.ort, raum: f.raum, personenzahl: parseInt(f.personenzahl) || 0,
         konto: f.konto, kostenstelle: f.kostenstelle, kostentraeger: f.kostentraeger,
-        positionen: f.positionen, fotoDataUrls: f.fotoDataUrls,
+        positionen: f.positionen, fotoDataUrls,
         wuensche: f.wuensche, interneNotiz: f.interneNotiz,
         rechnungsanschriftFirma: f.rechnungsanschriftFirma,
         rechnungsanschriftZuHaenden: f.rechnungsanschriftZuHaenden,
@@ -166,7 +192,7 @@ export function NewBelegScreen({ onClose, editBeleg }: Props) {
       kostenstelle: f.kostenstelle,
       kostentraeger: f.kostentraeger,
       positionen: f.positionen,
-      fotoDataUrls: f.fotoDataUrls,
+      fotoDataUrls,
       wuensche: f.wuensche,
       interneNotiz: f.interneNotiz,
       rechnungsanschriftFirma: f.rechnungsanschriftFirma,
