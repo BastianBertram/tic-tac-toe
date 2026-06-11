@@ -219,6 +219,7 @@ export function NewBelegScreen({ onClose, editBeleg }: Props) {
         {/* ── FOTOS (prominent oben) ── */}
         <div className={s.section}>
           <PhotoCapture
+            label="📷 Bewirtungsbeleg (optional)"
             dataUrls={f.fotoDataUrls}
             onChange={v => set('fotoDataUrls', v)}
             onExtracted={applyExtracted}
@@ -280,7 +281,7 @@ export function NewBelegScreen({ onClose, editBeleg }: Props) {
             <input value={f.veranstaltung} onChange={e => set('veranstaltung', e.target.value)} placeholder="z.B. Vorstandssitzung, Schulung …" />
           </Field>
           <div className={s.twoCol}>
-            <Field label="Datum von">
+            <Field label="Datum von *">
               <input type="date" value={f.cateringDatumVon} onChange={e => {
                 const val = e.target.value;
                 setF(prev => ({
@@ -290,12 +291,12 @@ export function NewBelegScreen({ onClose, editBeleg }: Props) {
                 }));
               }} />
             </Field>
-            <Field label="Datum bis">
+            <Field label="Datum bis *">
               <input type="date" value={f.cateringDatumBis} min={f.cateringDatumVon} onChange={e => set('cateringDatumBis', e.target.value)} />
             </Field>
           </div>
           <div className={s.twoCol}>
-            <Field label="Uhrzeit von">
+            <Field label="Uhrzeit von *">
               <input type="time" value={f.uhrzeitVon} onChange={e => {
                 const val = e.target.value;
                 setF(prev => ({
@@ -306,7 +307,7 @@ export function NewBelegScreen({ onClose, editBeleg }: Props) {
                 }));
               }} />
             </Field>
-            <Field label="Uhrzeit bis">
+            <Field label="Uhrzeit bis *">
               <input type="time" value={f.uhrzeitBis}
                 onChange={e => {
                   const val = e.target.value;
@@ -316,7 +317,7 @@ export function NewBelegScreen({ onClose, editBeleg }: Props) {
             </Field>
           </div>
           <div className={s.twoCol}>
-            <Field label="Ort">
+            <Field label="Ort *">
               <input value={f.ort} onChange={e => set('ort', e.target.value)} placeholder="Standort" />
             </Field>
             <Field label="Raum">
@@ -350,7 +351,7 @@ export function NewBelegScreen({ onClose, editBeleg }: Props) {
             <Field label="Teilnehmer">
               <input value={f.rechnungsanschriftTeilnehmer} onChange={e => set('rechnungsanschriftTeilnehmer', e.target.value)} placeholder="Namen der Teilnehmer" />
             </Field>
-            <Field label="Telefon für Rückfragen">
+            <Field label="Telefon für Rückfragen *">
               <input value={f.rechnungsanschriftTelefon} onChange={e => set('rechnungsanschriftTelefon', e.target.value)} placeholder="0511 …" />
             </Field>
           </div>
