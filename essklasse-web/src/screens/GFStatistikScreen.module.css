@@ -92,7 +92,7 @@
 .tooltip {
   display: none;
   position: absolute;
-  top: 24px;
+  bottom: 24px;
   right: 0;
   width: 180px;
   background: #1a1a2e;
