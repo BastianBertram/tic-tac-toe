@@ -656,10 +656,25 @@ function ObjekteTab() {
 const MAX_LOGO_BYTES = 800 * 1024; // ~800 KB Schutz für localStorage
 
 function EinstellungenTab() {
-  const { themeId, setTheme, customColor, setCustomColor, logoDataUrl, setLogo } = useSettingsStore();
+  const { themeId, setTheme, customColor, setCustomColor, logoDataUrl, setLogo, impressum, setImpressum } = useSettingsStore();
   const [logoError, setLogoError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [impressumOpen, setImpressumOpen] = useState(false);
   const istEssKlasse = logoDataUrl === ESSKLASSE_LOGO;
+
+  // ── Geschäftsführung (mehrere Namen) ──
+  function setGf(idx: number, val: string) {
+    const gf = [...impressum.geschaeftsfuehrung];
+    gf[idx] = val;
+    setImpressum({ geschaeftsfuehrung: gf });
+  }
+  function addGf() {
+    setImpressum({ geschaeftsfuehrung: [...impressum.geschaeftsfuehrung, ''] });
+  }
+  function removeGf(idx: number) {
+    const gf = impressum.geschaeftsfuehrung.filter((_, i) => i !== idx);
+    setImpressum({ geschaeftsfuehrung: gf.length ? gf : [''] });
+  }
 
   // Vorab gewählte (noch nicht übernommene) Farbe
   const [selThemeId, setSelThemeId] = useState(themeId);
@@ -812,6 +827,76 @@ function EinstellungenTab() {
         >
           Übernehmen
         </button>
+      </div>
+
+      {/* Impressum (aufklappbar) */}
+      <div className={s.formCard}>
+        <button
+          type="button"
+          className={s.collapseHead}
+          onClick={() => setImpressumOpen(o => !o)}
+          aria-expanded={impressumOpen}
+        >
+          <span className={s.formTitle}>Impressum</span>
+          <span className={s.collapseChevron}>{impressumOpen ? '▴' : '▾'}</span>
+        </button>
+
+        {impressumOpen && (
+          <div className={s.collapseBody}>
+            <p className={s.settingsHint}>Pflichtangaben des Unternehmens für das Impressum.</p>
+
+            <label className={s.label}>Straße und Hausnummer</label>
+            <div className={s.twoCol}>
+              <div style={{ flex: 3 }}>
+                <input className={s.input} value={impressum.strasse}
+                  onChange={e => setImpressum({ strasse: e.target.value })} placeholder="Straße" />
+              </div>
+              <div>
+                <input className={s.input} value={impressum.hausnummer}
+                  onChange={e => setImpressum({ hausnummer: e.target.value })} placeholder="Nr." />
+              </div>
+            </div>
+
+            <label className={s.label}>PLZ und Ort</label>
+            <div className={s.twoCol}>
+              <div>
+                <input className={s.input} value={impressum.plz}
+                  onChange={e => setImpressum({ plz: e.target.value })} placeholder="PLZ" maxLength={5} />
+              </div>
+              <div style={{ flex: 2 }}>
+                <input className={s.input} value={impressum.ort}
+                  onChange={e => setImpressum({ ort: e.target.value })} placeholder="Ort" />
+              </div>
+            </div>
+
+            <label className={s.label}>Geschäftsführung</label>
+            <div className={s.kostenstellenList}>
+              {impressum.geschaeftsfuehrung.map((name, idx) => (
+                <div key={idx} className={s.kostenstelleRow}>
+                  <input className={s.input} value={name}
+                    onChange={e => setGf(idx, e.target.value)}
+                    placeholder={`Name ${idx + 1}`} />
+                  {impressum.geschaeftsfuehrung.length > 1 && (
+                    <button type="button" className={s.ksRemoveBtn} onClick={() => removeGf(idx)}>✕</button>
+                  )}
+                </div>
+              ))}
+              <button type="button" className={s.ksAddBtn} onClick={addGf}>+ Name hinzufügen</button>
+            </div>
+
+            <label className={s.label}>Amtsgericht</label>
+            <input className={s.input} value={impressum.amtsgericht}
+              onChange={e => setImpressum({ amtsgericht: e.target.value })} placeholder="z.B. Amtsgericht Hannover" />
+
+            <label className={s.label}>Handelsregisternummer</label>
+            <input className={s.input} value={impressum.handelsregisternummer}
+              onChange={e => setImpressum({ handelsregisternummer: e.target.value })} placeholder="z.B. HRB 123456" />
+
+            <label className={s.label}>Umsatzsteuer-ID</label>
+            <input className={s.input} value={impressum.umsatzsteuerId}
+              onChange={e => setImpressum({ umsatzsteuerId: e.target.value })} placeholder="z.B. DE123456789" />
+          </div>
+        )}
       </div>
 
       {confirmDelete && (
