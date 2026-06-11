@@ -425,14 +425,15 @@
   text-transform: lowercase;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
 }
-.hexApplyBtn {
-  flex-shrink: 0;
-  padding: 11px 16px;
+.applyBtn {
+  width: 100%;
+  margin-top: 16px;
+  padding: 13px;
   border-radius: 10px;
   background: var(--ek-red);
   color: #fff;
-  font-size: 14px;
-  font-weight: 700;
+  font-size: 15px;
+  font-weight: 800;
   cursor: pointer;
 }
-.hexApplyBtn:disabled { background: var(--ek-border); color: var(--ek-muted); cursor: not-allowed; }
+.applyBtn:disabled { background: var(--ek-border); color: var(--ek-muted); cursor: not-allowed; }

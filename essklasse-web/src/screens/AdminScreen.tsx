@@ -661,12 +661,24 @@ function EinstellungenTab() {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const istEssKlasse = logoDataUrl === ESSKLASSE_LOGO;
 
-  const istCustom = themeId === CUSTOM_THEME_ID;
+  // Vorab gewählte (noch nicht übernommene) Farbe
+  const [selThemeId, setSelThemeId] = useState(themeId);
   const [hexInput, setHexInput] = useState(customColor ?? '#3366cc');
   const hexValid = isValidHex(hexInput);
   const customSwatch = hexValid ? deriveMood(hexInput) : null;
-  function applyCustomColor(hex: string) {
-    if (isValidHex(hex)) setCustomColor(normalizeHex(hex));
+  const selCustom = selThemeId === CUSTOM_THEME_ID;
+  const canApply = selCustom ? hexValid : true;
+
+  function chooseHex(hex: string) {
+    setHexInput(hex);
+    setSelThemeId(CUSTOM_THEME_ID);
+  }
+  function applySelection() {
+    if (selCustom) {
+      if (hexValid) setCustomColor(normalizeHex(hexInput));
+    } else {
+      setTheme(selThemeId);
+    }
   }
 
   function handleLogoFile(file: File | undefined) {
@@ -732,7 +744,8 @@ function EinstellungenTab() {
       <div className={s.formCard}>
         <div className={s.formTitle}>App-Farbe (Mood)</div>
         <p className={s.settingsHint}>
-          Bestimmt die Akzent- und Markenfarbe der gesamten App. Die Auswahl wirkt sofort.
+          Bestimmt die Akzent- und Markenfarbe der gesamten App. Farbe auswählen und
+          mit „Übernehmen" aktivieren.
         </p>
 
         <div className={s.moodGrid}>
@@ -740,12 +753,12 @@ function EinstellungenTab() {
             <button
               key={t.id}
               type="button"
-              className={`${s.moodCard} ${themeId === t.id ? s.moodCardActive : ''}`}
-              onClick={() => setTheme(t.id)}
+              className={`${s.moodCard} ${selThemeId === t.id ? s.moodCardActive : ''}`}
+              onClick={() => setSelThemeId(t.id)}
             >
               <span className={s.moodSwatch} style={{ background: t.primary }}>
                 <span className={s.moodSwatchSoft} style={{ background: t.soft }} />
-                {themeId === t.id && <span className={s.moodCheck}>✓</span>}
+                {selThemeId === t.id && <span className={s.moodCheck}>✓</span>}
               </span>
               <span className={s.moodName}>{t.name}</span>
             </button>
@@ -754,8 +767,8 @@ function EinstellungenTab() {
           {/* Eigene Farbe – Swatch */}
           <button
             type="button"
-            className={`${s.moodCard} ${istCustom ? s.moodCardActive : ''}`}
-            onClick={() => hexValid && applyCustomColor(hexInput)}
+            className={`${s.moodCard} ${selCustom ? s.moodCardActive : ''}`}
+            onClick={() => setSelThemeId(CUSTOM_THEME_ID)}
           >
             <span
               className={s.moodSwatch}
@@ -764,7 +777,7 @@ function EinstellungenTab() {
                 : { background: 'conic-gradient(red,orange,yellow,lime,cyan,blue,magenta,red)' }}
             >
               {customSwatch && <span className={s.moodSwatchSoft} style={{ background: customSwatch.soft }} />}
-              {istCustom ? <span className={s.moodCheck}>✓</span> : <span className={s.moodPlus}>+</span>}
+              {selCustom ? <span className={s.moodCheck}>✓</span> : <span className={s.moodPlus}>+</span>}
             </span>
             <span className={s.moodName}>Eigene Farbe</span>
           </button>
@@ -776,29 +789,29 @@ function EinstellungenTab() {
             type="color"
             className={s.colorPicker}
             value={hexValid ? normalizeHex(hexInput) : '#3366cc'}
-            onChange={e => { setHexInput(e.target.value); applyCustomColor(e.target.value); }}
+            onChange={e => chooseHex(e.target.value)}
             aria-label="Farbe wählen"
           />
           <input
             className={`${s.input} ${s.hexInput} ${hexInput && !hexValid ? s.inputError : ''}`}
             value={hexInput}
-            onChange={e => setHexInput(e.target.value)}
-            onKeyDown={e => { if (e.key === 'Enter' && hexValid) applyCustomColor(hexInput); }}
+            onChange={e => chooseHex(e.target.value)}
             placeholder="#RRGGBB"
             spellCheck={false}
           />
-          <button
-            type="button"
-            className={s.hexApplyBtn}
-            disabled={!hexValid}
-            onClick={() => applyCustomColor(hexInput)}
-          >
-            Übernehmen
-          </button>
         </div>
-        {hexInput && !hexValid && (
+        {selCustom && hexInput && !hexValid && (
           <div className={s.fieldError}>Bitte einen gültigen Hex-Code eingeben (z.B. #2e7d32).</div>
         )}
+
+        <button
+          type="button"
+          className={s.applyBtn}
+          disabled={!canApply}
+          onClick={applySelection}
+        >
+          Übernehmen
+        </button>
       </div>
 
       {confirmDelete && (
