@@ -14,6 +14,7 @@ import { AdminScreen } from './screens/AdminScreen';
 import { useAuthStore } from './store/authStore';
 import { useBelegStore } from './store/belegStore';
 import { useSettingsStore } from './store/settingsStore';
+import { initSync } from './services/sync';
 import { GFHomeScreen } from './screens/GFHomeScreen';
 import { GFBewirtungsListScreen } from './screens/GFBewirtungsListScreen';
 import type { GFKategorie } from './screens/GFBewirtungsListScreen';
@@ -55,6 +56,11 @@ export default function App() {
   // App-Einstellungen (Branding & Impressum) vom Server laden
   useEffect(() => {
     void useSettingsStore.getState().hydrateFromServer();
+  }, []);
+
+  // App-Daten (Benutzer, Objekte, Belege, Sales) mit dem Server synchronisieren
+  useEffect(() => {
+    void initSync();
   }, []);
 
   // Duplikat-Prüfung + Rechnungsnummer-Modal

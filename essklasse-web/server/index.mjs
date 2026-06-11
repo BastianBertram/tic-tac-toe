@@ -12,6 +12,7 @@
 import { createServer } from 'node:http';
 import { handleAuth, getSessionUser } from './auth.mjs';
 import { handleSettings } from './settings.mjs';
+import { handleData } from './data.mjs';
 
 const PORT           = Number(process.env.PORT ?? 3001);
 const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN ?? 'http://localhost:5173';
@@ -250,6 +251,19 @@ const server = createServer(async (req, res) => {
       const body = req.method === 'PUT' ? await readJsonBody(req) : null;
       const user = getSessionUser(req);
       const result = handleSettings(req.method, url, body, { user });
+      return send(res, result.status, result.payload);
+    } catch (e) {
+      return send(res, e?.status ?? 400, { error: e?.message ?? 'Bad request' });
+    }
+  }
+
+  // ── App-Daten (Benutzer, Objekte, Belege, Sales) ──
+  if (url.startsWith('/api/data/') && (req.method === 'GET' || req.method === 'PUT')) {
+    try {
+      const body = req.method === 'PUT' ? await readJsonBody(req) : null;
+      const user = getSessionUser(req);
+      const result = handleData(req.method, url, body, { user });
+      if (!result) return send(res, 404, { error: 'Not found' });
       return send(res, result.status, result.payload);
     } catch (e) {
       return send(res, e?.status ?? 400, { error: e?.message ?? 'Bad request' });

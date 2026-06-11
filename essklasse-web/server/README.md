@@ -33,6 +33,8 @@ needed (Node 20.6+; the repo is on 25.x).
 | GET    | `/health`              | —                                 | `{ ok, aiConfigured }`        |
 | GET    | `/api/settings`        | —                                 | `{ themeId, customColor, logoDataUrl, impressum }` |
 | PUT    | `/api/settings`        | full settings object              | persisted settings (admin-only in prod) |
+| GET    | `/api/data/<name>`     | —                                 | `{ initialized, data }` (`name`: users\|objekte\|belege\|sales) |
+| PUT    | `/api/data/<name>`     | full collection object            | `{ initialized, data }` (write gated per collection) |
 | POST   | `/api/ai/ocr-beleg`    | `{ dataUrl }`                     | `{ data: ExtractedBeleg }`    |
 | POST   | `/api/ai/ocr-abschluss`| `{ dataUrl, positionen[] }`       | `{ data: [...] }`             |
 | POST   | `/api/ai/duplikat`     | `{ beleg, candidates[] }`         | `{ ids: string[] }`           |
@@ -53,6 +55,25 @@ needed app-wide before login); `PUT /api/settings` is **admin-only in production
 (gated on the session cookie's user role). In dev (`NODE_ENV !== production`) the
 PUT is open so the role switcher works without a real login — same dev-grade
 posture as the auth scaffold. Swap the JSON file for a real DB before shipping.
+
+## App data (users, objects, belege, sales)
+
+`server/data.mjs` persists the app's operational collections to
+`server/data/<name>.json` (gitignored) so every user sees the same data instead
+of per-browser localStorage. Each collection is fetched on startup and written
+back on change by `src/services/sync.ts`:
+
+- `GET /api/data/<name>` returns `{ initialized, data }`. When a collection has
+  never been saved (`initialized: false`), the client uploads its locally seeded
+  state once — so the existing dev seed bootstraps the server.
+- `PUT /api/data/<name>` replaces the whole collection. **In production**:
+  `users`/`objekte` are admin-only, `belege`/`sales` require any logged-in user.
+  In dev it's open (role switcher has no real session).
+
+**Dev-grade caveats**: whole-collection replace (last write wins, no per-record
+merge), a JSON file instead of a DB, and the login still uses the separate
+hardcoded `USERS` list in `auth.mjs` — unifying login with the `users` collection
+and verifying the access token on writes are the remaining production steps.
 
 ## Auth (magic link) — SCAFFOLD
 
