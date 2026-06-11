@@ -91,8 +91,8 @@ export function generateErsatzBelegPdf(b: ErsatzBelegInput): string {
 
   // ── Kopf ──
   lines.push({ x: MARGIN, size: 18, bold: true, text: 'Ersatz-Bewirtungsbeleg' });
-  lines.push({ x: MARGIN, size: 9, text: 'Maschinell erstellt aus den manuell erfassten Bestelldaten (kein Original-Beleg hochgeladen).', gapBefore: 4 });
-  lines.push({ x: MARGIN, size: 9, text: `Objekt: ${b.objektName || '–'}`, gapBefore: 2 });
+  lines.push({ x: MARGIN, size: 9, text: 'Maschinell erstellt aus den manuell erfassten Bestelldaten (kein Original-Beleg hochgeladen).', gapBefore: 26 });
+  lines.push({ x: MARGIN, size: 9, text: `Objekt: ${b.objektName || '–'}`, gapBefore: 13 });
 
   const row = (label: string, value: string) =>
     lines.push({ x: MARGIN, size: 11, text: `${label}:  ${value || '–'}` });
@@ -143,7 +143,8 @@ export function generateErsatzBelegPdf(b: ErsatzBelegInput): string {
   let lastKat = '';
   for (const p of b.positionen) {
     if (p.kategorie !== lastKat) {
-      lines.push({ x: MARGIN, size: 10, bold: true, text: String(p.kategorie), gapBefore: 8 });
+      // Erste Kategorie braucht mehr Abstand zur Spaltenüberschrift.
+      lines.push({ x: MARGIN, size: 10, bold: true, text: String(p.kategorie), gapBefore: lastKat === '' ? 20 : 12 });
       lastKat = p.kategorie;
     }
     const summe = p.preis * p.menge;
