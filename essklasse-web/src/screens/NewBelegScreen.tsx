@@ -331,8 +331,8 @@ export function NewBelegScreen({ onClose, editBeleg }: Props) {
           </Field>
         </div>
 
-        {/* ── RECHNUNGSANSCHRIFT ── */}
-        {showRechnung && <div className={s.section}>
+        {/* ── RECHNUNGSANSCHRIFT (immer sichtbar) ── */}
+        <div className={s.section}>
           <div className={s.sectionTitle}>Rechnungsanschrift</div>
           <Field label="Firma">
             <input value={f.rechnungsanschriftFirma} onChange={e => set('rechnungsanschriftFirma', e.target.value)} placeholder="Firmenbezeichnung" />
@@ -357,7 +357,7 @@ export function NewBelegScreen({ onClose, editBeleg }: Props) {
               <input value={f.rechnungsanschriftTelefon} onChange={e => set('rechnungsanschriftTelefon', e.target.value)} placeholder="0511 …" />
             </Field>
           </div>
-        </div>}
+        </div>
 
         {/* ── KOSTENZUORDNUNG ── */}
         {showRechnung && <div className={s.section}>
