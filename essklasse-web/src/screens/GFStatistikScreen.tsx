@@ -136,28 +136,21 @@ export function GFStatistikScreen({ onKachelClick }: Props) {
 
         <div className={s.sectionLabel}>Zeitliche Analyse</div>
         <div className={s.grid}>
-          {stats.naechste && stats.naechsteTage !== null && (
-            <Kachel
-              icon="🔜"
-              value={stats.naechsteTage === 0 ? 'Heute' : `in ${stats.naechsteTage}d`}
-              label={`Nächste: ${stats.naechste.veranstaltung || stats.naechste.bestellungsnummer}`}
-              info="Tage bis zur nächsten noch offenen, bevorstehenden Bewirtung."
-              onClick={() => onKachelClick('naechste')}
-            />
-          )}
-          {stats.aeltesteTage !== null && (
-            <Kachel
-              icon="🕰️"
-              value={`${stats.aeltesteTage}d`}
-              label="Längste offene Überfälligkeit"
-              accent="orange"
-              info="Wie viele Tage die älteste überfällige, noch nicht abgeschlossene Bewirtung bereits wartet."
-              onClick={() => onKachelClick('aelteste')}
-            />
-          )}
-          {!stats.naechste && stats.aeltesteTage === null && (
-            <Kachel icon="🎉" value="—" label="Keine offenen Einträge" accent="green" info="Aktuell gibt es keine offenen oder überfälligen Bewirtungen." onClick={() => {}} />
-          )}
+          <Kachel
+            icon="🔜"
+            value={stats.naechsteTage === null ? '—' : stats.naechsteTage === 0 ? 'Heute' : `in ${stats.naechsteTage}d`}
+            label={stats.naechste ? `Nächste: ${stats.naechste.veranstaltung || stats.naechste.bestellungsnummer}` : 'Keine bevorstehenden Bewirtungen'}
+            info="Tage bis zur nächsten noch offenen, bevorstehenden Bewirtung."
+            onClick={() => onKachelClick('naechste')}
+          />
+          <Kachel
+            icon="🕰️"
+            value={stats.aeltesteTage !== null ? `${stats.aeltesteTage}d` : '—'}
+            label="Längste offene Überfälligkeit"
+            accent={stats.aeltesteTage !== null ? 'orange' : undefined}
+            info="Wie viele Tage die älteste überfällige, noch nicht abgeschlossene Bewirtung bereits wartet."
+            onClick={() => onKachelClick('aelteste')}
+          />
         </div>
       </div>
     </div>
