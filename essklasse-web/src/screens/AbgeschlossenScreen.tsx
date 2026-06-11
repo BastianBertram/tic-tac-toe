@@ -26,7 +26,7 @@ export function AbgeschlossenScreen({ onClose, onOpenBeleg }: Props) {
     <div className={s.screen}>
       <div className={s.header}>
         <button className={s.backBtn} onClick={onClose} type="button">← Zurück</button>
-        <span className={s.title}>Abgeschlossene Bewirtungen</span>
+        <span className={s.title}>✅ Abgeschlossene Bewirtungen</span>
       </div>
 
       <div className={s.scroll}>
