@@ -212,11 +212,21 @@ export default function App() {
 
 function GFApp() {
   const [kategorie, setKategorie] = useState<GFKategorie | null>(null);
+  const [detailBeleg, setDetailBeleg] = useState<Bewirtungsbeleg | null>(null);
+
+  if (detailBeleg) {
+    return (
+      <div className={s.app}>
+        <DetailScreen beleg={detailBeleg} onClose={() => setDetailBeleg(null)} canDelete={false} />
+      </div>
+    );
+  }
+
   return (
     <div className={s.app}>
       <div className={s.content}>
         {kategorie
-          ? <GFBewirtungsListScreen kategorie={kategorie} onClose={() => setKategorie(null)} />
+          ? <GFBewirtungsListScreen kategorie={kategorie} onClose={() => setKategorie(null)} onOpenBeleg={setDetailBeleg} />
           : <GFHomeScreen onKachelClick={setKategorie} />
         }
       </div>

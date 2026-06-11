@@ -16,9 +16,9 @@ const TITEL: Record<GFKategorie, string> = {
 
 type SortKey = 'datum-asc' | 'datum-desc' | 'nr-asc' | 'nr-desc';
 
-interface Props { kategorie: GFKategorie; onClose: () => void; }
+interface Props { kategorie: GFKategorie; onClose: () => void; onOpenBeleg?: (b: Bewirtungsbeleg) => void; }
 
-export function GFBewirtungsListScreen({ kategorie, onClose }: Props) {
+export function GFBewirtungsListScreen({ kategorie, onClose, onOpenBeleg }: Props) {
   const belege = useBelegStore(st => st.belege);
   const [suche, setSuche]   = useState('');
   const [sort, setSort]     = useState<SortKey>('datum-asc');
@@ -104,7 +104,7 @@ export function GFBewirtungsListScreen({ kategorie, onClose }: Props) {
           <p className={s.leer}>Keine Bewirtungen gefunden.</p>
         )}
         {gefiltert.map(b => (
-          <div key={b.id} className={s.item}>
+          <div key={b.id} className={s.item} onClick={() => onOpenBeleg?.(b)} style={onOpenBeleg ? { cursor: 'pointer' } : undefined}>
             <div className={s.itemTop}>
               <span className={s.itemNr}>{b.bestellungsnummer}</span>
               <span className={s.itemDatum}>
