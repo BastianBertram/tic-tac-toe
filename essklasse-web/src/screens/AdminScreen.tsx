@@ -656,7 +656,7 @@ function ObjekteTab() {
 const MAX_LOGO_BYTES = 800 * 1024; // ~800 KB Schutz für localStorage
 
 function EinstellungenTab() {
-  const { themeId, setTheme, customColor, setCustomColor, logoDataUrl, setLogo, firmenname, setFirmenname } = useSettingsStore();
+  const { themeId, setTheme, customColor, setCustomColor, logoDataUrl, setLogo } = useSettingsStore();
   const [logoError, setLogoError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const istEssKlasse = logoDataUrl === ESSKLASSE_LOGO;
@@ -799,18 +799,6 @@ function EinstellungenTab() {
         {hexInput && !hexValid && (
           <div className={s.fieldError}>Bitte einen gültigen Hex-Code eingeben (z.B. #2e7d32).</div>
         )}
-      </div>
-
-      {/* Firmenname (optional) */}
-      <div className={s.formCard}>
-        <div className={s.formTitle}>Firmenname</div>
-        <p className={s.settingsHint}>Optionaler Anzeigename, z.B. für interne Kennzeichnung.</p>
-        <input
-          className={s.input}
-          value={firmenname}
-          onChange={e => setFirmenname(e.target.value)}
-          placeholder="z.B. EssKlasse Catering GmbH"
-        />
       </div>
 
       {confirmDelete && (

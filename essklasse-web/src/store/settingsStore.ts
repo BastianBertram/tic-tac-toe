@@ -9,15 +9,12 @@ interface SettingsStore {
   customColor: string | null;
   /** Aktives Logo: Data-URL (hochgeladen) oder '/logo.webp' (EssKlasse). null = kein Logo (Standard). */
   logoDataUrl: string | null;
-  /** Anzeigename des Unternehmens (optional, für Login/Branding) */
-  firmenname: string;
 
   /** Preset-Theme wählen */
   setTheme: (id: string) => void;
   /** Eigene Farbe (Hex) setzen und aktivieren */
   setCustomColor: (hex: string) => void;
   setLogo: (dataUrl: string | null) => void;
-  setFirmenname: (name: string) => void;
 }
 
 export const useSettingsStore = create<SettingsStore>()(
@@ -26,12 +23,10 @@ export const useSettingsStore = create<SettingsStore>()(
       themeId: DEFAULT_THEME_ID,
       customColor: null,
       logoDataUrl: null,
-      firmenname: '',
 
       setTheme: (id) => { applyTheme(id, get().customColor); set({ themeId: id }); },
       setCustomColor: (hex) => { applyTheme(CUSTOM_THEME_ID, hex); set({ themeId: CUSTOM_THEME_ID, customColor: hex }); },
       setLogo: (logoDataUrl) => set({ logoDataUrl }),
-      setFirmenname: (firmenname) => set({ firmenname }),
     }),
     {
       name: 'essklasse-settings',
