@@ -63,9 +63,10 @@ export function NewBelegScreen({ onClose, editBeleg }: Props) {
     setF(prev => ({ ...prev, [key]: val }));
   }
 
-  // Ein Bewirtungsbeleg muss hochgeladen werden – es sei denn, alle Bestelldaten
-  // sind ausgefüllt UND mindestens eine Position wurde hinzugefügt.
-  const bestelldatenFelder: [string, boolean][] = [
+  // Pflichtfelder – immer erforderlich, unabhängig davon ob ein Beleg
+  // hochgeladen oder manuell erfasst wird. Mindestens eine Position muss
+  // ebenfalls vorhanden sein.
+  const pflichtFelder: [string, boolean][] = [
     ['Besteller', !!f.besteller.trim()],
     ['Veranstaltung', !!f.veranstaltung.trim()],
     ['Datum von', !!f.cateringDatumVon],
@@ -73,15 +74,13 @@ export function NewBelegScreen({ onClose, editBeleg }: Props) {
     ['Uhrzeit von', !!f.uhrzeitVon],
     ['Uhrzeit bis', !!f.uhrzeitBis],
     ['Ort', !!f.ort.trim()],
-    ['Raum', !!f.raum.trim()],
-    ['Personenzahl', (parseInt(f.personenzahl) || 0) > 0],
+    ['Telefon für Rückfragen', !!f.rechnungsanschriftTelefon.trim()],
   ];
-  const hatPositionen      = f.positionen.length > 0;
-  const bestelldatenOffen  = bestelldatenFelder.filter(([, ok]) => !ok).map(([name]) => name);
-  const manuellVollstaendig = bestelldatenOffen.length === 0 && hatPositionen;
-  const hatDokument        = f.fotoDataUrls.length > 0;
-  const belegOk            = hatDokument || manuellVollstaendig;
-  const fehlendManuell     = [...bestelldatenOffen, ...(hatPositionen ? [] : ['mindestens eine Position'])];
+  const hatPositionen   = f.positionen.length > 0;
+  const pflichtOffen    = pflichtFelder.filter(([, ok]) => !ok).map(([name]) => name);
+  const fehlendePflicht = [...pflichtOffen, ...(hatPositionen ? [] : ['mindestens eine Position'])];
+  const hatDokument     = f.fotoDataUrls.length > 0;
+  const belegOk         = fehlendePflicht.length === 0;
 
   function applyExtracted(data: ExtractedBeleg) {
     const extractedPositionen: BelegPosition[] = (data.positionen ?? []).map(p => ({
@@ -121,18 +120,16 @@ export function NewBelegScreen({ onClose, editBeleg }: Props) {
 
   async function handleSave() {
     if (!selectedObjektId) return alert('Bitte ein Objekt auswählen.');
-    if (!f.besteller.trim()) return alert('Besteller/Auftraggeber fehlt.');
-    if (!f.veranstaltung.trim()) return alert('Veranstaltung/Anlass fehlt.');
     if (!belegOk) {
-      return alert('Bitte einen Bewirtungsbeleg hochladen – oder alle Bestelldaten ausfüllen und mindestens eine Position hinzufügen.');
+      return alert('Bitte alle Pflichtfelder ausfüllen.\n\nNoch offen: ' + fehlendePflicht.join(', ') + '.');
     }
     const gewaehltes = objekte.find(o => o.id === selectedObjektId) ?? aktivesObjekt;
     setSaving(true);
 
-    // Kein Original-Beleg hochgeladen, aber alle Bestelldaten + Positionen manuell
-    // erfasst → Ersatz-Bewirtungsbeleg als PDF erzeugen und als Dokument ablegen.
+    // Kein Original-Beleg hochgeladen → Ersatz-Bewirtungsbeleg als PDF aus den
+    // (validierten) Pflichtangaben erzeugen und als Dokument ablegen.
     let fotoDataUrls = f.fotoDataUrls;
-    if (!hatDokument && manuellVollstaendig) {
+    if (!hatDokument) {
       const ersatzPdf = generateErsatzBelegPdf({
         objektName: gewaehltes?.name ?? '',
         besteller: f.besteller, veranstaltung: f.veranstaltung,
@@ -226,19 +223,19 @@ export function NewBelegScreen({ onClose, editBeleg }: Props) {
             onChange={v => set('fotoDataUrls', v)}
             onExtracted={applyExtracted}
           />
-          {!hatDokument && (
-            <div style={{
-              marginTop: 10, padding: '10px 12px', borderRadius: 10, fontSize: 12.5, lineHeight: 1.45,
-              border: `1px solid ${manuellVollstaendig ? '#a9dfbf' : '#f5d6a8'}`,
-              background: manuellVollstaendig ? '#eafaf1' : '#fff8ec',
-              color: manuellVollstaendig ? '#1a5c30' : '#8a5a00',
-            }}>
-              {manuellVollstaendig
-                ? '✓ Kein Upload nötig – alle Bestelldaten sind ausgefüllt und Positionen vorhanden.'
-                : <>📎 <strong>Bewirtungsbeleg hochladen</strong> – oder alle Bestelldaten ausfüllen und mindestens eine Position hinzufügen.
-                    <br />Noch offen: {fehlendManuell.join(', ')}.</>}
-            </div>
-          )}
+          <div style={{
+            marginTop: 10, padding: '10px 12px', borderRadius: 10, fontSize: 12.5, lineHeight: 1.45,
+            border: `1px solid ${belegOk ? '#a9dfbf' : '#f5d6a8'}`,
+            background: belegOk ? '#eafaf1' : '#fff8ec',
+            color: belegOk ? '#1a5c30' : '#8a5a00',
+          }}>
+            {belegOk
+              ? (hatDokument
+                  ? '✓ Alle Pflichtfelder ausgefüllt – Beleg ist hochgeladen.'
+                  : '✓ Alle Pflichtfelder ausgefüllt – ein Ersatz-Beleg wird beim Speichern automatisch erstellt.')
+              : <>📋 <strong>Pflichtfelder ausfüllen.</strong> Ein Dokument-Upload ist optional, aber diese Angaben sind immer erforderlich.
+                  <br />Noch offen: {fehlendePflicht.join(', ')}.</>}
+          </div>
         </div>
 
         {/* ── OBJEKT-AUSWAHL ── */}
