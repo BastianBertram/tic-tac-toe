@@ -1,28 +1,35 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { DEFAULT_THEME_ID, applyTheme } from '../theme';
+import { DEFAULT_THEME_ID, CUSTOM_THEME_ID, applyTheme } from '../theme';
 
 interface SettingsStore {
-  /** ID des aktiven Themes (Mood) */
+  /** ID des aktiven Themes (Mood) – Preset-ID oder 'custom' */
   themeId: string;
+  /** Frei gewählter Hex-Farbcode, wenn themeId === 'custom' */
+  customColor: string | null;
   /** Aktives Logo: Data-URL (hochgeladen) oder '/logo.webp' (EssKlasse). null = kein Logo (Standard). */
   logoDataUrl: string | null;
   /** Anzeigename des Unternehmens (optional, für Login/Branding) */
   firmenname: string;
 
+  /** Preset-Theme wählen */
   setTheme: (id: string) => void;
+  /** Eigene Farbe (Hex) setzen und aktivieren */
+  setCustomColor: (hex: string) => void;
   setLogo: (dataUrl: string | null) => void;
   setFirmenname: (name: string) => void;
 }
 
 export const useSettingsStore = create<SettingsStore>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       themeId: DEFAULT_THEME_ID,
+      customColor: null,
       logoDataUrl: null,
       firmenname: '',
 
-      setTheme: (id) => { applyTheme(id); set({ themeId: id }); },
+      setTheme: (id) => { applyTheme(id, get().customColor); set({ themeId: id }); },
+      setCustomColor: (hex) => { applyTheme(CUSTOM_THEME_ID, hex); set({ themeId: CUSTOM_THEME_ID, customColor: hex }); },
       setLogo: (logoDataUrl) => set({ logoDataUrl }),
       setFirmenname: (firmenname) => set({ firmenname }),
     }),
@@ -30,7 +37,7 @@ export const useSettingsStore = create<SettingsStore>()(
       name: 'essklasse-settings',
       onRehydrateStorage: () => (state) => {
         // Theme nach dem Laden aus dem Storage anwenden
-        if (state?.themeId) applyTheme(state.themeId);
+        if (state?.themeId) applyTheme(state.themeId, state.customColor);
       },
     }
   )

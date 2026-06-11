@@ -25,16 +25,51 @@ export const THEMES: ThemeMood[] = [
 ];
 
 export const DEFAULT_THEME_ID = 'tomatenrot';
+/** ID für eine frei gewählte Farbe (Hex-Eingabe) */
+export const CUSTOM_THEME_ID = 'custom';
 
 export function getTheme(id: string): ThemeMood {
   return THEMES.find(t => t.id === id) ?? THEMES[0];
 }
 
+/** Prüft, ob ein String ein gültiger Hex-Farbcode ist (#RGB oder #RRGGBB). */
+export function isValidHex(hex: string): boolean {
+  return /^#?([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(hex.trim());
+}
+
+/** Normalisiert einen Hex-Code auf die Form #rrggbb (Kleinbuchstaben). */
+export function normalizeHex(hex: string): string {
+  let h = hex.trim().replace(/^#/, '');
+  if (h.length === 3) h = h.split('').map(c => c + c).join('');
+  return '#' + h.toLowerCase();
+}
+
+/** Mischt eine Hex-Farbe um `amount` (0..1) Richtung Weiß (>0) bzw. Schwarz (<0). */
+function shade(hex: string, amount: number): string {
+  const h = normalizeHex(hex).slice(1);
+  const num = parseInt(h, 16);
+  let r = (num >> 16) & 0xff, g = (num >> 8) & 0xff, b = num & 0xff;
+  const target = amount < 0 ? 0 : 255;
+  const t = Math.abs(amount);
+  r = Math.round(r + (target - r) * t);
+  g = Math.round(g + (target - g) * t);
+  b = Math.round(b + (target - b) * t);
+  return '#' + ((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1);
+}
+
+/** Leitet aus einer Primärfarbe die hellere (soft) und dunklere (dark) Variante ab. */
+export function deriveMood(primary: string): ThemeMood {
+  const p = normalizeHex(primary);
+  return { id: CUSTOM_THEME_ID, name: 'Eigene Farbe', primary: p, soft: shade(p, 0.22), dark: shade(p, -0.28) };
+}
+
 /** Setzt die Theme-Farben als CSS-Variablen auf dem <html>-Element. */
-export function applyTheme(id: string) {
-  const t = getTheme(id);
+export function applyTheme(id: string, customColor?: string | null) {
+  const mood = id === CUSTOM_THEME_ID && customColor && isValidHex(customColor)
+    ? deriveMood(customColor)
+    : getTheme(id);
   const root = document.documentElement.style;
-  root.setProperty('--ek-red', t.primary);
-  root.setProperty('--ek-red-soft', t.soft);
-  root.setProperty('--ek-red-dark', t.dark);
+  root.setProperty('--ek-red', mood.primary);
+  root.setProperty('--ek-red-soft', mood.soft);
+  root.setProperty('--ek-red-dark', mood.dark);
 }

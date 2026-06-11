@@ -393,3 +393,46 @@
   font-weight: 700;
   cursor: pointer;
 }
+
+/* ─── Eigene Farbe ─── */
+.moodPlus {
+  position: relative;
+  z-index: 1;
+  color: #fff;
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1;
+  text-shadow: 0 1px 3px rgba(0,0,0,.45);
+}
+.hexRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 16px;
+}
+.colorPicker {
+  width: 46px;
+  height: 42px;
+  padding: 0;
+  border: 1.5px solid var(--ek-border);
+  border-radius: 10px;
+  background: var(--ek-surface);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.hexInput {
+  flex: 1;
+  text-transform: lowercase;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+.hexApplyBtn {
+  flex-shrink: 0;
+  padding: 11px 16px;
+  border-radius: 10px;
+  background: var(--ek-red);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.hexApplyBtn:disabled { background: var(--ek-border); color: var(--ek-muted); cursor: not-allowed; }

@@ -7,7 +7,7 @@ import { HamburgerDrawer } from '../components/HamburgerDrawer';
 import type { UserRolle, Anrede } from '../types';
 import { isValidEmail } from '../utils/email';
 import { useSettingsStore } from '../store/settingsStore';
-import { THEMES } from '../theme';
+import { THEMES, CUSTOM_THEME_ID, isValidHex, normalizeHex, deriveMood } from '../theme';
 import s from './AdminScreen.module.css';
 
 type AdminTab = 'user' | 'objekte' | 'einstellungen';
@@ -656,10 +656,18 @@ function ObjekteTab() {
 const MAX_LOGO_BYTES = 800 * 1024; // ~800 KB Schutz für localStorage
 
 function EinstellungenTab() {
-  const { themeId, setTheme, logoDataUrl, setLogo, firmenname, setFirmenname } = useSettingsStore();
+  const { themeId, setTheme, customColor, setCustomColor, logoDataUrl, setLogo, firmenname, setFirmenname } = useSettingsStore();
   const [logoError, setLogoError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const istEssKlasse = logoDataUrl === ESSKLASSE_LOGO;
+
+  const istCustom = themeId === CUSTOM_THEME_ID;
+  const [hexInput, setHexInput] = useState(customColor ?? '#3366cc');
+  const hexValid = isValidHex(hexInput);
+  const customSwatch = hexValid ? deriveMood(hexInput) : null;
+  function applyCustomColor(hex: string) {
+    if (isValidHex(hex)) setCustomColor(normalizeHex(hex));
+  }
 
   function handleLogoFile(file: File | undefined) {
     setLogoError(null);
@@ -742,7 +750,55 @@ function EinstellungenTab() {
               <span className={s.moodName}>{t.name}</span>
             </button>
           ))}
+
+          {/* Eigene Farbe – Swatch */}
+          <button
+            type="button"
+            className={`${s.moodCard} ${istCustom ? s.moodCardActive : ''}`}
+            onClick={() => hexValid && applyCustomColor(hexInput)}
+          >
+            <span
+              className={s.moodSwatch}
+              style={customSwatch
+                ? { background: customSwatch.primary }
+                : { background: 'conic-gradient(red,orange,yellow,lime,cyan,blue,magenta,red)' }}
+            >
+              {customSwatch && <span className={s.moodSwatchSoft} style={{ background: customSwatch.soft }} />}
+              {istCustom ? <span className={s.moodCheck}>✓</span> : <span className={s.moodPlus}>+</span>}
+            </span>
+            <span className={s.moodName}>Eigene Farbe</span>
+          </button>
         </div>
+
+        {/* Eigener Farbcode */}
+        <div className={s.hexRow}>
+          <input
+            type="color"
+            className={s.colorPicker}
+            value={hexValid ? normalizeHex(hexInput) : '#3366cc'}
+            onChange={e => { setHexInput(e.target.value); applyCustomColor(e.target.value); }}
+            aria-label="Farbe wählen"
+          />
+          <input
+            className={`${s.input} ${s.hexInput} ${hexInput && !hexValid ? s.inputError : ''}`}
+            value={hexInput}
+            onChange={e => setHexInput(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter' && hexValid) applyCustomColor(hexInput); }}
+            placeholder="#RRGGBB"
+            spellCheck={false}
+          />
+          <button
+            type="button"
+            className={s.hexApplyBtn}
+            disabled={!hexValid}
+            onClick={() => applyCustomColor(hexInput)}
+          >
+            Übernehmen
+          </button>
+        </div>
+        {hexInput && !hexValid && (
+          <div className={s.fieldError}>Bitte einen gültigen Hex-Code eingeben (z.B. #2e7d32).</div>
+        )}
       </div>
 
       {/* Firmenname (optional) */}

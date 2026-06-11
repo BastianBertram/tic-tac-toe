@@ -6,7 +6,10 @@ import { useSettingsStore } from './store/settingsStore';
 import { applyTheme } from './theme';
 
 // Persistiertes Theme (Mood) vor dem ersten Render anwenden
-applyTheme(useSettingsStore.getState().themeId);
+{
+  const st = useSettingsStore.getState();
+  applyTheme(st.themeId, st.customColor);
+}
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
