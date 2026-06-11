@@ -279,3 +279,100 @@
   background: #c0392b; color: #fff; font-size: 14px; font-weight: 800; cursor: pointer;
   box-shadow: 0 4px 16px rgba(192,57,43,.3);
 }
+
+/* ─── Einstellungen Tab ─── */
+.settingsHint {
+  font-size: 13px;
+  color: var(--ek-muted);
+  line-height: 1.5;
+  margin-bottom: 14px;
+}
+
+.logoPreviewBox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--ek-surface2);
+  border: 1.5px dashed var(--ek-border);
+  border-radius: 12px;
+  padding: 24px 16px;
+  margin-bottom: 14px;
+}
+.logoPreview { max-height: 56px; max-width: 100%; object-fit: contain; }
+
+.settingsBtnRow { display: flex; flex-wrap: wrap; gap: 10px; }
+
+.uploadBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 11px 16px;
+  border-radius: 10px;
+  background: var(--ek-red);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.resetBtn {
+  padding: 11px 16px;
+  border-radius: 10px;
+  background: var(--ek-surface);
+  border: 1.5px solid var(--ek-border);
+  color: var(--ek-gray);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.moodGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+.moodCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+.moodSwatch {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 2px solid transparent;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.moodSwatchSoft {
+  position: absolute;
+  right: 0; bottom: 0;
+  width: 45%; height: 45%;
+  border-top-left-radius: 12px;
+}
+.moodCardActive .moodSwatch {
+  border-color: var(--ek-charcoal);
+  box-shadow: 0 0 0 2px var(--ek-bg), 0 0 0 4px var(--ek-charcoal);
+}
+.moodCheck {
+  position: relative;
+  z-index: 1;
+  color: #fff;
+  font-size: 22px;
+  font-weight: 900;
+  text-shadow: 0 1px 3px rgba(0,0,0,.4);
+}
+.moodName {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ek-gray);
+  text-align: center;
+}

@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { BrandLogo } from '../components/BrandLogo';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { useBelegStore } from '../store/belegStore';
@@ -167,7 +168,7 @@ export function BuchhaltungScreen({ onOpenBeleg, onRechnungErstellen }: Props) {
   return (
     <div className={s.screen}>
       <div className={s.header}>
-        <img src="/logo.webp" alt="EssKlasse" className={s.logo} />
+        <BrandLogo className={s.logo} />
         <span className={s.headerSection}>{activeTab.icon} {activeTab.headerTitle}</span>
         <span className={s.rolleChip}>Buchhaltung</span>
       </div>

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { BrandLogo } from '../components/BrandLogo';
 import { v4 as uuidv4 } from 'uuid';
 import { format } from 'date-fns';
 import { useBelegStore } from '../store/belegStore';
@@ -163,7 +164,7 @@ export function NewBelegScreen({ onClose, editBeleg }: Props) {
     <div className={s.screen}>
       <div className={s.header}>
         <button className={s.closeBtn} onClick={onClose} type="button">✕</button>
-        <img src="/logo.webp" alt="EssKlasse" className={s.headerLogo} />
+        <BrandLogo className={s.headerLogo} />
         <button className={s.saveHdrBtn} onClick={handleSave} disabled={saving} type="button">
           {saving ? '…' : editBeleg ? 'Speichern' : 'Speichern'}
         </button>

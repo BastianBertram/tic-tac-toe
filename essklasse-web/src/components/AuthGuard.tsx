@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { BrandLogo } from './BrandLogo';
 import { useAuthStore }  from '../store/authStore';
 import { useObjektStore } from '../store/objektStore';
 import { LoginScreen }   from '../screens/LoginScreen';
@@ -74,7 +75,7 @@ export function AuthGuard({ children }: Props) {
         height: '100dvh', background: 'var(--ek-bg)',
       }}>
         <div style={{ textAlign: 'center' }}>
-          <img src="/logo.webp" alt="EssKlasse" style={{ height: 40, marginBottom: 16, opacity: .6 }} />
+          <BrandLogo style={{ height: 40, marginBottom: 16, opacity: .6 }} />
           <p style={{ color: 'var(--ek-muted)', fontSize: 14 }}>Wird geladen …</p>
         </div>
       </div>

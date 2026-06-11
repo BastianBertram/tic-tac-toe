@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { BrandLogo } from '../components/BrandLogo';
 import { format } from 'date-fns';
 import { useBelegStore } from '../store/belegStore';
 import { useObjektStore } from '../store/objektStore';
@@ -39,7 +40,7 @@ export function AbschlussListScreen({ onOpenBeleg }: Props) {
   return (
     <div className={s.screen}>
       <div className={s.header}>
-        <img src="/logo.webp" alt="EssKlasse" className={s.logo} />
+        <BrandLogo className={s.logo} />
         <span className={s.headerSection}>✓ Bewirtung Abschließen</span>
       </div>
 

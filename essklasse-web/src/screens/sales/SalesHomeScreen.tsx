@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { BrandLogo } from '../../components/BrandLogo';
 import { format, startOfMonth, endOfMonth, isWithinInterval, parseISO } from 'date-fns';
 import { useSalesStore } from '../../store/salesStore';
 import type { SalesStatus } from '../../types';
@@ -45,7 +46,7 @@ export function SalesHomeScreen({ onKachelClick }: Props) {
   return (
     <div className={s.screen}>
       <div className={s.header}>
-        <img src="/logo.webp" alt="EssKlasse" className={s.logo} />
+        <BrandLogo className={s.logo} />
         <span className={s.headerTitle}>🤝 Vertrieb</span>
       </div>
 

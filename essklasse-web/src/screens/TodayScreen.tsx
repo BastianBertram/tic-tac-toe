@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { BrandLogo } from '../components/BrandLogo';
 import { format, addDays, isToday } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { useBelegStore } from '../store/belegStore';
@@ -91,7 +92,7 @@ export function TodayScreen({ onOpenBeleg, onAbschliessen, onTabAbschluss }: Pro
     <div className={s.screen}>
       {/* ── Header ── */}
       <div className={s.header}>
-        <img src="/logo.webp" alt="EssKlasse" className={s.logo} />
+        <BrandLogo className={s.logo} />
         <span className={s.headerSection}>📋 Heute</span>
         {rolle !== 'geschaeftsfuehrung' && (
           <div className={s.headerRight}>

@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { BrandLogo } from '../components/BrandLogo';
 import { startOfWeek, endOfWeek, addWeeks, parseISO, isWithinInterval, format } from 'date-fns';
 import { useBelegStore } from '../store/belegStore';
 import type { GFKategorie } from './GFBewirtungsListScreen';
@@ -43,7 +44,7 @@ export function GFHomeScreen({ onKachelClick }: Props) {
   return (
     <div className={s.screen}>
       <div className={s.header}>
-        <img src="/logo.webp" alt="EssKlasse" className={s.logo} />
+        <BrandLogo className={s.logo} />
         <span className={s.headerTitle}>🏠 Home</span>
       </div>
       <div className={s.grid}>

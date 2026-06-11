@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { BrandLogo } from '../components/BrandLogo';
 import { format, parseISO, startOfMonth, endOfMonth, isWithinInterval, differenceInDays } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { useBelegStore } from '../store/belegStore';
@@ -102,7 +103,7 @@ export function GFStatistikScreen({ onKachelClick }: Props) {
   return (
     <div className={s.screen}>
       <div className={s.header}>
-        <img src="/logo.webp" alt="EssKlasse" className={s.logo} />
+        <BrandLogo className={s.logo} />
         <span className={s.headerTitle}>📊 Statistik</span>
       </div>
 

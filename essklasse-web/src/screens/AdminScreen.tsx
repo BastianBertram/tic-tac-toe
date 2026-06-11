@@ -1,13 +1,16 @@
 import { useState } from 'react';
+import { BrandLogo } from '../components/BrandLogo';
 import { v4 as uuidv4 } from 'uuid';
 import { useUserStore } from '../store/userStore';
 import { useObjektStore } from '../store/objektStore';
 import { HamburgerDrawer } from '../components/HamburgerDrawer';
 import type { UserRolle, Anrede } from '../types';
 import { isValidEmail } from '../utils/email';
+import { useSettingsStore } from '../store/settingsStore';
+import { THEMES } from '../theme';
 import s from './AdminScreen.module.css';
 
-type AdminTab = 'user' | 'objekte';
+type AdminTab = 'user' | 'objekte' | 'einstellungen';
 type FilterStatus = 'aktiv' | 'inaktiv' | 'alle';
 
 const ROLLE_LABELS: Record<UserRolle, string> = {
@@ -73,17 +76,18 @@ export function AdminScreen() {
   return (
     <div className={s.screen}>
       <div className={s.header}>
-        <img src="/logo.webp" alt="EssKlasse" className={s.logo} />
+        <BrandLogo className={s.logo} />
         <span className={s.headerSection}>
-          {tab === 'user' ? '👤 Benutzer' : '🏢 Objekte'}
+          {tab === 'user' ? '👤 Benutzer' : tab === 'objekte' ? '🏢 Objekte' : '⚙️ Einstellungen'}
         </span>
         <div className={s.headerRight}>
           <span className={s.rolleChip}>Admin</span>
         </div>
       </div>
 
-      {tab === 'user'    && <UserTab />}
-      {tab === 'objekte' && <ObjekteTab />}
+      {tab === 'user'          && <UserTab />}
+      {tab === 'objekte'       && <ObjekteTab />}
+      {tab === 'einstellungen' && <EinstellungenTab />}
 
       <nav className={s.nav}>
         <button type="button" className={s.hamburgerBtn} onClick={() => setDrawerOpen(true)}>
@@ -97,6 +101,10 @@ export function AdminScreen() {
         <button type="button" className={`${s.navTab} ${tab === 'objekte' ? s.navTabActive : ''}`} onClick={() => setTab('objekte')}>
           <span className={s.navTabIcon}>🏢</span>
           <span className={s.navTabLabel}>Objekte</span>
+        </button>
+        <button type="button" className={`${s.navTab} ${tab === 'einstellungen' ? s.navTabActive : ''}`} onClick={() => setTab('einstellungen')}>
+          <span className={s.navTabIcon}>⚙️</span>
+          <span className={s.navTabLabel}>Einstellungen</span>
         </button>
       </nav>
 
@@ -638,6 +646,116 @@ function ObjekteTab() {
           }
           onConfirmed={() => { toggleAktiv(confirmObj.id); setConfirmTarget(null); setShowForm(false); }}
           onCancel={() => setConfirmTarget(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+/* ─── Einstellungen Tab ─── */
+const MAX_LOGO_BYTES = 800 * 1024; // ~800 KB Schutz für localStorage
+
+function EinstellungenTab() {
+  const { themeId, setTheme, logoDataUrl, setLogo, firmenname, setFirmenname } = useSettingsStore();
+  const [logoError, setLogoError] = useState<string | null>(null);
+  const [confirmReset, setConfirmReset] = useState(false);
+
+  function handleLogoFile(file: File | undefined) {
+    setLogoError(null);
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setLogoError('Bitte eine Bilddatei auswählen (PNG, JPG, WEBP oder SVG).');
+      return;
+    }
+    if (file.size > MAX_LOGO_BYTES) {
+      setLogoError('Die Datei ist zu groß (max. 800 KB). Bitte ein kleineres Bild verwenden.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => setLogo(typeof reader.result === 'string' ? reader.result : null);
+    reader.onerror = () => setLogoError('Die Datei konnte nicht gelesen werden.');
+    reader.readAsDataURL(file);
+  }
+
+  return (
+    <div className={s.tabContent}>
+      {/* Unternehmenslogo */}
+      <div className={s.formCard}>
+        <div className={s.formTitle}>Unternehmenslogo</div>
+        <p className={s.settingsHint}>
+          Wird in der Kopfzeile, beim Login und in allen Bereichen der App angezeigt.
+          Empfohlen: PNG/SVG mit transparentem Hintergrund, max. 800 KB.
+        </p>
+
+        <div className={s.logoPreviewBox}>
+          <BrandLogo className={s.logoPreview} />
+        </div>
+
+        {logoError && <div className={s.fieldError}>{logoError}</div>}
+
+        <div className={s.settingsBtnRow}>
+          <label className={s.uploadBtn}>
+            {logoDataUrl ? '🖼 Logo ersetzen' : '⬆️ Logo hochladen'}
+            <input
+              type="file"
+              accept="image/png,image/jpeg,image/webp,image/svg+xml"
+              style={{ display: 'none' }}
+              onChange={e => { handleLogoFile(e.target.files?.[0]); e.target.value = ''; }}
+            />
+          </label>
+          {logoDataUrl && (
+            <button type="button" className={s.resetBtn} onClick={() => setConfirmReset(true)}>
+              ↩︎ Standard wiederherstellen
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* App-Farbe / Mood */}
+      <div className={s.formCard}>
+        <div className={s.formTitle}>App-Farbe (Mood)</div>
+        <p className={s.settingsHint}>
+          Bestimmt die Akzent- und Markenfarbe der gesamten App. Die Auswahl wirkt sofort.
+        </p>
+
+        <div className={s.moodGrid}>
+          {THEMES.map(t => (
+            <button
+              key={t.id}
+              type="button"
+              className={`${s.moodCard} ${themeId === t.id ? s.moodCardActive : ''}`}
+              onClick={() => setTheme(t.id)}
+            >
+              <span className={s.moodSwatch} style={{ background: t.primary }}>
+                <span className={s.moodSwatchSoft} style={{ background: t.soft }} />
+                {themeId === t.id && <span className={s.moodCheck}>✓</span>}
+              </span>
+              <span className={s.moodName}>{t.name}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Firmenname (optional) */}
+      <div className={s.formCard}>
+        <div className={s.formTitle}>Firmenname</div>
+        <p className={s.settingsHint}>Optionaler Anzeigename, z.B. für interne Kennzeichnung.</p>
+        <input
+          className={s.input}
+          value={firmenname}
+          onChange={e => setFirmenname(e.target.value)}
+          placeholder="z.B. EssKlasse Catering GmbH"
+        />
+      </div>
+
+      {confirmReset && (
+        <ConfirmModal
+          steps={[
+            { title: 'Standard-Logo wiederherstellen?', body: 'Das hochgeladene Logo wird entfernt und das mitgelieferte EssKlasse-Logo wieder angezeigt.', confirmLabel: 'Weiter →' },
+            { title: 'Wirklich zurücksetzen?', body: 'Das aktuell hinterlegte Logo geht verloren und müsste erneut hochgeladen werden.', confirmLabel: 'Ja, zurücksetzen', danger: true },
+          ]}
+          onConfirmed={() => { setLogo(null); setConfirmReset(false); }}
+          onCancel={() => setConfirmReset(false)}
         />
       )}
     </div>

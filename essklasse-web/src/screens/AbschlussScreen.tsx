@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { BrandLogo } from '../components/BrandLogo';
 import { useBelegStore } from '../store/belegStore';
 import { useAuthStore }  from '../store/authStore';
 import { PhotoCapture } from '../components/PhotoCapture';
@@ -97,7 +98,7 @@ export function AbschlussScreen({ beleg, onClose, onDone }: Props) {
       {/* Header */}
       <div className={s.header}>
         <button className={s.closeBtn} onClick={onClose} type="button">✕</button>
-        <img src="/logo.webp" alt="EssKlasse" className={s.headerLogo} />
+        <BrandLogo className={s.headerLogo} />
         <button
           className={s.abschliessenHdrBtn}
           onClick={fotos.length > 0 ? handleAbschliessen : undefined}

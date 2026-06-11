@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { BrandLogo } from '../components/BrandLogo';
 import s from './LoginScreen.module.css';
 import { isValidEmail } from '../utils/email';
 
@@ -45,7 +46,7 @@ export function LoginScreen() {
     <div className={s.page}>
       <div className={s.card}>
         {/* Logo */}
-        <img src="/logo.webp" alt="EssKlasse Catering & Gastronomie" className={s.logo} />
+        <BrandLogo className={s.logo} alt="EssKlasse Catering & Gastronomie" />
         <div className={s.divider} />
 
         {stage === 'email' ? (
