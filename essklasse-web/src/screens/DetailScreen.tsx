@@ -78,6 +78,8 @@ export function DetailScreen({ beleg: init, onClose, onAbschliessen, onBearbeite
           <Row label="Konto"       value={beleg.konto} />
           <Row label="Kostenstelle" value={beleg.kostenstelle} />
           <Row label="Kostenträger" value={beleg.kostentraeger} />
+          {/* Telefon für Rückfragen — immer an letzter Stelle der Kopfdaten */}
+          <Row label="Telefon für Rückfragen" value={beleg.rechnungsanschriftTelefon || '–'} />
         </div>
 
         {/* Positionen */}
