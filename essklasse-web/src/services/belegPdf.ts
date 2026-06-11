@@ -97,7 +97,7 @@ export function generateErsatzBelegPdf(b: ErsatzBelegInput): string {
   const row = (label: string, value: string) =>
     lines.push({ x: MARGIN, size: 11, text: `${label}:  ${value || '–'}` });
 
-  lines.push({ x: MARGIN, size: 13, bold: true, text: 'Bestelldaten', gapBefore: 18 });
+  lines.push({ x: MARGIN, size: 13, bold: true, text: 'Bestelldaten', gapBefore: 30 });
   row('Besteller / Auftraggeber', b.besteller);
   row('Veranstaltung / Anlass', b.veranstaltung);
   row('Datum', zeitraum);
@@ -107,7 +107,7 @@ export function generateErsatzBelegPdf(b: ErsatzBelegInput): string {
   row('Personenzahl', String(b.personenzahl || 0));
 
   if (b.konto || b.kostenstelle || b.kostentraeger) {
-    lines.push({ x: MARGIN, size: 13, bold: true, text: 'Kostenzuordnung', gapBefore: 14 });
+    lines.push({ x: MARGIN, size: 13, bold: true, text: 'Kostenzuordnung', gapBefore: 26 });
     if (b.konto)        row('Konto', b.konto);
     if (b.kostenstelle) row('Kostenstelle', b.kostenstelle);
     if (b.kostentraeger) row('Kostenträger', b.kostentraeger);
@@ -117,7 +117,7 @@ export function generateErsatzBelegPdf(b: ErsatzBelegInput): string {
     b.rechnungsanschriftStrasse || b.rechnungsanschriftPlzOrt || b.rechnungsanschriftAnlass ||
     b.rechnungsanschriftTeilnehmer || b.rechnungsanschriftTelefon;
   if (hatRechnung) {
-    lines.push({ x: MARGIN, size: 13, bold: true, text: 'Rechnungsanschrift', gapBefore: 14 });
+    lines.push({ x: MARGIN, size: 13, bold: true, text: 'Rechnungsanschrift', gapBefore: 26 });
     if (b.rechnungsanschriftFirma)       row('Firma', b.rechnungsanschriftFirma);
     if (b.rechnungsanschriftZuHaenden)   row('Zu Händen', b.rechnungsanschriftZuHaenden);
     if (b.rechnungsanschriftStrasse)     row('Straße / Nr.', b.rechnungsanschriftStrasse);
@@ -128,7 +128,7 @@ export function generateErsatzBelegPdf(b: ErsatzBelegInput): string {
   }
 
   // ── Positionen ──
-  lines.push({ x: MARGIN, size: 13, bold: true, text: 'Positionen / Leistungen', gapBefore: 16 });
+  lines.push({ x: MARGIN, size: 13, bold: true, text: 'Positionen / Leistungen', gapBefore: 30 });
   const colMenge = 360, colEinheit = 410, colPreis = 470, colSumme = 525;
   lines.push({ x: MARGIN, size: 9, bold: true, text: 'Bezeichnung' });
   // Spaltenüberschriften auf gleicher Höhe → über zusätzliche Felder am selben Y (gapBefore 0)
@@ -144,7 +144,7 @@ export function generateErsatzBelegPdf(b: ErsatzBelegInput): string {
   for (const p of b.positionen) {
     if (p.kategorie !== lastKat) {
       // Erste Kategorie braucht mehr Abstand zur Spaltenüberschrift.
-      lines.push({ x: MARGIN, size: 10, bold: true, text: String(p.kategorie), gapBefore: lastKat === '' ? 20 : 12 });
+      lines.push({ x: MARGIN, size: 10, bold: true, text: String(p.kategorie), gapBefore: lastKat === '' ? 22 : 20 });
       lastKat = p.kategorie;
     }
     const summe = p.preis * p.menge;
@@ -163,7 +163,7 @@ export function generateErsatzBelegPdf(b: ErsatzBelegInput): string {
   }
 
   if (b.wuensche?.trim()) {
-    lines.push({ x: MARGIN, size: 13, bold: true, text: 'Wünsche / Hinweise', gapBefore: 16 });
+    lines.push({ x: MARGIN, size: 13, bold: true, text: 'Wünsche / Hinweise', gapBefore: 28 });
     for (const part of wrap(b.wuensche.trim(), 95)) {
       lines.push({ x: MARGIN, size: 10, text: part });
     }
