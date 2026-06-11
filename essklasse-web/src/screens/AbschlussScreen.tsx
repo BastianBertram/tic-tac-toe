@@ -41,11 +41,11 @@ export function AbschlussScreen({ beleg, onClose, onDone }: Props) {
           ex.bezeichnung.toLowerCase().includes(p.bezeichnung.toLowerCase())
         );
         if (!pos) return;
-        if (ex.ausgeliefert != null) setMengen(prev => ({ ...prev, [pos.id]: String(ex.ausgeliefert) }));
-        if (ex.zurueckVoll  != null) setZurueckVoll(prev => ({ ...prev, [pos.id]: String(ex.zurueckVoll) }));
-        if (ex.zurueckLeer  != null) setZurueckLeer(prev => ({ ...prev, [pos.id]: String(ex.zurueckLeer) }));
-        if (ex.pfand        != null) setPfand(prev => ({ ...prev, [pos.id]: String(ex.pfand) }));
-        if (ex.berechnen    != null) setBerechnen(prev => ({ ...prev, [pos.id]: String(ex.berechnen) }));
+        if (ex.ausgeliefert != null) setMengen(prev => ({ ...prev, [pos.id]: onlyInt(String(ex.ausgeliefert)) }));
+        if (ex.zurueckVoll  != null) setZurueckVoll(prev => ({ ...prev, [pos.id]: onlyInt(String(ex.zurueckVoll)) }));
+        if (ex.zurueckLeer  != null) setZurueckLeer(prev => ({ ...prev, [pos.id]: onlyInt(String(ex.zurueckLeer)) }));
+        if (ex.pfand        != null) setPfand(prev => ({ ...prev, [pos.id]: onlyInt(String(ex.pfand)) }));
+        if (ex.berechnen    != null) setBerechnen(prev => ({ ...prev, [pos.id]: onlyInt(String(ex.berechnen)) }));
       });
       setScanMsg(`✅ ${extracted.length} Position(en) erkannt und übernommen`);
       setTimeout(() => setScanMsg(''), 4000);
@@ -63,7 +63,10 @@ export function AbschlussScreen({ beleg, onClose, onDone }: Props) {
     }
   }
 
-  function setMenge(id: string, val: string) { setMengen(prev => ({ ...prev, [id]: val })); }
+  // Nur ganze, nicht-negative Zahlen (inkl. 0) — entfernt alles außer Ziffern
+  function onlyInt(val: string): string { return val.replace(/\D/g, '').replace(/^0+(?=\d)/, ''); }
+
+  function setMenge(id: string, val: string) { setMengen(prev => ({ ...prev, [id]: onlyInt(val) })); }
 
   function handleAbschliessen() {
     const positionen: AbschlussPosition[] = beleg.positionen.map(p => ({
@@ -175,34 +178,34 @@ export function AbschlussScreen({ beleg, onClose, onDone }: Props) {
                       <div className={s.posName}>{p.bezeichnung}</div>
                       <div className={s.posQty}>{geplant}</div>
                       <div className={s.posCell}>
-                        <input type="number" min="0" step="0.5"
+                        <input type="number" min="0" step="1" inputMode="numeric"
                           className={`${s.mengeInput} ${abweichend ? s.mengeInputAbweichend : ''}`}
                           value={mengen[p.id] ?? String(p.menge)}
                           onChange={e => setMenge(p.id, e.target.value)}
                         />
                       </div>
                       <div className={s.posCell}>
-                        <input type="number" min="0" step="1" className={s.mengeInput}
+                        <input type="number" min="0" step="1" inputMode="numeric" className={s.mengeInput}
                           value={zurueckVoll[p.id]} placeholder="0"
-                          onChange={e => setZurueckVoll(prev => ({ ...prev, [p.id]: e.target.value }))}
+                          onChange={e => setZurueckVoll(prev => ({ ...prev, [p.id]: onlyInt(e.target.value) }))}
                         />
                       </div>
                       <div className={s.posCell}>
-                        <input type="number" min="0" step="1" className={s.mengeInput}
+                        <input type="number" min="0" step="1" inputMode="numeric" className={s.mengeInput}
                           value={zurueckLeer[p.id]} placeholder="0"
-                          onChange={e => setZurueckLeer(prev => ({ ...prev, [p.id]: e.target.value }))}
+                          onChange={e => setZurueckLeer(prev => ({ ...prev, [p.id]: onlyInt(e.target.value) }))}
                         />
                       </div>
                       <div className={s.posCell}>
-                        <input type="number" min="0" step="1" className={s.mengeInput}
+                        <input type="number" min="0" step="1" inputMode="numeric" className={s.mengeInput}
                           value={berechnen[p.id]} placeholder="0"
-                          onChange={e => setBerechnen(prev => ({ ...prev, [p.id]: e.target.value }))}
+                          onChange={e => setBerechnen(prev => ({ ...prev, [p.id]: onlyInt(e.target.value) }))}
                         />
                       </div>
                       <div className={s.posCell}>
-                        <input type="number" min="0" step="1" className={s.mengeInput}
+                        <input type="number" min="0" step="1" inputMode="numeric" className={s.mengeInput}
                           value={pfand[p.id]} placeholder="0"
-                          onChange={e => setPfand(prev => ({ ...prev, [p.id]: e.target.value }))}
+                          onChange={e => setPfand(prev => ({ ...prev, [p.id]: onlyInt(e.target.value) }))}
                         />
                       </div>
                     </div>
