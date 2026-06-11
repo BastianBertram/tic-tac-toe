@@ -133,15 +133,19 @@ export function DetailScreen({ beleg: init, onClose, onAbschliessen, onBearbeite
           <div className={`${s.section} ${s.sectionSmall}`}>
             <div className={s.sectionTitleSmall}>📷 Ursprünglicher Bewirtungsbeleg ({beleg.fotoDataUrls.length})</div>
             <div className={s.photoGridSmall}>
-              {beleg.fotoDataUrls.map((url, i) => (
-                <FileThumb
-                  key={i}
-                  url={url}
-                  filename={`${beleg.bestellungsnummer ?? 'beleg'}-bestell-${i + 1}`}
-                  onOpenImage={() => setLightbox(url)}
-                  onOpenPdf={() => setPdfViewer({ dataUrl: url, name: `${beleg.bestellungsnummer ?? 'beleg'}-bestell-${i+1}.pdf` })}
-                />
-              ))}
+              {beleg.fotoDataUrls.map((url, i) => {
+                const suffix = beleg.fotoDataUrls.length > 1 ? `-${i + 1}` : '';
+                const fileBase = `${beleg.bestellungsnummer ?? 'beleg'}-ursprünglicher-Bewirtungsbeleg${suffix}`;
+                return (
+                  <FileThumb
+                    key={i}
+                    url={url}
+                    filename={fileBase}
+                    onOpenImage={() => setLightbox(url)}
+                    onOpenPdf={() => setPdfViewer({ dataUrl: url, name: `${fileBase}.pdf` })}
+                  />
+                );
+              })}
             </div>
           </div>
         )}
