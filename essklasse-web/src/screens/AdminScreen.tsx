@@ -6,7 +6,7 @@ import { useObjektStore } from '../store/objektStore';
 import { HamburgerDrawer } from '../components/HamburgerDrawer';
 import type { UserRolle, Anrede } from '../types';
 import { isValidEmail } from '../utils/email';
-import { useSettingsStore } from '../store/settingsStore';
+import { useSettingsStore, type Impressum } from '../store/settingsStore';
 import { THEMES, CUSTOM_THEME_ID, isValidHex, normalizeHex, deriveMood } from '../theme';
 import s from './AdminScreen.module.css';
 
@@ -662,18 +662,36 @@ function EinstellungenTab() {
   const [impressumOpen, setImpressumOpen] = useState(false);
   const istEssKlasse = logoDataUrl === ESSKLASSE_LOGO;
 
-  // ── Geschäftsführung (mehrere Namen) ──
+  // ── Impressum: erst nach „Bearbeiten" editierbar, Speichern committet ──
+  const [impEdit, setImpEdit] = useState(false);
+  const [impForm, setImpForm] = useState<Impressum>(impressum);
+
+  function startImpEdit() {
+    setImpForm({ ...impressum, geschaeftsfuehrung: [...impressum.geschaeftsfuehrung] });
+    setImpEdit(true);
+    setImpressumOpen(true);
+  }
+  function saveImp() {
+    const gf = impForm.geschaeftsfuehrung.map(n => n.trim()).filter(Boolean);
+    setImpressum({ ...impForm, geschaeftsfuehrung: gf.length ? gf : [''] });
+    setImpEdit(false);
+  }
+  function cancelImp() {
+    setImpEdit(false);
+  }
+
+  // ── Geschäftsführung (mehrere Namen) – nur im Editiermodus ──
   function setGf(idx: number, val: string) {
-    const gf = [...impressum.geschaeftsfuehrung];
-    gf[idx] = val;
-    setImpressum({ geschaeftsfuehrung: gf });
+    setImpForm(f => { const gf = [...f.geschaeftsfuehrung]; gf[idx] = val; return { ...f, geschaeftsfuehrung: gf }; });
   }
   function addGf() {
-    setImpressum({ geschaeftsfuehrung: [...impressum.geschaeftsfuehrung, ''] });
+    setImpForm(f => ({ ...f, geschaeftsfuehrung: [...f.geschaeftsfuehrung, ''] }));
   }
   function removeGf(idx: number) {
-    const gf = impressum.geschaeftsfuehrung.filter((_, i) => i !== idx);
-    setImpressum({ geschaeftsfuehrung: gf.length ? gf : [''] });
+    setImpForm(f => {
+      const gf = f.geschaeftsfuehrung.filter((_, i) => i !== idx);
+      return { ...f, geschaeftsfuehrung: gf.length ? gf : [''] };
+    });
   }
 
   // Vorab gewählte (noch nicht übernommene) Farbe
@@ -841,42 +859,57 @@ function EinstellungenTab() {
           <span className={s.collapseChevron}>{impressumOpen ? '▴' : '▾'}</span>
         </button>
 
-        {impressumOpen && (
+        {impressumOpen && !impEdit && (
+          <div className={s.collapseBody}>
+            <ImpRow label="Hauptsitz" value={[
+              [impressum.strasse, impressum.hausnummer].filter(Boolean).join(' '),
+              [impressum.plz, impressum.ort].filter(Boolean).join(' '),
+            ].filter(Boolean).join(', ')} />
+            <ImpRow label="Geschäftsführung" value={impressum.geschaeftsfuehrung.filter(Boolean).join(', ')} />
+            <ImpRow label="Amtsgericht" value={impressum.amtsgericht} />
+            <ImpRow label="Handelsregisternummer" value={impressum.handelsregisternummer} />
+            <ImpRow label="Umsatzsteuer-ID" value={impressum.umsatzsteuerId} />
+
+            <button type="button" className={s.editBtn} onClick={startImpEdit}>✏️ Bearbeiten</button>
+          </div>
+        )}
+
+        {impressumOpen && impEdit && (
           <div className={s.collapseBody}>
             <p className={s.settingsHint}>Pflichtangaben des Unternehmens für das Impressum.</p>
 
             <label className={s.label}>Straße und Hausnummer</label>
             <div className={s.twoCol}>
               <div style={{ flex: 3 }}>
-                <input className={s.input} value={impressum.strasse}
-                  onChange={e => setImpressum({ strasse: e.target.value })} placeholder="Straße" />
+                <input className={s.input} value={impForm.strasse}
+                  onChange={e => setImpForm(f => ({ ...f, strasse: e.target.value }))} placeholder="Straße" />
               </div>
               <div>
-                <input className={s.input} value={impressum.hausnummer}
-                  onChange={e => setImpressum({ hausnummer: e.target.value })} placeholder="Nr." />
+                <input className={s.input} value={impForm.hausnummer}
+                  onChange={e => setImpForm(f => ({ ...f, hausnummer: e.target.value }))} placeholder="Nr." />
               </div>
             </div>
 
             <label className={s.label}>PLZ und Ort</label>
             <div className={s.twoCol}>
               <div>
-                <input className={s.input} value={impressum.plz}
-                  onChange={e => setImpressum({ plz: e.target.value })} placeholder="PLZ" maxLength={5} />
+                <input className={s.input} value={impForm.plz}
+                  onChange={e => setImpForm(f => ({ ...f, plz: e.target.value }))} placeholder="PLZ" maxLength={5} />
               </div>
               <div style={{ flex: 2 }}>
-                <input className={s.input} value={impressum.ort}
-                  onChange={e => setImpressum({ ort: e.target.value })} placeholder="Ort" />
+                <input className={s.input} value={impForm.ort}
+                  onChange={e => setImpForm(f => ({ ...f, ort: e.target.value }))} placeholder="Ort" />
               </div>
             </div>
 
             <label className={s.label}>Geschäftsführung</label>
             <div className={s.kostenstellenList}>
-              {impressum.geschaeftsfuehrung.map((name, idx) => (
+              {impForm.geschaeftsfuehrung.map((name, idx) => (
                 <div key={idx} className={s.kostenstelleRow}>
                   <input className={s.input} value={name}
                     onChange={e => setGf(idx, e.target.value)}
                     placeholder={`Name ${idx + 1}`} />
-                  {impressum.geschaeftsfuehrung.length > 1 && (
+                  {impForm.geschaeftsfuehrung.length > 1 && (
                     <button type="button" className={s.ksRemoveBtn} onClick={() => removeGf(idx)}>✕</button>
                   )}
                 </div>
@@ -885,16 +918,21 @@ function EinstellungenTab() {
             </div>
 
             <label className={s.label}>Amtsgericht</label>
-            <input className={s.input} value={impressum.amtsgericht}
-              onChange={e => setImpressum({ amtsgericht: e.target.value })} placeholder="z.B. Amtsgericht Hannover" />
+            <input className={s.input} value={impForm.amtsgericht}
+              onChange={e => setImpForm(f => ({ ...f, amtsgericht: e.target.value }))} placeholder="z.B. Amtsgericht Hannover" />
 
             <label className={s.label}>Handelsregisternummer</label>
-            <input className={s.input} value={impressum.handelsregisternummer}
-              onChange={e => setImpressum({ handelsregisternummer: e.target.value })} placeholder="z.B. HRB 123456" />
+            <input className={s.input} value={impForm.handelsregisternummer}
+              onChange={e => setImpForm(f => ({ ...f, handelsregisternummer: e.target.value }))} placeholder="z.B. HRB 123456" />
 
             <label className={s.label}>Umsatzsteuer-ID</label>
-            <input className={s.input} value={impressum.umsatzsteuerId}
-              onChange={e => setImpressum({ umsatzsteuerId: e.target.value })} placeholder="z.B. DE123456789" />
+            <input className={s.input} value={impForm.umsatzsteuerId}
+              onChange={e => setImpForm(f => ({ ...f, umsatzsteuerId: e.target.value }))} placeholder="z.B. DE123456789" />
+
+            <div className={s.formActions}>
+              <button type="button" className={s.cancelBtn} onClick={cancelImp}>Abbrechen</button>
+              <button type="button" className={s.saveBtn} onClick={saveImp}>Speichern</button>
+            </div>
           </div>
         )}
       </div>
@@ -909,6 +947,16 @@ function EinstellungenTab() {
           onCancel={() => setConfirmDelete(false)}
         />
       )}
+    </div>
+  );
+}
+
+/* ─── Impressum: Read-only-Zeile ─── */
+function ImpRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className={s.impRow}>
+      <span className={s.impLabel}>{label}</span>
+      <span className={value ? s.impValue : s.impEmpty}>{value || '—'}</span>
     </div>
   );
 }
