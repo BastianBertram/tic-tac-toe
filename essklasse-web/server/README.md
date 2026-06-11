@@ -31,6 +31,8 @@ needed (Node 20.6+; the repo is on 25.x).
 | Method | Path                   | Body                              | Returns                       |
 | ------ | ---------------------- | --------------------------------- | ----------------------------- |
 | GET    | `/health`              | —                                 | `{ ok, aiConfigured }`        |
+| GET    | `/api/settings`        | —                                 | `{ themeId, customColor, logoDataUrl, impressum }` |
+| PUT    | `/api/settings`        | full settings object              | persisted settings (admin-only in prod) |
 | POST   | `/api/ai/ocr-beleg`    | `{ dataUrl }`                     | `{ data: ExtractedBeleg }`    |
 | POST   | `/api/ai/ocr-abschluss`| `{ dataUrl, positionen[] }`       | `{ data: [...] }`             |
 | POST   | `/api/ai/duplikat`     | `{ beleg, candidates[] }`         | `{ ids: string[] }`           |
@@ -41,6 +43,16 @@ needed (Node 20.6+; the repo is on 25.x).
 
 When `ANTHROPIC_API_KEY` is unset the AI endpoints return `503 AI_NOT_CONFIGURED`
 and the frontend falls back to manual entry.
+
+## App settings (branding & Impressum)
+
+`server/settings.mjs` persists the app-wide branding (theme/mood, logo) and
+Impressum to `server/data/settings.json` (gitignored), so the values apply to
+**all** users and survive restarts. `GET /api/settings` is public (theme/logo are
+needed app-wide before login); `PUT /api/settings` is **admin-only in production**
+(gated on the session cookie's user role). In dev (`NODE_ENV !== production`) the
+PUT is open so the role switcher works without a real login — same dev-grade
+posture as the auth scaffold. Swap the JSON file for a real DB before shipping.
 
 ## Auth (magic link) — SCAFFOLD
 

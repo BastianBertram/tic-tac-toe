@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { DEFAULT_THEME_ID, CUSTOM_THEME_ID, applyTheme } from '../theme';
+import { fetchSettings, saveSettings } from '../services/settingsService';
 
 /** Impressums-/Pflichtangaben des Unternehmens */
 export interface Impressum {
@@ -44,6 +45,18 @@ interface SettingsStore {
   setLogo: (dataUrl: string | null) => void;
   /** Impressum (teilweise) aktualisieren */
   setImpressum: (partial: Partial<Impressum>) => void;
+  /** Einstellungen vom Server laden (Server ist Quelle der Wahrheit) */
+  hydrateFromServer: () => Promise<void>;
+}
+
+/** Schreibt die aktuellen Settings (debounced) zurück auf den Server. */
+let pushTimer: ReturnType<typeof setTimeout> | null = null;
+function schedulePush(get: () => SettingsStore) {
+  if (pushTimer) clearTimeout(pushTimer);
+  pushTimer = setTimeout(() => {
+    const { themeId, customColor, logoDataUrl, impressum } = get();
+    void saveSettings({ themeId, customColor, logoDataUrl, impressum });
+  }, 400);
 }
 
 export const useSettingsStore = create<SettingsStore>()(
@@ -54,15 +67,29 @@ export const useSettingsStore = create<SettingsStore>()(
       logoDataUrl: null,
       impressum: EMPTY_IMPRESSUM,
 
-      setTheme: (id) => { applyTheme(id, get().customColor); set({ themeId: id }); },
-      setCustomColor: (hex) => { applyTheme(CUSTOM_THEME_ID, hex); set({ themeId: CUSTOM_THEME_ID, customColor: hex }); },
-      setLogo: (logoDataUrl) => set({ logoDataUrl }),
-      setImpressum: (partial) => set(s => ({ impressum: { ...s.impressum, ...partial } })),
+      setTheme: (id) => { applyTheme(id, get().customColor); set({ themeId: id }); schedulePush(get); },
+      setCustomColor: (hex) => { applyTheme(CUSTOM_THEME_ID, hex); set({ themeId: CUSTOM_THEME_ID, customColor: hex }); schedulePush(get); },
+      setLogo: (logoDataUrl) => { set({ logoDataUrl }); schedulePush(get); },
+      setImpressum: (partial) => { set(s => ({ impressum: { ...s.impressum, ...partial } })); schedulePush(get); },
+
+      hydrateFromServer: async () => {
+        const data = await fetchSettings();
+        if (!data) return; // Server offline → lokaler Cache bleibt aktiv
+        set({
+          themeId: data.themeId ?? DEFAULT_THEME_ID,
+          customColor: data.customColor ?? null,
+          logoDataUrl: data.logoDataUrl ?? null,
+          impressum: { ...EMPTY_IMPRESSUM, ...data.impressum },
+        });
+        applyTheme(data.themeId ?? DEFAULT_THEME_ID, data.customColor);
+      },
     }),
     {
       name: 'essklasse-settings',
+      // Lokaler Cache nur fürs sofortige Anwenden beim Start; Server ist führend.
+      partialize: (s) => ({ themeId: s.themeId, customColor: s.customColor, logoDataUrl: s.logoDataUrl, impressum: s.impressum }),
       onRehydrateStorage: () => (state) => {
-        // Theme nach dem Laden aus dem Storage anwenden
+        // Gecachtes Theme sofort anwenden; Server-Abgleich erfolgt beim App-Start.
         if (state?.themeId) applyTheme(state.themeId, state.customColor);
       },
     }

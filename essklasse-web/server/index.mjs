@@ -10,7 +10,8 @@
  *       ALLOWED_ORIGIN (default http://localhost:5173)
  */
 import { createServer } from 'node:http';
-import { handleAuth } from './auth.mjs';
+import { handleAuth, getSessionUser } from './auth.mjs';
+import { handleSettings } from './settings.mjs';
 
 const PORT           = Number(process.env.PORT ?? 3001);
 const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN ?? 'http://localhost:5173';
@@ -227,7 +228,7 @@ const server = createServer(async (req, res) => {
   if (req.method === 'OPTIONS') {
     res.writeHead(204, {
       'Access-Control-Allow-Origin': ALLOWED_ORIGIN,
-      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type',
       'Access-Control-Allow-Credentials': 'true',
       'Access-Control-Max-Age': '86400',
@@ -241,6 +242,18 @@ const server = createServer(async (req, res) => {
 
   if (req.method === 'GET' && url === '/health') {
     return send(res, 200, { ok: true, aiConfigured: Boolean(API_KEY) });
+  }
+
+  // ── App-Einstellungen (Branding & Impressum) ──
+  if (url === '/api/settings' && (req.method === 'GET' || req.method === 'PUT')) {
+    try {
+      const body = req.method === 'PUT' ? await readJsonBody(req) : null;
+      const user = getSessionUser(req);
+      const result = handleSettings(req.method, url, body, { user });
+      return send(res, result.status, result.payload);
+    } catch (e) {
+      return send(res, e?.status ?? 400, { error: e?.message ?? 'Bad request' });
+    }
   }
 
   // ── Auth routes (no Anthropic key required) ──

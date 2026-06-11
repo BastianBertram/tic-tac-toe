@@ -25,3 +25,6 @@ dist-ssr
 .env.local
 *.env*
 !.env.example
+
+# Server-persisted settings
+server/data/

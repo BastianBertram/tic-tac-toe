@@ -144,6 +144,14 @@ const HANDLERS = {
   '/auth/logout': logout,
 };
 
+/** Resolves the logged-in user from the refresh cookie, or null. */
+export function getSessionUser(req) {
+  const token = parseCookies(req)[COOKIE_NAME];
+  const entry = token && sessions.get(token);
+  if (!entry || entry.expiresAt < Date.now()) return null;
+  return findUser(entry.email);
+}
+
 /** Returns { status, payload, setCookie? } or null if `url` is not an auth route. */
 export function handleAuth(url, body, req, ctx) {
   const handler = HANDLERS[url];

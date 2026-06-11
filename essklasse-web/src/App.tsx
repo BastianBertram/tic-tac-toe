@@ -13,6 +13,7 @@ import { BuchhaltungScreen } from './screens/BuchhaltungScreen';
 import { AdminScreen } from './screens/AdminScreen';
 import { useAuthStore } from './store/authStore';
 import { useBelegStore } from './store/belegStore';
+import { useSettingsStore } from './store/settingsStore';
 import { GFHomeScreen } from './screens/GFHomeScreen';
 import { GFBewirtungsListScreen } from './screens/GFBewirtungsListScreen';
 import type { GFKategorie } from './screens/GFBewirtungsListScreen';
@@ -49,6 +50,11 @@ export default function App() {
       if (belege.length === 0) seedAll();
       seedSales();
     }
+  }, []);
+
+  // App-Einstellungen (Branding & Impressum) vom Server laden
+  useEffect(() => {
+    void useSettingsStore.getState().hydrateFromServer();
   }, []);
 
   // Duplikat-Prüfung + Rechnungsnummer-Modal
