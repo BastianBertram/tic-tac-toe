@@ -665,6 +665,7 @@ function EinstellungenTab() {
   // ── Impressum: erst nach „Bearbeiten" editierbar, Speichern committet ──
   const [impEdit, setImpEdit] = useState(false);
   const [impForm, setImpForm] = useState<Impressum>(impressum);
+  const [confirmSaveImp, setConfirmSaveImp] = useState(false);
 
   function startImpEdit() {
     setImpForm({ ...impressum, geschaeftsfuehrung: [...impressum.geschaeftsfuehrung] });
@@ -675,10 +676,21 @@ function EinstellungenTab() {
     const gf = impForm.geschaeftsfuehrung.map(n => n.trim()).filter(Boolean);
     setImpressum({ ...impForm, geschaeftsfuehrung: gf.length ? gf : [''] });
     setImpEdit(false);
+    setConfirmSaveImp(false);
   }
   function cancelImp() {
     setImpEdit(false);
   }
+  // Speichern nur möglich, wenn alle Pflichtfelder ausgefüllt sind
+  const impFormComplete =
+    impForm.strasse.trim() !== '' &&
+    impForm.hausnummer.trim() !== '' &&
+    impForm.plz.trim() !== '' &&
+    impForm.ort.trim() !== '' &&
+    impForm.geschaeftsfuehrung.some(n => n.trim() !== '') &&
+    impForm.amtsgericht.trim() !== '' &&
+    impForm.handelsregisternummer.trim() !== '' &&
+    impForm.umsatzsteuerId.trim() !== '';
 
   // ── Geschäftsführung (mehrere Namen) – nur im Editiermodus ──
   function setGf(idx: number, val: string) {
@@ -929,9 +941,12 @@ function EinstellungenTab() {
             <input className={s.input} value={impForm.umsatzsteuerId}
               onChange={e => setImpForm(f => ({ ...f, umsatzsteuerId: e.target.value }))} placeholder="z.B. DE123456789" />
 
+            {!impFormComplete && (
+              <div className={s.fieldError}>Bitte alle Felder ausfüllen, um das Impressum zu speichern.</div>
+            )}
             <div className={s.formActions}>
               <button type="button" className={s.cancelBtn} onClick={cancelImp}>Abbrechen</button>
-              <button type="button" className={s.saveBtn} onClick={saveImp}>Speichern</button>
+              <button type="button" className={s.saveBtn} disabled={!impFormComplete} onClick={() => setConfirmSaveImp(true)}>Speichern</button>
             </div>
           </div>
         )}
@@ -945,6 +960,17 @@ function EinstellungenTab() {
           ]}
           onConfirmed={() => { setLogo(null); setConfirmDelete(false); }}
           onCancel={() => setConfirmDelete(false)}
+        />
+      )}
+
+      {confirmSaveImp && (
+        <ConfirmModal
+          steps={[
+            { title: 'Impressum speichern?', body: 'Die Impressums-Angaben werden für alle Nutzer der App gespeichert.', confirmLabel: 'Weiter →' },
+            { title: 'Änderungen bestätigen', body: 'Bitte bestätige, dass die eingegebenen Pflichtangaben korrekt sind und veröffentlicht werden sollen.', confirmLabel: 'Ja, speichern' },
+          ]}
+          onConfirmed={saveImp}
+          onCancel={() => setConfirmSaveImp(false)}
         />
       )}
     </div>
