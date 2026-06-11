@@ -1,0 +1,49 @@
+.screen { flex: 1; overflow: hidden; display: flex; flex-direction: column; background: var(--ek-bg); }
+
+.header {
+  display: flex; align-items: center; justify-content: center;
+  padding: 12px 16px; border-bottom: 1px solid var(--ek-border);
+  background: var(--ek-surface); flex-shrink: 0;
+}
+.headerTitle { font-size: 17px; font-weight: 800; color: var(--ek-charcoal); }
+
+.toolbar {
+  padding: 10px 14px; background: var(--ek-surface);
+  border-bottom: 1px solid var(--ek-border); flex-shrink: 0;
+}
+.suche {
+  width: 100%; box-sizing: border-box; padding: 9px 12px; border-radius: 9px;
+  border: 1.5px solid var(--ek-border); background: var(--ek-bg);
+  font-size: 13px; color: var(--ek-charcoal);
+}
+
+.list { flex: 1; overflow-y: auto; padding: 12px 12px 160px; display: flex; flex-direction: column; gap: 8px; }
+.leer { text-align: center; color: var(--ek-muted); font-size: 14px; margin-top: 40px; }
+
+.kunde { background: var(--ek-surface); border: 1px solid var(--ek-border); border-radius: 12px; overflow: hidden; }
+
+.kundeHead {
+  width: 100%; display: flex; align-items: center; gap: 12px;
+  padding: 14px; background: transparent; cursor: pointer; text-align: left;
+}
+.kundeInfo { flex: 1; min-width: 0; }
+.kundeFirma { font-size: 15px; font-weight: 800; color: var(--ek-charcoal); }
+.kundeMeta { font-size: 12px; color: var(--ek-muted); margin-top: 2px; }
+
+.kundeWerte { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; flex-shrink: 0; }
+.wonWert { font-size: 14px; font-weight: 900; color: #1e6b4a; }
+.pipeWert { font-size: 11px; font-weight: 700; color: #c0720a; }
+.chevron { font-size: 12px; color: var(--ek-muted); margin-top: 2px; }
+
+.anfragenList { border-top: 1px solid var(--ek-border); padding: 4px 14px 8px; }
+.anfrageRow {
+  width: 100%; display: flex; align-items: center; gap: 10px;
+  padding: 10px 0; background: transparent; cursor: pointer; text-align: left;
+  border-bottom: 1px solid var(--ek-border);
+}
+.anfrageRow:last-child { border-bottom: none; }
+.statusDot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.anfrageBody { flex: 1; min-width: 0; }
+.anfrageVeranst { font-size: 13px; font-weight: 700; color: var(--ek-charcoal); }
+.anfrageSub { font-size: 11px; color: var(--ek-muted); }
+.anfrageWert { font-size: 13px; font-weight: 800; color: var(--ek-charcoal); flex-shrink: 0; }

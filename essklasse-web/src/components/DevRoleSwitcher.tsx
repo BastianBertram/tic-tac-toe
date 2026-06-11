@@ -32,6 +32,12 @@ const ROLES: { rolle: UserRolle; label: string; color: string; user: AuthUser }[
     color: '#1e6b4a',
     user: { id: 'demo-gf', name: 'Hans Müller', email: 'gf@hwk.de', rolle: 'geschaeftsfuehrung' },
   },
+  {
+    rolle: 'sales',
+    label: 'Sales',
+    color: '#b9770e',
+    user: { id: 'demo-sales', name: 'Lena Vogel', email: 'sales@hwk.de', rolle: 'sales' },
+  },
 ];
 
 export function DevRoleSwitcher() {

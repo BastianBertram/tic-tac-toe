@@ -22,6 +22,8 @@ import type { StatKategorie } from './screens/GFStatistikDetailScreen';
 import { DevRoleSwitcher } from './components/DevRoleSwitcher';
 import { DuplikatCheckModal } from './components/DuplikatCheckModal';
 import { seedAll } from './dev/seedData';
+import { seedSales } from './dev/seedSales';
+import { SalesApp } from './screens/sales/SalesApp';
 import type { Bewirtungsbeleg } from './types';
 import s from './App.module.css';
 
@@ -45,6 +47,7 @@ export default function App() {
     if (import.meta.env.DEV) {
       const { belege } = useBelegStore.getState();
       if (belege.length === 0) seedAll();
+      seedSales();
     }
   }, []);
 
@@ -109,6 +112,16 @@ export default function App() {
           <AdminScreen />
           <DevOverlay />
         </div>
+      </AuthGuard>
+    );
+  }
+
+  // ── Sales / Vertrieb ──
+  if (rolle === 'sales') {
+    return (
+      <AuthGuard>
+        <SalesApp />
+        <DevOverlay />
       </AuthGuard>
     );
   }

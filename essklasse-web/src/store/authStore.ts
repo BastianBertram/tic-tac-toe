@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-export type UserRolle = 'user' | 'admin' | 'buchhaltung' | 'bereichsleitung' | 'geschaeftsfuehrung';
+export type UserRolle = 'user' | 'admin' | 'buchhaltung' | 'bereichsleitung' | 'geschaeftsfuehrung' | 'sales';
 
 export interface AuthUser {
   id: string;
@@ -25,6 +25,7 @@ interface AuthStore {
   isUser:               () => boolean;
   isBereichsleitung:    () => boolean;
   isGeschaeftsfuehrung: () => boolean;
+  isSales:              () => boolean;
   /** Nur true wenn der echte Ursprungsnutzer Geschäftsführung ist (auch bei aktivem Rollenwechsel) */
   isGeschaeftsfuehrungBase: () => boolean;
   switchRolleAs: (rolle: UserRolle, objektIds?: string[]) => void;
@@ -43,6 +44,7 @@ export const useAuthStore = create<AuthStore>()(
       isUser:               () => get().user?.rolle === 'user',
       isBereichsleitung:    () => get().user?.rolle === 'bereichsleitung',
       isGeschaeftsfuehrung: () => get().user?.rolle === 'geschaeftsfuehrung',
+      isSales:              () => get().user?.rolle === 'sales',
       isGeschaeftsfuehrungBase: () => {
         const u = get().user;
         return u?.rolle === 'geschaeftsfuehrung' || u?.baseRolle === 'geschaeftsfuehrung';

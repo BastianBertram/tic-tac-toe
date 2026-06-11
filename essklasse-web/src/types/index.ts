@@ -49,7 +49,97 @@ export interface AbschlussPosition {
   pfand?: number;
 }
 
-export type UserRolle = 'user' | 'admin' | 'buchhaltung' | 'bereichsleitung' | 'geschaeftsfuehrung';
+export type UserRolle = 'user' | 'admin' | 'buchhaltung' | 'bereichsleitung' | 'geschaeftsfuehrung' | 'sales';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Sales / Vertrieb (Betriebsgastronomie & Catering)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Vertriebssegment: laufende Betriebsverpflegung vs. einmaliges Event-Catering */
+export type SalesSegment = 'betriebsgastronomie' | 'catering';
+
+export const SALES_SEGMENTE: { value: SalesSegment; label: string }[] = [
+  { value: 'betriebsgastronomie', label: 'Betriebsgastronomie' },
+  { value: 'catering',            label: 'Catering' },
+];
+
+/** Pipeline-Stufen einer Vertriebs-Opportunity */
+export type SalesStatus =
+  | 'neu'           // Anfrage eingegangen
+  | 'qualifiziert'  // Bedarf geprüft, qualifiziert
+  | 'angebot'       // Angebot erstellt / versendet
+  | 'verhandlung'   // in Verhandlung
+  | 'gewonnen'      // Auftrag gewonnen
+  | 'verloren';     // verloren / abgesagt
+
+export const SALES_PIPELINE: SalesStatus[] = ['neu', 'qualifiziert', 'angebot', 'verhandlung', 'gewonnen', 'verloren'];
+
+export const SALES_STATUS_LABEL: Record<SalesStatus, string> = {
+  neu:          'Neu',
+  qualifiziert: 'Qualifiziert',
+  angebot:      'Angebot',
+  verhandlung:  'Verhandlung',
+  gewonnen:     'Gewonnen',
+  verloren:     'Verloren',
+};
+
+/** Quelle eines Leads */
+export type SalesQuelle = 'empfehlung' | 'website' | 'telefon' | 'messe' | 'bestandskunde' | 'sonstige';
+
+export const SALES_QUELLEN: { value: SalesQuelle; label: string }[] = [
+  { value: 'empfehlung',    label: 'Empfehlung' },
+  { value: 'website',       label: 'Website' },
+  { value: 'telefon',       label: 'Telefon' },
+  { value: 'messe',         label: 'Messe / Event' },
+  { value: 'bestandskunde', label: 'Bestandskunde' },
+  { value: 'sonstige',      label: 'Sonstige' },
+];
+
+export type SalesAktivitaetTyp = 'anruf' | 'email' | 'termin' | 'notiz' | 'angebot' | 'statuswechsel';
+
+export interface SalesAktivitaet {
+  id: string;
+  typ: SalesAktivitaetTyp;
+  text: string;
+  datum: string;        // ISO
+  von?: string;         // Bearbeiter
+}
+
+/** Eine Vertriebs-Opportunity / Anfrage */
+export interface SalesAnfrage {
+  id: string;
+  nummer: string;             // z.B. "L260001"
+  segment: SalesSegment;
+  status: SalesStatus;
+  quelle: SalesQuelle;
+
+  // Kunde / Kontakt
+  kundeFirma: string;
+  ansprechpartner: string;
+  email: string;
+  telefon: string;
+
+  // Veranstaltung / Bedarf
+  veranstaltung: string;      // z.B. "Sommerfest 2026", "Kantinen-Vollverpflegung"
+  datum?: string;             // geplantes Event-/Startdatum (yyyy-MM-dd)
+  personenzahl: number;
+  ort: string;
+
+  // Wert
+  geschaetzterWert: number;   // erwarteter Umsatz €
+  /** bei Betriebsgastronomie: erwarteter Jahreswert; geschaetzterWert = monatlich * 12 möglich */
+  wiederkehrend: boolean;
+
+  // Vertriebssteuerung
+  verantwortlich: string;     // zuständiger Vertriebler
+  wiedervorlage?: string;     // nächster Follow-up (yyyy-MM-dd)
+  verlustgrund?: string;      // wenn verloren
+  notiz: string;
+  aktivitaeten: SalesAktivitaet[];
+
+  erstelltAm: string;
+  aktualisiertAm: string;
+}
 
 export type Anrede = 'Herr' | 'Frau';
 
