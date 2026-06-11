@@ -54,6 +54,7 @@
 .posRow { display: flex; justify-content: space-between; align-items: baseline; padding: 6px 0; border-bottom: 1px solid var(--ek-border); }
 .posRow:last-child { border-bottom: none; }
 .posName { font-weight: 700; font-size: 14px; color: var(--ek-charcoal); }
+.posAnzahl { font-weight: 700; font-size: 14px; color: var(--ek-charcoal); white-space: nowrap; flex-shrink: 0; padding-left: 14px; }
 .posMeta { color: var(--ek-muted); font-size: 12px; margin-top: 2px; }
 
 .sectionAbschluss { border-color: #27ae60; }
