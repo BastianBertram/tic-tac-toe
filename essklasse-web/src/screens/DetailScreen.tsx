@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { de } from 'date-fns/locale';
 import { formatDatum } from '../utils/date';
 import type { Bewirtungsbeleg } from '../types';
 import { PdfViewer } from '../components/PdfViewer';
 import { useBelegStore } from '../store/belegStore';
+import { useSettingsStore } from '../store/settingsStore';
+import { generateErsatzBelegPdf } from '../services/belegPdf';
 import s from './DetailScreen.module.css';
 
 interface Props { beleg: Bewirtungsbeleg; onClose: () => void; onAbschliessen?: () => void; onBearbeiten?: () => void; onRechnungErstellen?: (b: Bewirtungsbeleg) => void; canDelete?: boolean; }
@@ -21,8 +23,46 @@ export function DetailScreen({ beleg: init, onClose, onAbschliessen, onBearbeite
   const [lightbox, setLightbox] = useState<string | null>(null);
   const [pdfViewer, setPdfViewer] = useState<{ dataUrl: string; name: string } | null>(null);
   const [deleteStep, setDeleteStep] = useState<0 | 1 | null>(null);
+  const [regenerating, setRegenerating] = useState(false);
 
   const datum = formatDatum(beleg.cateringDatumVon, 'dd.MM.yyyy', { locale: de });
+
+  // Erkennt einen automatisch erzeugten Ersatz-Beleg (einziges Dokument, PDF,
+  // enthält die Kennung) — nur dann darf das PDF neu erzeugt werden.
+  const istErsatzBeleg = useMemo(() => {
+    if (beleg.fotoDataUrls.length !== 1) return false;
+    const url = beleg.fotoDataUrls[0];
+    if (!url.startsWith('data:application/pdf')) return false;
+    try { return atob(url.split(',')[1] ?? '').includes('Ersatz-Bewirtungsbeleg'); }
+    catch { return false; }
+  }, [beleg.fotoDataUrls]);
+
+  async function regenerateErsatz() {
+    setRegenerating(true);
+    try {
+      const pdf = await generateErsatzBelegPdf({
+        objektName: beleg.objektName,
+        besteller: beleg.besteller, veranstaltung: beleg.veranstaltung,
+        cateringDatumVon: beleg.cateringDatumVon, cateringDatumBis: beleg.cateringDatumBis,
+        uhrzeitVon: beleg.uhrzeitVon, uhrzeitBis: beleg.uhrzeitBis,
+        ort: beleg.ort, raum: beleg.raum, personenzahl: beleg.personenzahl,
+        konto: beleg.konto, kostenstelle: beleg.kostenstelle, kostentraeger: beleg.kostentraeger,
+        wuensche: beleg.wuensche,
+        rechnungsanschriftFirma: beleg.rechnungsanschriftFirma,
+        rechnungsanschriftZuHaenden: beleg.rechnungsanschriftZuHaenden,
+        rechnungsanschriftStrasse: beleg.rechnungsanschriftStrasse,
+        rechnungsanschriftPlzOrt: beleg.rechnungsanschriftPlzOrt,
+        rechnungsanschriftAnlass: beleg.rechnungsanschriftAnlass,
+        rechnungsanschriftTeilnehmer: beleg.rechnungsanschriftTeilnehmer,
+        rechnungsanschriftTelefon: beleg.rechnungsanschriftTelefon,
+        positionen: beleg.positionen,
+        logoDataUrl: useSettingsStore.getState().logoDataUrl,
+      });
+      store.updateBeleg(beleg.id, { fotoDataUrls: [pdf] });
+    } finally {
+      setRegenerating(false);
+    }
+  }
 
   function confirmDelete() { store.deleteBeleg(beleg.id); onClose(); }
 
@@ -147,6 +187,20 @@ export function DetailScreen({ beleg: init, onClose, onAbschliessen, onBearbeite
                 );
               })}
             </div>
+            {istErsatzBeleg && (
+              <button
+                type="button"
+                onClick={regenerateErsatz}
+                disabled={regenerating}
+                style={{
+                  marginTop: 10, width: '100%', padding: '9px 12px', borderRadius: 10,
+                  border: '1px solid var(--ek-border)', background: 'var(--ek-surface)',
+                  color: 'var(--ek-charcoal)', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                }}
+              >
+                {regenerating ? '⏳ Wird neu erstellt …' : '🔄 Ersatz-Beleg neu erstellen (mit Logo)'}
+              </button>
+            )}
           </div>
         )}
 
