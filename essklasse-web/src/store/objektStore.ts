@@ -5,6 +5,12 @@ import type { Objekt } from '../types';
 /** Sentinel für „Alle Objekte" (z.B. Bereichsleitung sieht alle zugeordneten). */
 export const ALLE_OBJEKTE = 'ALL';
 
+/**
+ * Marker in `user.objektIds`, der „allen Objekten zugeordnet" bedeutet (vom
+ * Admin vergebbar, z.B. für die Buchhaltung) → objektübergreifender Zugriff.
+ */
+export const ALLE_OBJEKTE_MARKER = '__alle__';
+
 interface ObjektStore {
   /** Alle dem User zugeordneten Objekte (wird nach Login vom API geladen) */
   objekte: Objekt[];
@@ -90,6 +96,7 @@ export function useSichtbareObjekte(): Objekt[] {
   const users   = useUserStore(s => s.users);
   if (istObjektGebunden(user?.rolle)) {
     const ids = resolveObjektIds(user, users);
+    if (ids.includes(ALLE_OBJEKTE_MARKER)) return objekte;   // „Alle Objekte" zugeordnet
     return objekte.filter(o => ids.includes(o.id));
   }
   return objekte;

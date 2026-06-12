@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { BrandLogo, ESSKLASSE_LOGO } from '../components/BrandLogo';
 import { v4 as uuidv4 } from 'uuid';
 import { useUserStore } from '../store/userStore';
-import { useObjektStore } from '../store/objektStore';
+import { useObjektStore, ALLE_OBJEKTE_MARKER } from '../store/objektStore';
 import { HamburgerDrawer } from '../components/HamburgerDrawer';
 import type { UserRolle, Anrede } from '../types';
 import { isValidEmail } from '../utils/email';
@@ -121,7 +121,7 @@ function UserTab() {
   const objekte = useObjektStore(st => st.objekte);
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
-  const ALLE_OBJEKTE_ID = '__alle__';
+  const ALLE_OBJEKTE_ID = ALLE_OBJEKTE_MARKER;
   const emptyForm = { anrede: 'Herr' as Anrede, vorname: '', nachname: '', email: '', telefon: '', rolle: 'user' as UserRolle, objektIds: [] as string[] };
   const [form, setForm] = useState(emptyForm);
   const [search, setSearch] = useState('');
@@ -146,7 +146,7 @@ function UserTab() {
       email: u.email,
       telefon: u.telefon ?? '',
       rolle: u.rolle,
-      objektIds: u.objektIds.length === 0 && u.rolle === 'buchhaltung' ? [ALLE_OBJEKTE_ID] : u.objektIds,
+      objektIds: u.objektIds,
     });
     setEditId(u.id);
     setShowForm(true);
@@ -173,7 +173,8 @@ function UserTab() {
     doSave();
   }
   function doSave() {
-    const objektIds = form.objektIds.filter(id => id !== ALLE_OBJEKTE_ID);
+    // „Alle Objekte" wird als Marker (ALLE_OBJEKTE_MARKER) gespeichert → Vollzugriff.
+    const objektIds = form.objektIds;
     if (editId) updateUser(editId, { anrede: form.anrede, vorname: form.vorname, nachname: form.nachname, email: form.email, telefon: form.telefon, rolle: form.rolle, objektIds });
     else        addUser({ ...form, objektIds });
     setShowForm(false);

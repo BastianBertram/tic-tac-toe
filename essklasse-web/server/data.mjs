@@ -87,6 +87,8 @@ function userScope(ctx) {
     u.id === identity.id ||
     String(u.email ?? '').toLowerCase() === String(identity.email ?? '').toLowerCase());
   const objektIds = rec?.objektIds ?? identity.objektIds ?? [];
+  // Marker „__alle__" = vom Admin allen Objekten zugeordnet → Vollzugriff.
+  if (objektIds.includes('__alle__')) return { restricted: false, objektIds: [] };
   return { restricted: true, objektIds };
 }
 

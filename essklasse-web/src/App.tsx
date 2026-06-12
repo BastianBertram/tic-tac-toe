@@ -13,7 +13,7 @@ import { BuchhaltungScreen } from './screens/BuchhaltungScreen';
 import { AdminScreen } from './screens/AdminScreen';
 import { useAuthStore } from './store/authStore';
 import { useBelegStore } from './store/belegStore';
-import { useObjektStore, resolveObjektIds, istObjektGebunden, ALLE_OBJEKTE } from './store/objektStore';
+import { useObjektStore, resolveObjektIds, istObjektGebunden, ALLE_OBJEKTE, ALLE_OBJEKTE_MARKER } from './store/objektStore';
 import { useUserStore } from './store/userStore';
 import { useSettingsStore } from './store/settingsStore';
 import { initSync } from './services/sync';
@@ -75,7 +75,10 @@ export default function App() {
     const u = useAuthStore.getState().user;
     // Nur die dem User zugeordneten Objekte berücksichtigen (Admin-Zuordnung).
     const meine = istObjektGebunden(rolle)
-      ? (() => { const ids = resolveObjektIds(u, useUserStore.getState().users); return objStore.objekte.filter(o => ids.includes(o.id)); })()
+      ? (() => {
+          const ids = resolveObjektIds(u, useUserStore.getState().users);
+          return ids.includes(ALLE_OBJEKTE_MARKER) ? objStore.objekte : objStore.objekte.filter(o => ids.includes(o.id));
+        })()
       : objStore.objekte;
     if (prevRolleRef.current !== rolle) { defaultAppliedRef.current = false; prevRolleRef.current = rolle; }
     const darfAlle = istObjektGebunden(rolle) && meine.length > 1;
