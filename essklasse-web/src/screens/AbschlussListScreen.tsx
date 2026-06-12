@@ -4,6 +4,7 @@ import { format } from 'date-fns';
 import { useBelegStore } from '../store/belegStore';
 import { useObjektFilter } from '../store/objektStore';
 import { BelegCard } from '../components/BelegCard';
+import { OffeneBanner } from '../components/OffeneBanner';
 import { AbschlussScreen } from './AbschlussScreen';
 import type { Bewirtungsbeleg } from '../types';
 import s from './AbschlussListScreen.module.css';
@@ -44,14 +45,7 @@ export function AbschlussListScreen({ onOpenBeleg }: Props) {
         <span className={s.headerSection}>✓ Bewirtung Abschließen</span>
       </div>
 
-      {offene.length > 0 && (
-        <div className={s.urgentBanner}>
-          <span className={s.urgentIcon}>⚠️</span>
-          <span>
-            <strong>{offene.length} Bewirtung{offene.length > 1 ? 'en' : ''}</strong> müssen noch abgeschlossen werden.
-          </span>
-        </div>
-      )}
+      <OffeneBanner />
 
       <div className={s.list}>
         {offene.length === 0 ? (
