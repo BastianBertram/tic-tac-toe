@@ -344,6 +344,15 @@ export async function generateErsatzBelegPdf(b: ErsatzBelegInput): Promise<strin
 
   flush();
 
+  // ── Seitenzahl unten rechts (jetzt ist die Gesamtanzahl bekannt) ──
+  const total = pages.length;
+  const einheit = total === 1 ? 'Seite' : 'Seiten';
+  for (let i = 0; i < total; i++) {
+    const label = `Seite ${i + 1} von ${total} ${einheit}`;
+    const fx = PAGE_W - MARGIN - textWidth(label, 8, false);
+    pages[i] += `BT /F1 8 Tf ${fx.toFixed(2)} 30 Td (${esc(label)}) Tj ET\n`;
+  }
+
   return buildPdf(pages, logo);
 }
 
