@@ -128,6 +128,7 @@ function UserTab() {
   const emptyForm = { anrede: 'Herr' as Anrede, vorname: '', nachname: '', email: '', telefon: '', rolle: 'user' as UserRolle, objektIds: [] as string[] };
   const [form, setForm] = useState(emptyForm);
   const [search, setSearch] = useState('');
+  const [objektSuche, setObjektSuche] = useState(''); // Suche in „Objekte zuordnen"
   // Standard: alle Benutzer zeigen, deaktivierte erscheinen ausgegraut.
   const [filter, setFilter] = useState<FilterStatus>('alle');
   const [confirmDeactivate, setConfirmDeactivate] = useState(false);
@@ -141,6 +142,7 @@ function UserTab() {
     setForm({ ...emptyForm, objektIds: defaultObjektIds('user') });
     setEditId(null);
     setEditMode(true);   // neuer Benutzer ist direkt editierbar
+    setObjektSuche('');
     setShowForm(true);
   }
   function openEdit(u: typeof users[0]) {
@@ -155,6 +157,7 @@ function UserTab() {
     });
     setEditId(u.id);
     setEditMode(false);  // bestehende Karte startet schreibgeschützt (Ansehen)
+    setObjektSuche('');
     setShowForm(true);
   }
   function closeForm() { setShowForm(false); setEditMode(false); }
@@ -281,9 +284,22 @@ function UserTab() {
           <option value="admin">Admin</option>
         </select>
 
-        {(form.rolle === 'user' || form.rolle === 'buchhaltung' || form.rolle === 'bereichsleitung') && objekte.length > 0 && (
+        {(form.rolle === 'user' || form.rolle === 'buchhaltung' || form.rolle === 'bereichsleitung') && objekte.length > 0 && (() => {
+          const q = objektSuche.trim().toLowerCase();
+          const gefiltert = objekte.filter(o => o.aktiv !== false &&
+            (!q || `${o.kuerzel ?? ''} ${o.name ?? ''}`.toLowerCase().includes(q)));
+          return (
           <>
             <label className={s.label}>Objekte zuordnen *</label>
+            <input
+              className={s.input}
+              type="text"
+              placeholder="🔎 Objekt suchen …"
+              value={objektSuche}
+              disabled={readOnly}
+              onChange={e => setObjektSuche(e.target.value)}
+              style={{ marginBottom: 8 }}
+            />
             <div className={s.objektCheckList}>
               {form.rolle === 'buchhaltung' && (
                 <label className={`${s.checkRow} ${s.checkRowAlle}`}>
@@ -296,15 +312,19 @@ function UserTab() {
                   <span className={s.checkRowAlleLabel}>🌐 Alle Objekte</span>
                 </label>
               )}
-              {objekte.filter(o => o.aktiv !== false).map(o => (
+              {gefiltert.map(o => (
                 <label key={o.id} className={s.checkRow}>
                   <input type="checkbox" disabled={readOnly} checked={form.objektIds.includes(o.id)} onChange={() => toggleObjekt(o.id)} />
                   <span>{o.kuerzel ? `${o.kuerzel} – ` : ''}{o.name}</span>
                 </label>
               ))}
+              {gefiltert.length === 0 && (
+                <div style={{ fontSize: 12.5, color: 'var(--ek-muted)', padding: '4px 2px' }}>Kein Objekt gefunden.</div>
+              )}
             </div>
           </>
-        )}
+          );
+        })()}
 
         {/* Deaktivieren — nur im Bearbeitungsmodus eines aktiven Benutzers */}
         {editId && editTarget?.aktiv && editMode && (
