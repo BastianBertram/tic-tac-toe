@@ -160,6 +160,19 @@ export function handleData(method, url, body, ctx = {}) {
       return { status: 400, payload: { error: 'Body muss ein Objekt sein.' } };
     }
 
+    // Deaktivierung ist endgültig: ein einmal deaktivierter Benutzer kann
+    // serverseitig nicht wieder aktiviert werden (auch nicht per Direkt-API).
+    if (name === 'users') {
+      const vorher = Array.isArray(load(name).data?.users) ? load(name).data.users : [];
+      const inaktiveIds = new Set(vorher.filter(u => u.aktiv === false).map(u => u.id));
+      const users = Array.isArray(body.users)
+        ? body.users.map(u => inaktiveIds.has(u.id) ? { ...u, aktiv: false } : u)
+        : body.users;
+      const merged = { ...body, users };
+      persist(name, merged);
+      return { status: 200, payload: { initialized: true, data: merged } };
+    }
+
     // Eingeschränkte Nutzer dürfen Objekte nicht verändern → Stand bewahren,
     // Antwort auf den eigenen Geltungsbereich beschränken.
     if (name === 'objekte') {
