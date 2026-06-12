@@ -56,6 +56,7 @@ export function NewBelegScreen({ onClose, editBeleg }: Props) {
   const [f, setF] = useState(editBeleg ? initFromBeleg(editBeleg) : INIT);
   const [saving, setSaving] = useState(false);
   const [showErrors, setShowErrors] = useState(false);
+  const [mismatchWarn, setMismatchWarn] = useState(false);
   const [selectedObjektId, setSelectedObjektId] = useState<string>(editBeleg?.objektId ?? aktivesObjekt?.id ?? '');
   const addBeleg = useBelegStore(s => s.addBeleg);
   const currentUser = useAuthStore(st => st.user);
@@ -99,6 +100,20 @@ export function NewBelegScreen({ onClose, editBeleg }: Props) {
     showErrors && !ok ? { borderColor: '#e74c3c', background: '#fdecea' } : undefined;
 
   function applyExtracted(data: ExtractedBeleg) {
+    // Beim Bearbeiten: gehört der hochgeladene Beleg zu einem anderen Besteller,
+    // dürfen die vorhandenen Daten nicht überschrieben werden.
+    if (editBeleg) {
+      const norm = (s?: string) => (s ?? '').toLowerCase().replace(/\s+/g, ' ').trim();
+      const orig = norm(editBeleg.besteller);
+      const neu = norm(data.besteller);
+      if (orig && neu && orig !== neu) {
+        setMismatchWarn(true);
+        set('fotoDataUrls', editBeleg.fotoDataUrls); // Fremd-Beleg wieder entfernen
+        return;
+      }
+    }
+    setMismatchWarn(false);
+
     const extractedPositionen: BelegPosition[] = (data.positionen ?? []).map(p => ({
       id: uuidv4(),
       kategorie: (KATEGORIEN_LIST.includes(p.kategorie as Kategorie) ? p.kategorie : 'Sonstiges') as Kategorie,
@@ -246,9 +261,20 @@ export function NewBelegScreen({ onClose, editBeleg }: Props) {
           <PhotoCapture
             label="📷 Bewirtungsbeleg (optional)"
             dataUrls={f.fotoDataUrls}
-            onChange={v => set('fotoDataUrls', v)}
+            onChange={v => { setMismatchWarn(false); set('fotoDataUrls', v); }}
             onExtracted={applyExtracted}
           />
+          {mismatchWarn && (
+            <div style={{
+              marginTop: 10, padding: '10px 12px', borderRadius: 10, fontSize: 12.5, lineHeight: 1.5,
+              border: '1px solid #f5b7b1', background: '#fdecea', color: '#c0392b', fontWeight: 600,
+            }}>
+              ⚠️ <strong>Anderer Besteller erkannt.</strong> Der hochgeladene Beleg gehört zu einem
+              anderen Bewirtungsauftrag – die Daten wurden nicht übernommen.
+              <br />Bitte als <strong>neuen Bewirtungsauftrag</strong> anlegen oder den richtigen
+              Auftrag zum Bearbeiten wählen.
+            </div>
+          )}
           <div style={{
             marginTop: 10, padding: '10px 12px', borderRadius: 10, fontSize: 12.5, lineHeight: 1.45,
             border: `1px solid ${belegOk ? '#a9dfbf' : '#f5d6a8'}`,
