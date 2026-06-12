@@ -21,6 +21,30 @@ const MAX_BODY_BYTES = 25 * 1024 * 1024; // 25 MB — data URLs of photos/PDFs
 
 const ANTHROPIC_URL = 'https://api.anthropic.com/v1/messages';
 
+// ── Single-Device-Sessions ───────────────────────────────────────────────────
+// Pro Nutzer ist nur EIN Gerät gleichzeitig aktiv. Ein neuer Login/Claim auf
+// einem anderen Gerät verdrängt die bisherige Sitzung; das alte Gerät erhält
+// danach 401 SESSION_SUPERSEDED und wird abgemeldet.
+const activeDevice = new Map(); // email(lower) → deviceId
+
+function emailOf(req) {
+  const u = getSessionUser(req);
+  return String(u?.email ?? req.headers['x-user-email'] ?? '').toLowerCase() || null;
+}
+function claimDevice(email, deviceId) {
+  if (!email || !deviceId) return false;
+  activeDevice.set(email, deviceId);
+  return true;
+}
+/** true, wenn das anfragende Gerät das aktuell aktive ist (oder noch keins gesetzt). */
+function isCurrentDevice(req) {
+  const email = emailOf(req);
+  if (!email) return true;                       // unbekannt → nicht blockieren
+  const cur = activeDevice.get(email);
+  if (!cur) return true;                          // noch kein Gerät beansprucht
+  return cur === (req.headers['x-device-id'] ?? null);
+}
+
 // ── Prompts (moved off the client) ──────────────────────────────────────────
 const OCR_BELEG_SYSTEM = `Du bist ein präziser OCR-Assistent für Bewirtungsbelege der HWK Hannover / EssKlasse Catering & Gastronomie.
 
@@ -230,7 +254,7 @@ const server = createServer(async (req, res) => {
     res.writeHead(204, {
       'Access-Control-Allow-Origin': ALLOWED_ORIGIN,
       'Access-Control-Allow-Methods': 'GET, POST, PUT, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, X-User-Email',
+      'Access-Control-Allow-Headers': 'Content-Type, X-User-Email, X-Device-Id',
       'Access-Control-Allow-Credentials': 'true',
       'Access-Control-Max-Age': '86400',
       'Vary': 'Origin',
@@ -245,8 +269,17 @@ const server = createServer(async (req, res) => {
     return send(res, 200, { ok: true, aiConfigured: Boolean(API_KEY) });
   }
 
-  // ── Konto-Status (für Sofort-Logout bei Deaktivierung) ──
+  // ── Single-Device: dieses Gerät als aktives beanspruchen (Login) ──
+  if (req.method === 'POST' && url === '/api/session/claim') {
+    const ok = claimDevice(emailOf(req), req.headers['x-device-id'] ?? null);
+    return send(res, ok ? 200 : 400, { ok });
+  }
+
+  // ── Konto-Status (für Sofort-Logout bei Deaktivierung / Geräte­wechsel) ──
   if (req.method === 'GET' && url === '/api/me') {
+    if (!isCurrentDevice(req)) {
+      return send(res, 401, { error: 'SESSION_SUPERSEDED' });
+    }
     const user = getSessionUser(req);
     const devEmail = req.headers['x-user-email'] ?? null;
     return send(res, 200, accountStatus({ user, devEmail }));
@@ -266,6 +299,10 @@ const server = createServer(async (req, res) => {
 
   // ── App-Daten (Benutzer, Objekte, Belege, Sales) ──
   if (url.startsWith('/api/data/') && (req.method === 'GET' || req.method === 'PUT')) {
+    // Verdrängte Sitzung (anderes Gerät) → Zugriff verweigern.
+    if (!isCurrentDevice(req)) {
+      return send(res, 401, { error: 'SESSION_SUPERSEDED' });
+    }
     try {
       const body = req.method === 'PUT' ? await readJsonBody(req) : null;
       const user = getSessionUser(req);

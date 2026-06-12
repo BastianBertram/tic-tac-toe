@@ -17,7 +17,7 @@ import { useObjektStore, resolveObjektIds, istObjektGebunden, ALLE_OBJEKTE, ALLE
 import { useUserStore } from './store/userStore';
 import { useSettingsStore } from './store/settingsStore';
 import { initSync } from './services/sync';
-import { fetchMe, setOnDeactivated } from './services/dataService';
+import { fetchMe, setOnDeactivated, setOnSuperseded, claimSession } from './services/dataService';
 import { GFHomeScreen } from './screens/GFHomeScreen';
 import { GFBewirtungsListScreen } from './screens/GFBewirtungsListScreen';
 import type { GFKategorie } from './screens/GFBewirtungsListScreen';
@@ -66,22 +66,31 @@ export default function App() {
     void initSync();
   }, []);
 
-  // Deaktivierung durch den Admin → sofortiger Logout (Sperre serverseitig).
+  // Deaktivierung (Admin) bzw. Anmeldung auf einem anderen Gerät → Sofort-Logout.
   useEffect(() => {
-    const deaktivieren = () => {
+    const abmelden = (grund: string) => {
       if (!useAuthStore.getState().user) return;
       useAuthStore.getState().logout();
       useObjektStore.getState().reset();
-      alert('Ihr Konto wurde deaktiviert. Sie wurden abgemeldet. Bitte wenden Sie sich an Ihren Administrator.');
+      alert(grund);
     };
-    setOnDeactivated(deaktivieren);
+    setOnDeactivated(() => abmelden('Ihr Konto wurde deaktiviert. Sie wurden abgemeldet. Bitte wenden Sie sich an Ihren Administrator.'));
+    setOnSuperseded(() => abmelden('Sie wurden abgemeldet, da Ihr Konto auf einem anderen Gerät angemeldet wurde.'));
     const id = setInterval(async () => {
       if (!useAuthStore.getState().user) return;
-      const me = await fetchMe();
-      if (me && me.authenticated && !me.active) deaktivieren();
+      const me = await fetchMe();             // erkennt Deaktivierung & Geräte­wechsel (401/403)
+      if (me && me.authenticated && !me.active) {
+        abmelden('Ihr Konto wurde deaktiviert. Sie wurden abgemeldet. Bitte wenden Sie sich an Ihren Administrator.');
+      }
     }, 8000);
     return () => clearInterval(id);
   }, []);
+
+  // Beim Anmelden dieses Gerät als aktive Sitzung beanspruchen (verdrängt andere).
+  const userEmail = user?.email;
+  useEffect(() => {
+    if (userEmail) void claimSession();
+  }, [userEmail]);
 
   // User & Bereichsleitung mit mehreren Objekten: standardmäßig „Alle Objekte".
   // Bei nur einem Objekt oder anderen Rollen → ggf. auf ein Einzelobjekt zurücksetzen.
