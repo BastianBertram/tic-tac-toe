@@ -98,8 +98,11 @@ function login(body, _req, { allowedOrigin }) {
   magicTokens.set(token, { email: user.email, expiresAt: Date.now() + MAGIC_TTL_MS });
   const link = `${allowedOrigin}/?token=${token}`;
 
-  // TODO: send `link` via a real email provider. For dev we log it.
-  console.log(`[auth] magic link for ${user.email}:\n  ${link}`);
+  // TODO: send `link` via a real email provider.
+  // In Produktion NICHT loggen (enthält ein gültiges One-Time-Token); nur in Dev.
+  if (!IS_PROD) {
+    console.log(`[auth] magic link for ${user.email}:\n  ${link}`);
+  }
 
   // In dev, also return the link so it's testable without an email provider.
   return { status: 200, payload: IS_PROD ? { ok: true } : { ok: true, devLink: link } };
@@ -115,7 +118,8 @@ function verify(body) {
   const user = findUser(entry.email);
   if (!user) return { status: 401, payload: { error: 'Konto nicht gefunden.' } };
   // Vom Admin deaktivierte Konten dürfen sich nicht einloggen.
-  if (!accountStatus({ devEmail: user.email }).active) {
+  const st = accountStatus({ devEmail: user.email });
+  if (st.authenticated && !st.active) {
     return { status: 403, payload: { error: 'Konto deaktiviert. Bitte wenden Sie sich an Ihren Administrator.' } };
   }
 
@@ -134,7 +138,8 @@ function refresh(_body, req) {
   const user = findUser(entry.email);
   if (!user) return { status: 401, payload: { error: 'Konto nicht gefunden.' } };
   // Während einer laufenden Sitzung deaktiviert → Sitzung beenden.
-  if (!accountStatus({ devEmail: user.email }).active) {
+  const st = accountStatus({ devEmail: user.email });
+  if (st.authenticated && !st.active) {
     sessions.delete(token);
     return { status: 403, payload: { error: 'Konto deaktiviert.' }, setCookie: buildSetCookie('', { clear: true }) };
   }

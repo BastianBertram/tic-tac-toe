@@ -85,10 +85,10 @@ function resolveIdentity(ctx) {
   return null;
 }
 
-/** Status des Kontos: authentifiziert? aktiv? */
+/** Status des Kontos: authentifiziert? aktiv? (fail-closed: unbekannt = inaktiv) */
 export function accountStatus(ctx) {
   const idn = resolveIdentity(ctx);
-  return { authenticated: !!idn, active: idn ? idn.aktiv !== false : true };
+  return { authenticated: !!idn, active: idn ? idn.aktiv !== false : false };
 }
 
 function userScope(ctx) {
@@ -117,8 +117,9 @@ export function handleData(method, url, body, ctx = {}) {
   const cfg = COLLECTIONS[name];
   if (!cfg) return { status: 404, payload: { error: 'Unknown collection' } };
 
-  // Deaktivierte Konten verlieren sofort jeden Datenzugriff.
-  if (!accountStatus(ctx).active) {
+  // Authentifizierte, aber deaktivierte Konten verlieren sofort jeden Zugriff.
+  const status = accountStatus(ctx);
+  if (status.authenticated && !status.active) {
     return { status: 403, payload: { error: 'ACCOUNT_DEACTIVATED' } };
   }
 
@@ -147,17 +148,33 @@ export function handleData(method, url, body, ctx = {}) {
   }
 
   if (method === 'PUT') {
-    if (IS_PROD) {
-      const user = ctx.user;
-      if (cfg.write === 'admin' && user?.rolle !== 'admin') {
+    // Autorisierung anhand der EINEN Rollenquelle (resolveIdentity → users.json),
+    // konsistent zum Lese-Scoping. Admin-Schreibrechte (users/objekte) werden in
+    // Dev wie Prod erzwungen — verhindert Privilege Escalation. Ausnahme: das
+    // initiale Befüllen einer noch leeren Kollektion (Bootstrap/Seed).
+    const identity = resolveIdentity(ctx);
+    if (cfg.write === 'admin' && identity?.rolle !== 'admin') {
+      const existing = load(name).data?.[name];
+      const bootstrapping = !Array.isArray(existing) || existing.length === 0;
+      if (!bootstrapping) {
         return { status: 403, payload: { error: 'Nur Admins dürfen diese Daten ändern.' } };
       }
-      if (cfg.write === 'auth' && !user) {
-        return { status: 401, payload: { error: 'Anmeldung erforderlich.' } };
-      }
+    }
+    // Auth-Schreibrechte (belege/sales) sind in Produktion zwingend.
+    if (IS_PROD && cfg.write === 'auth' && !identity) {
+      return { status: 401, payload: { error: 'Anmeldung erforderlich.' } };
     }
     if (!body || typeof body !== 'object' || Array.isArray(body)) {
       return { status: 400, payload: { error: 'Body muss ein Objekt sein.' } };
+    }
+    // Datenintegrität: ein bestehender Stammdatenbestand darf nicht durch eine
+    // leere Liste komplett gelöscht werden (Schutz vor versehentlichem Wipe).
+    if (name === 'users' || name === 'objekte') {
+      const vorhanden = Array.isArray(load(name).data?.[name]) ? load(name).data[name] : [];
+      const eingehend = Array.isArray(body[name]) ? body[name] : null;
+      if (vorhanden.length > 0 && eingehend && eingehend.length === 0) {
+        return { status: 400, payload: { error: 'Leere Stammdatenliste nicht erlaubt.' } };
+      }
     }
 
     // Deaktivierung ist endgültig: ein einmal deaktivierter Benutzer ist
