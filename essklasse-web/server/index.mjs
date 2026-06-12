@@ -230,7 +230,7 @@ const server = createServer(async (req, res) => {
     res.writeHead(204, {
       'Access-Control-Allow-Origin': ALLOWED_ORIGIN,
       'Access-Control-Allow-Methods': 'GET, POST, PUT, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
+      'Access-Control-Allow-Headers': 'Content-Type, X-User-Email',
       'Access-Control-Allow-Credentials': 'true',
       'Access-Control-Max-Age': '86400',
       'Vary': 'Origin',
@@ -262,7 +262,8 @@ const server = createServer(async (req, res) => {
     try {
       const body = req.method === 'PUT' ? await readJsonBody(req) : null;
       const user = getSessionUser(req);
-      const result = handleData(req.method, url, body, { user });
+      const devEmail = req.headers['x-user-email'] ?? null;
+      const result = handleData(req.method, url, body, { user, devEmail });
       if (!result) return send(res, 404, { error: 'Not found' });
       return send(res, result.status, result.payload);
     } catch (e) {

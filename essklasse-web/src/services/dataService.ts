@@ -1,3 +1,5 @@
+import { useAuthStore } from '../store/authStore';
+
 const BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:3001';
 
 export interface DataEnvelope<T = unknown> {
@@ -6,10 +8,23 @@ export interface DataEnvelope<T = unknown> {
   data: T;
 }
 
+/**
+ * Identifiziert den aktuellen Nutzer gegenüber dem Server. In Produktion ist
+ * das Session-Cookie maßgeblich; der Header dient als Dev-Fallback (kein echter
+ * Session-Login über den Rollen-Switcher).
+ */
+function identityHeaders(): Record<string, string> {
+  const email = useAuthStore.getState().user?.email;
+  return email ? { 'X-User-Email': email } : {};
+}
+
 /** Lädt eine Kollektion vom Server. null bei Netzwerkfehler (Server offline). */
 export async function fetchData<T = unknown>(name: string): Promise<DataEnvelope<T> | null> {
   try {
-    const res = await fetch(`${BASE}/api/data/${name}`, { credentials: 'include' });
+    const res = await fetch(`${BASE}/api/data/${name}`, {
+      credentials: 'include',
+      headers: { ...identityHeaders() },
+    });
     if (!res.ok) return null;
     return await res.json();
   } catch {
@@ -23,7 +38,7 @@ export async function saveData(name: string, data: unknown): Promise<boolean> {
     const res = await fetch(`${BASE}/api/data/${name}`, {
       method: 'PUT',
       credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...identityHeaders() },
       body: JSON.stringify(data),
     });
     return res.ok;

@@ -61,6 +61,33 @@ function persist(name, data) {
  * @param ctx { user } – eingeloggter Nutzer (oder null) für die Schreibrechte-Prüfung
  * @returns { status, payload } oder null, wenn keine Daten-Route
  */
+/**
+ * Ermittelt den Objekt-Geltungsbereich des anfragenden Nutzers.
+ * Quelle ist der im Admin verwaltete Benutzer-Datensatz (users.json); die
+ * Identität kommt aus der Session (Cookie) oder – als Dev-Fallback – aus dem
+ * Header `X-User-Email`.
+ * @returns { restricted: boolean, objektIds: string[] }
+ *   restricted=true nur für die Rollen `user`/`bereichsleitung`.
+ */
+function userScope(ctx) {
+  const users = load('users').data?.users ?? [];
+  let identity = ctx.user ?? null;
+  if (!identity && ctx.devEmail) {
+    const mail = String(ctx.devEmail).toLowerCase();
+    identity = users.find(u => String(u.email ?? '').toLowerCase() === mail) ?? null;
+  }
+  if (!identity) return { restricted: false, objektIds: [] };
+  if (identity.rolle !== 'user' && identity.rolle !== 'bereichsleitung') {
+    return { restricted: false, objektIds: [] };
+  }
+  // Maßgeblich ist die im Admin gepflegte Zuordnung.
+  const rec = users.find(u =>
+    u.id === identity.id ||
+    String(u.email ?? '').toLowerCase() === String(identity.email ?? '').toLowerCase());
+  const objektIds = rec?.objektIds ?? identity.objektIds ?? [];
+  return { restricted: true, objektIds };
+}
+
 export function handleData(method, url, body, ctx = {}) {
   const m = url.match(/^\/api\/data\/([a-z]+)$/);
   if (!m) return null;
@@ -69,7 +96,20 @@ export function handleData(method, url, body, ctx = {}) {
   if (!cfg) return { status: 404, payload: { error: 'Unknown collection' } };
 
   if (method === 'GET') {
-    return { status: 200, payload: load(name) };
+    const env = load(name);
+    // Belege nur für die dem Nutzer zugeordneten Objekte ausliefern.
+    if (name === 'belege') {
+      const scope = userScope(ctx);
+      if (scope.restricted) {
+        const ids = new Set(scope.objektIds);
+        const alle = Array.isArray(env.data?.belege) ? env.data.belege : [];
+        return { status: 200, payload: {
+          initialized: env.initialized,
+          data: { ...env.data, belege: alle.filter(b => ids.has(b.objektId)) },
+        } };
+      }
+    }
+    return { status: 200, payload: env };
   }
 
   if (method === 'PUT') {
@@ -85,9 +125,40 @@ export function handleData(method, url, body, ctx = {}) {
     if (!body || typeof body !== 'object' || Array.isArray(body)) {
       return { status: 400, payload: { error: 'Body muss ein Objekt sein.' } };
     }
+
+    // Eingeschränkte Nutzer dürfen nur Belege ihrer Objekte schreiben; Belege
+    // anderer Objekte bleiben unangetastet (Merge statt vollständigem Ersetzen).
+    if (name === 'belege') {
+      const scope = userScope(ctx);
+      if (scope.restricted) {
+        const ids = new Set(scope.objektIds);
+        const bestehend = Array.isArray(load(name).data?.belege) ? load(name).data.belege : [];
+        const fremde    = bestehend.filter(b => !ids.has(b.objektId));      // unverändert lassen
+        const eigenAlt  = bestehend.filter(b => ids.has(b.objektId));
+        let eigenNeu    = Array.isArray(body.belege) ? body.belege.filter(b => ids.has(b.objektId)) : [];
+        // Schutz: ein leerer Eigen-Push (z.B. uninitialisierter Client) darf die
+        // bereits vorhandenen Belege des Nutzers nicht versehentlich löschen.
+        if (eigenNeu.length === 0 && eigenAlt.length > 0) eigenNeu = eigenAlt;
+        const mergedZaehler = mergeZaehler(load(name).data?.bestellungZaehler, body.bestellungZaehler);
+        const merged = { ...load(name).data, ...body, belege: [...fremde, ...eigenNeu], bestellungZaehler: mergedZaehler };
+        persist(name, merged);
+        // Antwort wieder auf den Geltungsbereich beschränken.
+        return { status: 200, payload: { initialized: true, data: { ...merged, belege: eigenNeu } } };
+      }
+    }
+
     persist(name, body);
     return { status: 200, payload: { initialized: true, data: body } };
   }
 
   return { status: 405, payload: { error: 'Method not allowed' } };
+}
+
+/** Führt zwei Bestellungszähler zusammen (höchster Wert je Jahr gewinnt). */
+function mergeZaehler(a = {}, b = {}) {
+  const out = { ...a };
+  for (const [k, v] of Object.entries(b ?? {})) {
+    out[k] = Math.max(Number(out[k] ?? 0), Number(v ?? 0));
+  }
+  return out;
 }
