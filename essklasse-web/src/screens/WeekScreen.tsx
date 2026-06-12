@@ -31,6 +31,52 @@ function toMin(t?: string): number | null {
   return h * 60 + m;
 }
 
+interface Platzierung { beleg: Bewirtungsbeleg; von: number; bis: number; lane: number; lanes: number; }
+
+/**
+ * Ordnet die Belege eines Tages überlappungsfrei in Spuren (lanes) an:
+ * sich zeitlich überschneidende Belege erhalten verschiedene Spuren und werden
+ * dadurch nebeneinander statt übereinander dargestellt.
+ */
+function platziere(dayBelege: Bewirtungsbeleg[]): Platzierung[] {
+  const items = dayBelege
+    .map(b => {
+      const von = toMin(b.uhrzeitVon);
+      if (von == null) return null;
+      const bis = Math.max(toMin(b.uhrzeitBis) ?? von + 60, von + 15);
+      return { beleg: b, von, bis };
+    })
+    .filter((x): x is { beleg: Bewirtungsbeleg; von: number; bis: number } => x != null)
+    .sort((a, b) => a.von - b.von || a.bis - b.bis);
+
+  const result: Platzierung[] = [];
+  let cluster: typeof items = [];
+  let clusterEnd = -1;
+
+  const flush = () => {
+    if (cluster.length === 0) return;
+    const laneEnds: number[] = []; // Endzeit je Spur
+    const laneOf = new Map<typeof cluster[number], number>();
+    for (const it of cluster) {
+      let lane = laneEnds.findIndex(end => end <= it.von);
+      if (lane === -1) { lane = laneEnds.length; laneEnds.push(it.bis); }
+      else laneEnds[lane] = it.bis;
+      laneOf.set(it, lane);
+    }
+    const lanes = laneEnds.length;
+    for (const it of cluster) result.push({ ...it, lane: laneOf.get(it)!, lanes });
+    cluster = [];
+  };
+
+  for (const it of items) {
+    if (cluster.length > 0 && it.von >= clusterEnd) flush();
+    cluster.push(it);
+    clusterEnd = Math.max(clusterEnd, it.bis);
+  }
+  flush();
+  return result;
+}
+
 export function WeekScreen({ onOpenBeleg, onTabAbschluss }: Props) {
   const belege          = useBelegStore(st => st.belege);
   const { matchObjekt } = useObjektFilter();
@@ -136,19 +182,18 @@ export function WeekScreen({ onOpenBeleg, onTabAbschluss }: Props) {
                 {hours.map(h => (
                   <div key={h} className={s.hourLine} style={{ top: (h - minH) * HOUR_H }} />
                 ))}
-                {/* Bewirtungen als Zeitblöcke */}
-                {dayBelege.map(b => {
-                  const von = toMin(b.uhrzeitVon);
-                  if (von == null) return null;
-                  const bis = toMin(b.uhrzeitBis) ?? von + 60;
+                {/* Bewirtungen als Zeitblöcke — überlappende nebeneinander */}
+                {platziere(dayBelege).map(({ beleg: b, von, bis, lane, lanes }) => {
                   const top = (von - minH * 60) / 60 * HOUR_H;
                   const height = Math.max((bis - von) / 60 * HOUR_H, 22);
+                  const left = `calc(${(lane / lanes) * 100}% + 2px)`;
+                  const width = `calc(${100 / lanes}% - 4px)`;
                   return (
                     <button
                       key={b.id}
                       type="button"
                       className={`${s.entry} ${b.abgeschlossen ? s.entryDone : ''}`}
-                      style={{ top, height }}
+                      style={{ top, height, left, width }}
                       onClick={() => onOpenBeleg(b)}
                       title={`${b.uhrzeitVon}–${b.uhrzeitBis || ''} · ${b.veranstaltung || 'Bewirtung'}`}
                     >

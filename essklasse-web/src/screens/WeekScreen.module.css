@@ -92,7 +92,7 @@
 
 /* Bewirtung als Zeitblock */
 .entry {
-  position: absolute; left: 2px; right: 2px;
+  position: absolute;
   display: flex; flex-direction: column; gap: 0;
   overflow: hidden; text-align: left;
   padding: 2px 4px; border-radius: 5px;
