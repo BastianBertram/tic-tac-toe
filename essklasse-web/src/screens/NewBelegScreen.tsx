@@ -55,6 +55,7 @@ export function NewBelegScreen({ onClose, editBeleg }: Props) {
 
   const [f, setF] = useState(editBeleg ? initFromBeleg(editBeleg) : INIT);
   const [saving, setSaving] = useState(false);
+  const [showErrors, setShowErrors] = useState(false);
   const [selectedObjektId, setSelectedObjektId] = useState<string>(editBeleg?.objektId ?? aktivesObjekt?.id ?? '');
   const addBeleg = useBelegStore(s => s.addBeleg);
   const currentUser = useAuthStore(st => st.user);
@@ -67,21 +68,35 @@ export function NewBelegScreen({ onClose, editBeleg }: Props) {
   // Pflichtfelder – immer erforderlich, unabhängig davon ob ein Beleg
   // hochgeladen oder manuell erfasst wird. Mindestens eine Position muss
   // ebenfalls vorhanden sein.
+  const v = {
+    besteller:     !!f.besteller.trim(),
+    veranstaltung: !!f.veranstaltung.trim(),
+    datumVon:      !!f.cateringDatumVon,
+    datumBis:      !!f.cateringDatumBis,
+    uhrzeitVon:    !!f.uhrzeitVon,
+    uhrzeitBis:    !!f.uhrzeitBis,
+    ort:           !!f.ort.trim(),
+    telefon:       !!f.rechnungsanschriftTelefon.trim(),
+  };
   const pflichtFelder: [string, boolean][] = [
-    ['Besteller', !!f.besteller.trim()],
-    ['Veranstaltung', !!f.veranstaltung.trim()],
-    ['Datum von', !!f.cateringDatumVon],
-    ['Datum bis', !!f.cateringDatumBis],
-    ['Uhrzeit von', !!f.uhrzeitVon],
-    ['Uhrzeit bis', !!f.uhrzeitBis],
-    ['Ort', !!f.ort.trim()],
-    ['Telefon für Rückfragen', !!f.rechnungsanschriftTelefon.trim()],
+    ['Besteller', v.besteller],
+    ['Veranstaltung', v.veranstaltung],
+    ['Datum von', v.datumVon],
+    ['Datum bis', v.datumBis],
+    ['Uhrzeit von', v.uhrzeitVon],
+    ['Uhrzeit bis', v.uhrzeitBis],
+    ['Ort', v.ort],
+    ['Telefon für Rückfragen', v.telefon],
   ];
   const hatPositionen   = f.positionen.length > 0;
   const pflichtOffen    = pflichtFelder.filter(([, ok]) => !ok).map(([name]) => name);
   const fehlendePflicht = [...pflichtOffen, ...(hatPositionen ? [] : ['mindestens eine Position'])];
   const hatDokument     = f.fotoDataUrls.length > 0;
   const belegOk         = fehlendePflicht.length === 0;
+
+  // Rote Markierung für Pflichtfelder, sobald ein Speicherversuch fehlschlug.
+  const errStyle = (ok: boolean): React.CSSProperties | undefined =>
+    showErrors && !ok ? { borderColor: '#e74c3c', background: '#fdecea' } : undefined;
 
   function applyExtracted(data: ExtractedBeleg) {
     const extractedPositionen: BelegPosition[] = (data.positionen ?? []).map(p => ({
@@ -122,7 +137,9 @@ export function NewBelegScreen({ onClose, editBeleg }: Props) {
   async function handleSave() {
     if (!selectedObjektId) return alert('Bitte ein Objekt auswählen.');
     if (!belegOk) {
-      return alert('Bitte alle Pflichtfelder ausfüllen.\n\nNoch offen: ' + fehlendePflicht.join(', ') + '.');
+      // Pflichtfelder rot markieren und Hinweis über dem Speichern-Button zeigen.
+      setShowErrors(true);
+      return;
     }
     const gewaehltes = objekte.find(o => o.id === selectedObjektId) ?? aktivesObjekt;
     setSaving(true);
@@ -276,14 +293,14 @@ export function NewBelegScreen({ onClose, editBeleg }: Props) {
           <div className={s.sectionTitle}>Bestellerdaten</div>
 
           <Field label="Besteller / Auftraggeber *">
-            <input value={f.besteller} onChange={e => set('besteller', e.target.value)} placeholder="Name des Bestellers" />
+            <input value={f.besteller} onChange={e => set('besteller', e.target.value)} placeholder="Name des Bestellers" style={errStyle(v.besteller)} />
           </Field>
           <Field label="Veranstaltung / Anlass *">
-            <input value={f.veranstaltung} onChange={e => set('veranstaltung', e.target.value)} placeholder="z.B. Vorstandssitzung, Schulung …" />
+            <input value={f.veranstaltung} onChange={e => set('veranstaltung', e.target.value)} placeholder="z.B. Vorstandssitzung, Schulung …" style={errStyle(v.veranstaltung)} />
           </Field>
           <div className={s.twoCol}>
             <Field label="Datum von *">
-              <input type="date" value={f.cateringDatumVon} onChange={e => {
+              <input type="date" value={f.cateringDatumVon} style={errStyle(v.datumVon)} onChange={e => {
                 const val = e.target.value;
                 setF(prev => ({
                   ...prev,
@@ -293,12 +310,12 @@ export function NewBelegScreen({ onClose, editBeleg }: Props) {
               }} />
             </Field>
             <Field label="Datum bis *">
-              <input type="date" value={f.cateringDatumBis} min={f.cateringDatumVon} onChange={e => set('cateringDatumBis', e.target.value)} />
+              <input type="date" value={f.cateringDatumBis} min={f.cateringDatumVon} style={errStyle(v.datumBis)} onChange={e => set('cateringDatumBis', e.target.value)} />
             </Field>
           </div>
           <div className={s.twoCol}>
             <Field label="Uhrzeit von *">
-              <input type="time" value={f.uhrzeitVon} onChange={e => {
+              <input type="time" value={f.uhrzeitVon} style={errStyle(v.uhrzeitVon)} onChange={e => {
                 const val = e.target.value;
                 setF(prev => ({
                   ...prev,
@@ -309,7 +326,7 @@ export function NewBelegScreen({ onClose, editBeleg }: Props) {
               }} />
             </Field>
             <Field label="Uhrzeit bis *">
-              <input type="time" value={f.uhrzeitBis}
+              <input type="time" value={f.uhrzeitBis} style={errStyle(v.uhrzeitBis)}
                 onChange={e => {
                   const val = e.target.value;
                   const sameDay = f.cateringDatumVon === f.cateringDatumBis;
@@ -319,7 +336,7 @@ export function NewBelegScreen({ onClose, editBeleg }: Props) {
           </div>
           <div className={s.twoCol}>
             <Field label="Ort *">
-              <input value={f.ort} onChange={e => set('ort', e.target.value)} placeholder="Standort" />
+              <input value={f.ort} onChange={e => set('ort', e.target.value)} placeholder="Standort" style={errStyle(v.ort)} />
             </Field>
             <Field label="Raum">
               <input value={f.raum} onChange={e => set('raum', e.target.value)} placeholder="Raum / Bereich" />
@@ -353,7 +370,7 @@ export function NewBelegScreen({ onClose, editBeleg }: Props) {
               <input value={f.rechnungsanschriftTeilnehmer} onChange={e => set('rechnungsanschriftTeilnehmer', e.target.value)} placeholder="Namen der Teilnehmer" />
             </Field>
             <Field label="Telefon für Rückfragen *">
-              <input value={f.rechnungsanschriftTelefon} onChange={e => set('rechnungsanschriftTelefon', e.target.value)} placeholder="0511 …" />
+              <input value={f.rechnungsanschriftTelefon} onChange={e => set('rechnungsanschriftTelefon', e.target.value)} placeholder="0511 …" style={errStyle(v.telefon)} />
             </Field>
           </div>
         </div>
@@ -376,7 +393,12 @@ export function NewBelegScreen({ onClose, editBeleg }: Props) {
 
         {/* ── POSITIONEN ── */}
         <div className={s.section}>
-          <PositionEditor positionen={f.positionen} onChange={v => set('positionen', v)} />
+          <PositionEditor positionen={f.positionen} onChange={pos => set('positionen', pos)} />
+          {showErrors && !hatPositionen && (
+            <p style={{ color: '#c0392b', fontSize: 12.5, fontWeight: 600, marginTop: 8 }}>
+              ⚠️ Bitte mindestens eine Position hinzufügen.
+            </p>
+          )}
         </div>
 
         {/* ── WÜNSCHE & NOTIZEN ── */}
@@ -391,6 +413,18 @@ export function NewBelegScreen({ onClose, editBeleg }: Props) {
               placeholder="Nur intern sichtbar …" rows={3} />
           </Field>
         </div>
+
+        {/* Hinweis bei fehlenden Pflichtfeldern */}
+        {showErrors && !belegOk && (
+          <div style={{
+            margin: '4px 0 12px', padding: '10px 12px', borderRadius: 10,
+            border: '1px solid #f5b7b1', background: '#fdecea', color: '#c0392b',
+            fontSize: 12.5, lineHeight: 1.45, fontWeight: 600,
+          }}>
+            ⚠️ Bitte alle rot markierten Pflichtfelder ausfüllen.
+            <br />Noch offen: {fehlendePflicht.join(', ')}.
+          </div>
+        )}
 
         {/* Bottom save button */}
         <button className={s.saveBtn} onClick={handleSave} disabled={saving} type="button">
