@@ -18,6 +18,7 @@ const PORT           = Number(process.env.PORT ?? 3001);
 const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN ?? 'http://localhost:5173';
 const API_KEY        = process.env.ANTHROPIC_API_KEY ?? '';
 const MAX_BODY_BYTES = 25 * 1024 * 1024; // 25 MB — data URLs of photos/PDFs
+const IS_PROD        = process.env.NODE_ENV === 'production';
 
 const ANTHROPIC_URL = 'https://api.anthropic.com/v1/messages';
 
@@ -27,9 +28,15 @@ const ANTHROPIC_URL = 'https://api.anthropic.com/v1/messages';
 // danach 401 SESSION_SUPERSEDED und wird abgemeldet.
 const activeDevice = new Map(); // email(lower) → deviceId
 
+/** Client-Header-Identität NUR im Dev-Modus (Rollen-Switcher). In Produktion
+ *  ist ausschließlich die authentifizierte Cookie-Session maßgeblich. */
+function devEmailHeader(req) {
+  return IS_PROD ? null : (req.headers['x-user-email'] ?? null);
+}
+
 function emailOf(req) {
   const u = getSessionUser(req);
-  return String(u?.email ?? req.headers['x-user-email'] ?? '').toLowerCase() || null;
+  return String(u?.email ?? devEmailHeader(req) ?? '').toLowerCase() || null;
 }
 function claimDevice(email, deviceId) {
   if (!email || !deviceId) return false;
@@ -281,8 +288,7 @@ const server = createServer(async (req, res) => {
       return send(res, 401, { error: 'SESSION_SUPERSEDED' });
     }
     const user = getSessionUser(req);
-    const devEmail = req.headers['x-user-email'] ?? null;
-    return send(res, 200, accountStatus({ user, devEmail }));
+    return send(res, 200, accountStatus({ user, devEmail: devEmailHeader(req) }));
   }
 
   // ── App-Einstellungen (Branding & Impressum) ──
@@ -299,15 +305,18 @@ const server = createServer(async (req, res) => {
 
   // ── App-Daten (Benutzer, Objekte, Belege, Sales) ──
   if (url.startsWith('/api/data/') && (req.method === 'GET' || req.method === 'PUT')) {
+    const user = getSessionUser(req);
+    // In Produktion ist eine authentifizierte Sitzung zwingend (kein Header-Trust).
+    if (IS_PROD && !user) {
+      return send(res, 401, { error: 'Anmeldung erforderlich.' });
+    }
     // Verdrängte Sitzung (anderes Gerät) → Zugriff verweigern.
     if (!isCurrentDevice(req)) {
       return send(res, 401, { error: 'SESSION_SUPERSEDED' });
     }
     try {
       const body = req.method === 'PUT' ? await readJsonBody(req) : null;
-      const user = getSessionUser(req);
-      const devEmail = req.headers['x-user-email'] ?? null;
-      const result = handleData(req.method, url, body, { user, devEmail });
+      const result = handleData(req.method, url, body, { user, devEmail: devEmailHeader(req) });
       if (!result) return send(res, 404, { error: 'Not found' });
       return send(res, result.status, result.payload);
     } catch (e) {
