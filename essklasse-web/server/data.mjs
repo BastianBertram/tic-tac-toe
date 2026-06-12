@@ -97,15 +97,22 @@ export function handleData(method, url, body, ctx = {}) {
 
   if (method === 'GET') {
     const env = load(name);
-    // Belege nur für die dem Nutzer zugeordneten Objekte ausliefern.
-    if (name === 'belege') {
+    // Belege bzw. Objekte nur für die dem Nutzer zugeordneten Objekte ausliefern.
+    if (name === 'belege' || name === 'objekte') {
       const scope = userScope(ctx);
       if (scope.restricted) {
         const ids = new Set(scope.objektIds);
-        const alle = Array.isArray(env.data?.belege) ? env.data.belege : [];
+        if (name === 'belege') {
+          const alle = Array.isArray(env.data?.belege) ? env.data.belege : [];
+          return { status: 200, payload: {
+            initialized: env.initialized,
+            data: { ...env.data, belege: alle.filter(b => ids.has(b.objektId)) },
+          } };
+        }
+        const alle = Array.isArray(env.data?.objekte) ? env.data.objekte : [];
         return { status: 200, payload: {
           initialized: env.initialized,
-          data: { ...env.data, belege: alle.filter(b => ids.has(b.objektId)) },
+          data: { ...env.data, objekte: alle.filter(o => ids.has(o.id)) },
         } };
       }
     }
@@ -124,6 +131,21 @@ export function handleData(method, url, body, ctx = {}) {
     }
     if (!body || typeof body !== 'object' || Array.isArray(body)) {
       return { status: 400, payload: { error: 'Body muss ein Objekt sein.' } };
+    }
+
+    // Eingeschränkte Nutzer dürfen Objekte nicht verändern → Stand bewahren,
+    // Antwort auf den eigenen Geltungsbereich beschränken.
+    if (name === 'objekte') {
+      const scope = userScope(ctx);
+      if (scope.restricted) {
+        const ids = new Set(scope.objektIds);
+        const existing = load(name).data ?? COLLECTIONS.objekte.default;
+        const alle = Array.isArray(existing.objekte) ? existing.objekte : [];
+        return { status: 200, payload: {
+          initialized: true,
+          data: { ...existing, objekte: alle.filter(o => ids.has(o.id)) },
+        } };
+      }
     }
 
     // Eingeschränkte Nutzer dürfen nur Belege ihrer Objekte schreiben; Belege
