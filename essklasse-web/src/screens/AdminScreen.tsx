@@ -121,6 +121,9 @@ function UserTab() {
   const objekte = useObjektStore(st => st.objekte);
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
+  // Karte startet bei bestehenden Usern schreibgeschützt; „Bearbeiten" schaltet
+  // die Felder frei (nur bei aktiven Benutzern).
+  const [editMode, setEditMode] = useState(false);
   const ALLE_OBJEKTE_ID = ALLE_OBJEKTE_MARKER;
   const emptyForm = { anrede: 'Herr' as Anrede, vorname: '', nachname: '', email: '', telefon: '', rolle: 'user' as UserRolle, objektIds: [] as string[] };
   const [form, setForm] = useState(emptyForm);
@@ -137,6 +140,7 @@ function UserTab() {
   function openNew() {
     setForm({ ...emptyForm, objektIds: defaultObjektIds('user') });
     setEditId(null);
+    setEditMode(true);   // neuer Benutzer ist direkt editierbar
     setShowForm(true);
   }
   function openEdit(u: typeof users[0]) {
@@ -150,8 +154,10 @@ function UserTab() {
       objektIds: u.objektIds,
     });
     setEditId(u.id);
+    setEditMode(false);  // bestehende Karte startet schreibgeschützt (Ansehen)
     setShowForm(true);
   }
+  function closeForm() { setShowForm(false); setEditMode(false); }
   const emailTouched = form.email.length > 0;
   const emailFormatOk = isValidEmail(form.email);
   const emailError = emailTouched && !emailFormatOk
@@ -179,6 +185,7 @@ function UserTab() {
     if (editId) updateUser(editId, { anrede: form.anrede, vorname: form.vorname, nachname: form.nachname, email: form.email, telefon: form.telefon, rolle: form.rolle, objektIds });
     else        addUser({ ...form, objektIds });
     setShowForm(false);
+    setEditMode(false);
     setConfirmAlleObjekte(false);
     setConfirmGeschaeftsfuehrung(false);
   }
@@ -213,12 +220,21 @@ function UserTab() {
   // Benutzer-Formular (neu/bearbeiten/ansehen) — wird oben (neu) oder inline an
   // der Kachel-Position (bearbeiten) gerendert.
   const renderForm = () => {
-    const readOnly = !!editId && !!editTarget && !editTarget.aktiv;
+    const istInaktiv = !!editId && !!editTarget && !editTarget.aktiv;
+    // Bestehende Benutzer: Felder nur im editMode änderbar (nur aktive können in
+    // den editMode wechseln). Neue Benutzer sind direkt editierbar.
+    const readOnly = !!editId && !editMode;
     return (
       <div className={s.formCard}>
-        <div className={s.formTitle}>{!editId ? 'Neuer Benutzer' : readOnly ? 'Benutzer ansehen' : 'Benutzer bearbeiten'}</div>
-        {readOnly && (
-          <div style={{ fontSize: 12.5, color: 'var(--ek-muted)', margin: '0 0 12px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+          <div className={s.formTitle} style={{ margin: 0 }}>{!editId ? 'Neuer Benutzer' : editMode ? 'Benutzer bearbeiten' : 'Benutzer ansehen'}</div>
+          {/* Aktive Benutzer: in der Ansicht oben rechts auf „Bearbeiten" schalten */}
+          {editId && editTarget?.aktiv && !editMode && (
+            <button type="button" className={s.iconBtn} title="Bearbeiten" onClick={() => setEditMode(true)}>✏️ Bearbeiten</button>
+          )}
+        </div>
+        {istInaktiv && (
+          <div style={{ fontSize: 12.5, color: 'var(--ek-muted)', margin: '8px 0 12px' }}>
             🔒 Dieser Benutzer ist deaktiviert und kann nur angesehen, nicht bearbeitet werden.
           </div>
         )}
@@ -290,7 +306,8 @@ function UserTab() {
           </>
         )}
 
-        {editId && editTarget?.aktiv && (
+        {/* Deaktivieren — nur im Bearbeitungsmodus eines aktiven Benutzers */}
+        {editId && editTarget?.aktiv && editMode && (
           <>
             <div className={s.dividerLine} />
             <button type="button" className={s.deactivateBtn} onClick={() => setConfirmDeactivate(true)}>
@@ -299,12 +316,9 @@ function UserTab() {
           </>
         )}
         <div className={s.formActions}>
-          <button type="button" className={s.cancelBtn} onClick={() => setShowForm(false)}>Abbrechen</button>
-          {(!editId || editTarget?.aktiv) && (
+          <button type="button" className={s.cancelBtn} onClick={closeForm}>{readOnly ? 'Schließen' : 'Abbrechen'}</button>
+          {(!editId || editMode) && (
             <button type="button" className={s.saveBtn} onClick={handleSave} disabled={!canSave}>Speichern</button>
-          )}
-          {editId && !editTarget?.aktiv && (
-            <button type="button" className={s.cancelBtn} onClick={() => setShowForm(false)}>Schließen</button>
           )}
         </div>
       </div>
@@ -368,13 +382,10 @@ function UserTab() {
                 {ROLLE_LABELS[u.rolle]}
               </span>
               <div className={s.userActions}>
-                {/* Aktive Benutzer: bearbeiten. Deaktivierte: nur ansehen (schreibgeschützt). */}
-                {u.aktiv
-                  ? <button type="button" className={s.iconBtn} onClick={() => openEdit(u)} title="Bearbeiten">✏️</button>
-                  : <>
-                      <button type="button" className={s.iconBtn} onClick={() => openEdit(u)} title="Ansehen">👁</button>
-                      <span className={s.inaktivLabel}>Inaktiv</span>
-                    </>}
+                {/* Immer „Ansehen" (👁) → öffnet die Karte. Bearbeiten erfolgt in
+                    der Karte (nur bei aktiven Benutzern). */}
+                <button type="button" className={s.iconBtn} onClick={() => openEdit(u)} title="Ansehen">👁</button>
+                {!u.aktiv && <span className={s.inaktivLabel}>Inaktiv</span>}
               </div>
             </div>
           </div>
