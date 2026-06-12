@@ -144,32 +144,30 @@ export function NewBelegScreen({ onClose, editBeleg }: Props) {
     const gewaehltes = objekte.find(o => o.id === selectedObjektId) ?? aktivesObjekt;
     setSaving(true);
 
-    // Kein Original-Beleg hochgeladen → Ersatz-Bewirtungsbeleg als PDF aus den
-    // (validierten) Pflichtangaben erzeugen und als Dokument ablegen.
-    let fotoDataUrls = f.fotoDataUrls;
-    if (!hatDokument) {
-      const ersatzPdf = await generateErsatzBelegPdf({
-        objektName: gewaehltes?.name ?? '',
-        besteller: f.besteller, veranstaltung: f.veranstaltung,
-        cateringDatumVon: f.cateringDatumVon, cateringDatumBis: f.cateringDatumBis,
-        uhrzeitVon: f.uhrzeitVon, uhrzeitBis: f.uhrzeitBis,
-        ort: f.ort, raum: f.raum, personenzahl: parseInt(f.personenzahl) || 0,
-        konto: f.konto, kostenstelle: f.kostenstelle, kostentraeger: f.kostentraeger,
-        wuensche: f.wuensche,
-        rechnungsanschriftFirma: f.rechnungsanschriftFirma,
-        rechnungsanschriftZuHaenden: f.rechnungsanschriftZuHaenden,
-        rechnungsanschriftStrasse: f.rechnungsanschriftStrasse,
-        rechnungsanschriftPlzOrt: f.rechnungsanschriftPlzOrt,
-        rechnungsanschriftAnlass: f.rechnungsanschriftAnlass,
-        rechnungsanschriftTeilnehmer: f.rechnungsanschriftTeilnehmer,
-        rechnungsanschriftTelefon: f.rechnungsanschriftTelefon,
-        positionen: f.positionen,
-        logoDataUrl: useSettingsStore.getState().logoDataUrl,
-      });
-      fotoDataUrls = [ersatzPdf];
-    }
+    // Erzeugt das Ersatz-PDF aus den erfassten Daten + Auftragsnummer.
+    const buildErsatzPdf = (bestellungsnummer?: string) => generateErsatzBelegPdf({
+      objektName: gewaehltes?.name ?? '',
+      bestellungsnummer,
+      besteller: f.besteller, veranstaltung: f.veranstaltung,
+      cateringDatumVon: f.cateringDatumVon, cateringDatumBis: f.cateringDatumBis,
+      uhrzeitVon: f.uhrzeitVon, uhrzeitBis: f.uhrzeitBis,
+      ort: f.ort, raum: f.raum, personenzahl: parseInt(f.personenzahl) || 0,
+      konto: f.konto, kostenstelle: f.kostenstelle, kostentraeger: f.kostentraeger,
+      wuensche: f.wuensche,
+      rechnungsanschriftFirma: f.rechnungsanschriftFirma,
+      rechnungsanschriftZuHaenden: f.rechnungsanschriftZuHaenden,
+      rechnungsanschriftStrasse: f.rechnungsanschriftStrasse,
+      rechnungsanschriftPlzOrt: f.rechnungsanschriftPlzOrt,
+      rechnungsanschriftAnlass: f.rechnungsanschriftAnlass,
+      rechnungsanschriftTeilnehmer: f.rechnungsanschriftTeilnehmer,
+      rechnungsanschriftTelefon: f.rechnungsanschriftTelefon,
+      positionen: f.positionen,
+      logoDataUrl: useSettingsStore.getState().logoDataUrl,
+    });
 
     if (editBeleg) {
+      // Auftragsnummer ist bekannt → Ersatz-PDF direkt mit Nummer erzeugen.
+      const fotoDataUrls = hatDokument ? f.fotoDataUrls : [await buildErsatzPdf(editBeleg.bestellungsnummer)];
       updateBeleg(editBeleg.id, {
         objektId: gewaehltes?.id ?? '', objektName: gewaehltes?.name ?? '',
         besteller: f.besteller, cateringDatumVon: f.cateringDatumVon, cateringDatumBis: f.cateringDatumBis,
@@ -191,7 +189,9 @@ export function NewBelegScreen({ onClose, editBeleg }: Props) {
       return;
     }
 
-    addBeleg({
+    // Neuer Beleg: erst anlegen (Auftragsnummer wird vergeben), dann ggf. das
+    // Ersatz-PDF mit der Nummer erzeugen und nachtragen.
+    const neuId = addBeleg({
       objektId:   gewaehltes?.id   ?? '',
       objektName: gewaehltes?.name ?? '',
       besteller: f.besteller,
@@ -207,7 +207,7 @@ export function NewBelegScreen({ onClose, editBeleg }: Props) {
       kostenstelle: f.kostenstelle,
       kostentraeger: f.kostentraeger,
       positionen: f.positionen,
-      fotoDataUrls,
+      fotoDataUrls: f.fotoDataUrls,
       wuensche: f.wuensche,
       interneNotiz: f.interneNotiz,
       rechnungsanschriftFirma: f.rechnungsanschriftFirma,
@@ -218,6 +218,13 @@ export function NewBelegScreen({ onClose, editBeleg }: Props) {
       rechnungsanschriftTeilnehmer: f.rechnungsanschriftTeilnehmer,
       rechnungsanschriftTelefon: f.rechnungsanschriftTelefon,
     }, currentUser?.name ?? currentUser?.email);
+
+    // Kein Upload → Ersatz-PDF mit der frisch vergebenen Auftragsnummer erzeugen.
+    if (!hatDokument) {
+      const nummer = useBelegStore.getState().belege.find(x => x.id === neuId)?.bestellungsnummer;
+      const ersatzPdf = await buildErsatzPdf(nummer);
+      updateBeleg(neuId, { fotoDataUrls: [ersatzPdf] });
+    }
 
     setSaving(false);
     onClose();

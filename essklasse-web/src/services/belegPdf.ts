@@ -15,6 +15,8 @@ import type { BelegPosition } from '../types';
 
 export interface ErsatzBelegInput {
   objektName: string;
+  /** Auftragsnummer (z.B. "A260000123") — prominent über den Bestelldaten. */
+  bestellungsnummer?: string;
   besteller: string;
   veranstaltung: string;
   cateringDatumVon: string;
@@ -165,7 +167,15 @@ export async function generateErsatzBelegPdf(b: ErsatzBelegInput): Promise<strin
   txt(MARGIN, y, 'Maschinell erstellt aus den erfassten Bestelldaten (kein Original-Beleg hochgeladen).', 9);
   y -= 13;
   txt(MARGIN, y, `Objekt: ${b.objektName || '–'}`, 9);
-  y -= 30;
+  y -= 12;
+  // Auftragsnummer deutlich hervorgehoben (über den Bestelldaten)
+  if (b.bestellungsnummer) {
+    y -= 18;
+    txt(MARGIN, y, `Auftragsnummer: ${b.bestellungsnummer}`, 13, true);
+    y -= 24;
+  } else {
+    y -= 18;
+  }
 
   // ── Abschnitt-Helfer ──
   const sectionTitle = (label: string) => {
