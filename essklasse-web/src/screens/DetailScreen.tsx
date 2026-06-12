@@ -135,7 +135,7 @@ export function DetailScreen({ beleg: init, onClose, onAbschliessen, onBearbeite
             <div className={s.photoGridSmall}>
               {beleg.fotoDataUrls.map((url, i) => {
                 const suffix = beleg.fotoDataUrls.length > 1 ? `-${i + 1}` : '';
-                const fileBase = `${beleg.bestellungsnummer ?? 'beleg'}-ursprünglicher-Bewirtungsbeleg${suffix}`;
+                const fileBase = `${beleg.bestellungsnummer ?? 'beleg'}-ursprünglicher-Bewirtungsbeleg-version-${beleg.belegVersion ?? 1}${suffix}`;
                 return (
                   <FileThumb
                     key={i}

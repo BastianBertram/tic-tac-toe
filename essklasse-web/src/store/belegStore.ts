@@ -33,6 +33,7 @@ export const useBelegStore = create<BelegStore>()(
           bestellungZaehler: { ...s.bestellungZaehler, [year]: naechste },
           belege: [{
             ...b, id, bestellungsnummer,
+            belegVersion: 1,
             erstelltAm: new Date().toISOString(),
             ...(erstelltVon ? { erstelltVon } : {}),
             abgeschlossen: false,

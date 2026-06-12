@@ -185,6 +185,8 @@ export interface Bewirtungsbeleg {
   kostentraeger: string;
   positionen: BelegPosition[];
   fotoDataUrls: string[];
+  /** Versionsnummer des hinterlegten Belegs; +1 bei jeder Bearbeitung. */
+  belegVersion?: number;
   wuensche: string;
   interneNotiz: string;
   rechnungsanschriftFirma?: string;

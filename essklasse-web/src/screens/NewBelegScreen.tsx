@@ -181,7 +181,8 @@ export function NewBelegScreen({ onClose, editBeleg }: Props) {
     });
 
     if (editBeleg) {
-      // Auftragsnummer ist bekannt → Ersatz-PDF direkt mit Nummer erzeugen.
+      // Bearbeitung → der bisherige Beleg wird durch den neuen Upload bzw. ein
+      // neu erzeugtes Ersatz-PDF ersetzt; die Versionsnummer wird hochgezählt.
       const fotoDataUrls = hatDokument ? f.fotoDataUrls : [await buildErsatzPdf(editBeleg.bestellungsnummer)];
       updateBeleg(editBeleg.id, {
         objektId: gewaehltes?.id ?? '', objektName: gewaehltes?.name ?? '',
@@ -190,6 +191,7 @@ export function NewBelegScreen({ onClose, editBeleg }: Props) {
         ort: f.ort, raum: f.raum, personenzahl: parseInt(f.personenzahl) || 0,
         konto: f.konto, kostenstelle: f.kostenstelle, kostentraeger: f.kostentraeger,
         positionen: f.positionen, fotoDataUrls,
+        belegVersion: (editBeleg.belegVersion ?? 1) + 1,
         wuensche: f.wuensche, interneNotiz: f.interneNotiz,
         rechnungsanschriftFirma: f.rechnungsanschriftFirma,
         rechnungsanschriftZuHaenden: f.rechnungsanschriftZuHaenden,
