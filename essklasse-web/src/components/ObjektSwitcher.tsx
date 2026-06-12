@@ -29,7 +29,8 @@ function ObjektSheet({ onClose }: { onClose: () => void }) {
   const objekte          = useObjektStore(s => s.objekte);
   const aktiveObjektId   = useObjektStore(s => s.aktiveObjektId);
   const setAktiveObjektId = useObjektStore(s => s.setAktiveObjektId);
-  const istBereichsleitung = useAuthStore(st => st.user?.rolle === 'bereichsleitung');
+  const rolle = useAuthStore(st => st.user?.rolle);
+  const darfAlle = (rolle === 'user' || rolle === 'bereichsleitung') && objekte.length > 1;
 
   function select(id: string) {
     setAktiveObjektId(id);
@@ -46,8 +47,8 @@ function ObjektSheet({ onClose }: { onClose: () => void }) {
         <p className={s.sheetSub}>Sie sehen nur Bewirtungen des gewählten Objekts.</p>
 
         <div className={s.list}>
-          {/* Bereichsleitung: alle zugeordneten Objekte gemeinsam ansehen */}
-          {istBereichsleitung && objekte.length > 1 && (
+          {/* Mehrere Objekte: alle zugeordneten Objekte gemeinsam ansehen */}
+          {darfAlle && (
             <button
               className={`${s.item} ${alleAktiv ? s.itemActive : ''}`}
               onClick={() => select(ALLE_OBJEKTE)}

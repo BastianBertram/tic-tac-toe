@@ -33,7 +33,6 @@ export function HamburgerDrawer({ onClose, onAbgeschlossene }: Props) {
   const isBuchhaltung     = user?.rolle === 'buchhaltung';
   const isAdmin           = user?.rolle === 'admin';
   const isGf              = user?.rolle === 'geschaeftsfuehrung';
-  const isBereichsleitung = user?.rolle === 'bereichsleitung';
   const [loading, setLoading] = useState(false);
 
   function handleRolleSwitch(rolle: UserRolle) {
@@ -84,8 +83,8 @@ export function HamburgerDrawer({ onClose, onAbgeschlossene }: Props) {
           <>
             <div className={s.objekteInfo}>
               <div className={s.objekteLabel}>Zugeordnete Objekte</div>
-              {/* Bereichsleitung: alle zugeordneten Objekte gemeinsam ansehen */}
-              {isBereichsleitung && objekte.length > 1 && (() => {
+              {/* Mehrere Objekte: alle zugeordneten Objekte gemeinsam ansehen */}
+              {objekte.length > 1 && (() => {
                 const alleAktiv = aktiveObjektId === ALLE_OBJEKTE;
                 return (
                   <button

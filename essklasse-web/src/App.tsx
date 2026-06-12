@@ -64,18 +64,22 @@ export default function App() {
     void initSync();
   }, []);
 
-  // Bereichsleitung: beim Eintritt in die Rolle standardmäßig „Alle Objekte".
-  // Andere Rollen kennen „Alle Objekte" nicht → ggf. auf ein Einzelobjekt zurücksetzen.
+  // User & Bereichsleitung mit mehreren Objekten: standardmäßig „Alle Objekte".
+  // Bei nur einem Objekt oder anderen Rollen → ggf. auf ein Einzelobjekt zurücksetzen.
+  const objekteCount = useObjektStore(st => st.objekte.length);
   const prevRolleRef = useRef<typeof rolle>(undefined);
+  const defaultAppliedRef = useRef(false);
   useEffect(() => {
     const objStore = useObjektStore.getState();
-    if (rolle === 'bereichsleitung') {
-      if (prevRolleRef.current !== 'bereichsleitung') objStore.setAktiveObjektId(ALLE_OBJEKTE);
-    } else if (objStore.aktiveObjektId === ALLE_OBJEKTE) {
+    if (prevRolleRef.current !== rolle) { defaultAppliedRef.current = false; prevRolleRef.current = rolle; }
+    const darfAlle = (rolle === 'user' || rolle === 'bereichsleitung') && objStore.objekte.length > 1;
+    if (darfAlle && !defaultAppliedRef.current) {
+      objStore.setAktiveObjektId(ALLE_OBJEKTE);
+      defaultAppliedRef.current = true;
+    } else if (!darfAlle && objStore.aktiveObjektId === ALLE_OBJEKTE) {
       objStore.setAktiveObjektId(objStore.objekte[0]?.id ?? '');
     }
-    prevRolleRef.current = rolle;
-  }, [rolle]);
+  }, [rolle, objekteCount]);
 
   // Duplikat-Prüfung + Rechnungsnummer-Modal
   const [duplikatBeleg, setDuplikatBeleg] = useState<Bewirtungsbeleg | null>(null);
