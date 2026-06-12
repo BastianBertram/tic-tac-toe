@@ -489,13 +489,15 @@ function ObjekteTab() {
   const { objekte, setObjekte, updateObjekt, toggleAktiv } = useObjektStore();
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
+  // Karte startet bei bestehenden Objekten schreibgeschützt; „Bearbeiten" gibt frei.
+  const [editMode, setEditMode] = useState(false);
   const emptyObjForm = { name: '', kuerzel: '', strasse: '', plz: '', ort: '', telefon: '', email: '', kostenstellen: [''] };
   const [form, setForm] = useState(emptyObjForm);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<FilterStatus>('aktiv');
   const [confirmTarget, setConfirmTarget] = useState<{ id: string; toAktiv: boolean } | null>(null);
 
-  function openNew() { setForm(emptyObjForm); setEditId(null); setShowForm(true); }
+  function openNew() { setForm(emptyObjForm); setEditId(null); setEditMode(true); setShowForm(true); }
   function openEdit(o: typeof objekte[0]) {
     setForm({
       name: o.name,
@@ -508,8 +510,10 @@ function ObjekteTab() {
       kostenstellen: o.kostenstellen?.length ? o.kostenstellen : [''],
     });
     setEditId(o.id);
+    setEditMode(false);  // bestehende Karte startet schreibgeschützt (Ansehen)
     setShowForm(true);
   }
+  function closeForm() { setShowForm(false); setEditMode(false); }
 
   const objEmailTouched = form.email.length > 0;
   const objEmailOk = !objEmailTouched || isValidEmail(form.email);
@@ -523,6 +527,7 @@ function ObjekteTab() {
     if (editId) updateObjekt(editId, data);
     else setObjekte([...objekte, { id: uuidv4(), ...data, aktiv: true }]);
     setShowForm(false);
+    setEditMode(false);
   }
 
   function setKostenstelle(idx: number, val: string) {
@@ -549,38 +554,47 @@ function ObjekteTab() {
   const editObj    = editId ? objekte.find(o => o.id === editId) : null;
   const confirmObj = confirmTarget ? objekte.find(o => o.id === confirmTarget.id) : null;
 
-  // Objekt-Formular — oben (neu) oder inline an der Kachel-Position (bearbeiten).
-  const renderForm = () => (
+  // Objekt-Formular — oben (neu) oder inline an der Kachel-Position. Bestehende
+  // Objekte starten schreibgeschützt (Ansehen); „Bearbeiten" schaltet frei.
+  const renderForm = () => {
+    const readOnly = !!editId && !editMode;
+    return (
     <div className={s.formCard}>
-      <div className={s.formTitle}>{editId ? 'Objekt bearbeiten' : 'Neues Objekt'}</div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+        <div className={s.formTitle} style={{ margin: 0 }}>{!editId ? 'Neues Objekt' : editMode ? 'Objekt bearbeiten' : 'Objekt ansehen'}</div>
+        {editId && !editMode && (
+          <button type="button" className={s.iconBtn} title="Bearbeiten" onClick={() => setEditMode(true)}>✏️</button>
+        )}
+      </div>
 
       <label className={s.label}>Objektname *</label>
-      <input className={s.input} value={form.name} onChange={e => setForm(f => ({...f, name: e.target.value}))} placeholder="HWK Hannover Hauptgebäude" />
+      <input className={s.input} disabled={readOnly} value={form.name} onChange={e => setForm(f => ({...f, name: e.target.value}))} placeholder="HWK Hannover Hauptgebäude" />
 
       <label className={s.label}>Objektkürzel *</label>
-      <input className={s.input} value={form.kuerzel} onChange={e => setForm(f => ({...f, kuerzel: e.target.value}))} placeholder="z.B. HWK oder FBZ" />
+      <input className={s.input} disabled={readOnly} value={form.kuerzel} onChange={e => setForm(f => ({...f, kuerzel: e.target.value}))} placeholder="z.B. HWK oder FBZ" />
 
       <label className={s.label}>Straße und Hausnummer *</label>
-      <input className={s.input} value={form.strasse} onChange={e => setForm(f => ({...f, strasse: e.target.value}))} placeholder="Berliner Allee 17" />
+      <input className={s.input} disabled={readOnly} value={form.strasse} onChange={e => setForm(f => ({...f, strasse: e.target.value}))} placeholder="Berliner Allee 17" />
 
       <div className={s.twoCol}>
         <div>
           <label className={s.label}>PLZ *</label>
-          <input className={s.input} value={form.plz} onChange={e => setForm(f => ({...f, plz: e.target.value}))} placeholder="30175" maxLength={5} />
+          <input className={s.input} disabled={readOnly} value={form.plz} onChange={e => setForm(f => ({...f, plz: e.target.value}))} placeholder="30175" maxLength={5} />
         </div>
         <div style={{ flex: 2 }}>
           <label className={s.label}>Ort *</label>
-          <input className={s.input} value={form.ort} onChange={e => setForm(f => ({...f, ort: e.target.value}))} placeholder="Hannover" />
+          <input className={s.input} disabled={readOnly} value={form.ort} onChange={e => setForm(f => ({...f, ort: e.target.value}))} placeholder="Hannover" />
         </div>
       </div>
 
       <label className={s.label}>Telefonnummer</label>
-      <input className={s.input} type="tel" value={form.telefon} onChange={e => setForm(f => ({...f, telefon: e.target.value}))} placeholder="0511 123456" />
+      <input className={s.input} type="tel" disabled={readOnly} value={form.telefon} onChange={e => setForm(f => ({...f, telefon: e.target.value}))} placeholder="0511 123456" />
 
       <label className={s.label}>E-Mail</label>
       <input
         className={`${s.input} ${objEmailError ? s.inputError : objEmailTouched && objEmailOk ? s.inputOk : ''}`}
         type="email"
+        disabled={readOnly}
         value={form.email}
         onChange={e => setForm(f => ({...f, email: e.target.value}))}
         placeholder="info@objekt.de"
@@ -593,20 +607,23 @@ function ObjekteTab() {
           <div key={idx} className={s.kostenstelleRow}>
             <input
               className={s.input}
+              disabled={readOnly}
               value={k}
               onChange={e => setKostenstelle(idx, e.target.value)}
               placeholder={`Kostenstelle ${idx + 1}`}
             />
-            {form.kostenstellen.length > 1 && (
+            {!readOnly && form.kostenstellen.length > 1 && (
               <button type="button" className={s.ksRemoveBtn} onClick={() => removeKostenstelle(idx)}>✕</button>
             )}
           </div>
         ))}
-        <button type="button" className={s.ksAddBtn} onClick={addKostenstelle}>+ Kostenstelle hinzufügen</button>
+        {!readOnly && (
+          <button type="button" className={s.ksAddBtn} onClick={addKostenstelle}>+ Kostenstelle hinzufügen</button>
+        )}
       </div>
 
-      {/* De-/Aktivieren — nur bei bestehenden Objekten */}
-      {editId && editObj && (
+      {/* De-/Aktivieren — nur im Bearbeitungsmodus eines bestehenden Objekts */}
+      {editId && editObj && editMode && (
         <>
           <div className={s.dividerLine} />
           {editObj.aktiv !== false ? (
@@ -622,11 +639,14 @@ function ObjekteTab() {
       )}
 
       <div className={s.formActions}>
-        <button type="button" className={s.cancelBtn} onClick={() => setShowForm(false)}>Abbrechen</button>
-        <button type="button" className={s.saveBtn} onClick={handleSave} disabled={!canSaveObjekt}>Speichern</button>
+        <button type="button" className={s.cancelBtn} onClick={closeForm}>{readOnly ? 'Schließen' : 'Abbrechen'}</button>
+        {(!editId || editMode) && (
+          <button type="button" className={s.saveBtn} onClick={handleSave} disabled={!canSaveObjekt}>Speichern</button>
+        )}
       </div>
     </div>
-  );
+    );
+  };
 
   return (
     <div className={s.tabContent}>
@@ -677,7 +697,8 @@ function ObjekteTab() {
                 )}
               </div>
               <div className={s.userActions}>
-                <button type="button" className={s.iconBtn} onClick={() => openEdit(o)} title="Bearbeiten">✏️</button>
+                {/* Ansehen (👁) öffnet die Karte; Bearbeiten erfolgt darin. */}
+                <button type="button" className={s.iconBtn} onClick={() => openEdit(o)} title="Ansehen">👁</button>
                 {!isAktiv && <span className={s.inaktivLabel}>Inaktiv</span>}
               </div>
             </div>
