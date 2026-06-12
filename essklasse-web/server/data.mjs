@@ -139,6 +139,25 @@ export function handleData(method, url, body, ctx = {}) {
 
   if (method === 'GET') {
     const env = load(name);
+    // Benutzerliste nur für Admin/GF vollständig. Eingeschränkte Nutzer erhalten
+    // ausschließlich Kollegen, mit denen sie sich mindestens ein Objekt teilen
+    // (plus sich selbst) — keine app-weite Offenlegung aller Stammdaten.
+    if (name === 'users') {
+      const scope = userScope(ctx);
+      if (scope.restricted) {
+        const ids = new Set(scope.objektIds);
+        const ich = resolveIdentity(ctx);
+        const alle = Array.isArray(env.data?.users) ? env.data.users : [];
+        const sichtbar = alle.filter(u =>
+          (ich && (u.id === ich.id ||
+            String(u.email ?? '').toLowerCase() === String(ich.email ?? '').toLowerCase())) ||
+          (Array.isArray(u.objektIds) && u.objektIds.some(oid => ids.has(oid))));
+        return { status: 200, payload: {
+          initialized: env.initialized,
+          data: { ...env.data, users: sichtbar },
+        } };
+      }
+    }
     // Belege bzw. Objekte nur für die dem Nutzer zugeordneten Objekte ausliefern.
     if (name === 'belege' || name === 'objekte') {
       const scope = userScope(ctx);
