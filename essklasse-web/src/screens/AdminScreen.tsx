@@ -518,6 +518,85 @@ function ObjekteTab() {
   const editObj    = editId ? objekte.find(o => o.id === editId) : null;
   const confirmObj = confirmTarget ? objekte.find(o => o.id === confirmTarget.id) : null;
 
+  // Objekt-Formular — oben (neu) oder inline an der Kachel-Position (bearbeiten).
+  const renderForm = () => (
+    <div className={s.formCard}>
+      <div className={s.formTitle}>{editId ? 'Objekt bearbeiten' : 'Neues Objekt'}</div>
+
+      <label className={s.label}>Objektname *</label>
+      <input className={s.input} value={form.name} onChange={e => setForm(f => ({...f, name: e.target.value}))} placeholder="HWK Hannover Hauptgebäude" />
+
+      <label className={s.label}>Objektkürzel *</label>
+      <input className={s.input} value={form.kuerzel} onChange={e => setForm(f => ({...f, kuerzel: e.target.value}))} placeholder="z.B. HWK oder FBZ" />
+
+      <label className={s.label}>Straße und Hausnummer *</label>
+      <input className={s.input} value={form.strasse} onChange={e => setForm(f => ({...f, strasse: e.target.value}))} placeholder="Berliner Allee 17" />
+
+      <div className={s.twoCol}>
+        <div>
+          <label className={s.label}>PLZ *</label>
+          <input className={s.input} value={form.plz} onChange={e => setForm(f => ({...f, plz: e.target.value}))} placeholder="30175" maxLength={5} />
+        </div>
+        <div style={{ flex: 2 }}>
+          <label className={s.label}>Ort *</label>
+          <input className={s.input} value={form.ort} onChange={e => setForm(f => ({...f, ort: e.target.value}))} placeholder="Hannover" />
+        </div>
+      </div>
+
+      <label className={s.label}>Telefonnummer</label>
+      <input className={s.input} type="tel" value={form.telefon} onChange={e => setForm(f => ({...f, telefon: e.target.value}))} placeholder="0511 123456" />
+
+      <label className={s.label}>E-Mail</label>
+      <input
+        className={`${s.input} ${objEmailError ? s.inputError : objEmailTouched && objEmailOk ? s.inputOk : ''}`}
+        type="email"
+        value={form.email}
+        onChange={e => setForm(f => ({...f, email: e.target.value}))}
+        placeholder="info@objekt.de"
+      />
+      {objEmailError && <div className={s.fieldError}>{objEmailError}</div>}
+
+      <label className={s.label}>Kostenstellen</label>
+      <div className={s.kostenstellenList}>
+        {form.kostenstellen.map((k, idx) => (
+          <div key={idx} className={s.kostenstelleRow}>
+            <input
+              className={s.input}
+              value={k}
+              onChange={e => setKostenstelle(idx, e.target.value)}
+              placeholder={`Kostenstelle ${idx + 1}`}
+            />
+            {form.kostenstellen.length > 1 && (
+              <button type="button" className={s.ksRemoveBtn} onClick={() => removeKostenstelle(idx)}>✕</button>
+            )}
+          </div>
+        ))}
+        <button type="button" className={s.ksAddBtn} onClick={addKostenstelle}>+ Kostenstelle hinzufügen</button>
+      </div>
+
+      {/* De-/Aktivieren — nur bei bestehenden Objekten */}
+      {editId && editObj && (
+        <>
+          <div className={s.dividerLine} />
+          {editObj.aktiv !== false ? (
+            <button type="button" className={s.deactivateBtn} onClick={() => setConfirmTarget({ id: editId, toAktiv: false })}>
+              🔒 Objekt deaktivieren
+            </button>
+          ) : (
+            <button type="button" className={s.activateBtn} onClick={() => setConfirmTarget({ id: editId, toAktiv: true })}>
+              🔓 Objekt aktivieren
+            </button>
+          )}
+        </>
+      )}
+
+      <div className={s.formActions}>
+        <button type="button" className={s.cancelBtn} onClick={() => setShowForm(false)}>Abbrechen</button>
+        <button type="button" className={s.saveBtn} onClick={handleSave} disabled={!canSaveObjekt}>Speichern</button>
+      </div>
+    </div>
+  );
+
   return (
     <div className={s.tabContent}>
       <div className={s.searchRow}>
@@ -545,89 +624,15 @@ function ObjekteTab() {
         <button type="button" className={s.addBtn} onClick={openNew}>+ Neues Objekt</button>
       </div>
 
-      {showForm && (
-        <div className={s.formCard}>
-          <div className={s.formTitle}>{editId ? 'Objekt bearbeiten' : 'Neues Objekt'}</div>
-
-          <label className={s.label}>Objektname *</label>
-          <input className={s.input} value={form.name} onChange={e => setForm(f => ({...f, name: e.target.value}))} placeholder="HWK Hannover Hauptgebäude" />
-
-          <label className={s.label}>Objektkürzel *</label>
-          <input className={s.input} value={form.kuerzel} onChange={e => setForm(f => ({...f, kuerzel: e.target.value}))} placeholder="z.B. HWK oder FBZ" />
-
-          <label className={s.label}>Straße und Hausnummer *</label>
-          <input className={s.input} value={form.strasse} onChange={e => setForm(f => ({...f, strasse: e.target.value}))} placeholder="Berliner Allee 17" />
-
-          <div className={s.twoCol}>
-            <div>
-              <label className={s.label}>PLZ *</label>
-              <input className={s.input} value={form.plz} onChange={e => setForm(f => ({...f, plz: e.target.value}))} placeholder="30175" maxLength={5} />
-            </div>
-            <div style={{ flex: 2 }}>
-              <label className={s.label}>Ort *</label>
-              <input className={s.input} value={form.ort} onChange={e => setForm(f => ({...f, ort: e.target.value}))} placeholder="Hannover" />
-            </div>
-          </div>
-
-          <label className={s.label}>Telefonnummer</label>
-          <input className={s.input} type="tel" value={form.telefon} onChange={e => setForm(f => ({...f, telefon: e.target.value}))} placeholder="0511 123456" />
-
-          <label className={s.label}>E-Mail</label>
-          <input
-            className={`${s.input} ${objEmailError ? s.inputError : objEmailTouched && objEmailOk ? s.inputOk : ''}`}
-            type="email"
-            value={form.email}
-            onChange={e => setForm(f => ({...f, email: e.target.value}))}
-            placeholder="info@objekt.de"
-          />
-          {objEmailError && <div className={s.fieldError}>{objEmailError}</div>}
-
-          <label className={s.label}>Kostenstellen</label>
-          <div className={s.kostenstellenList}>
-            {form.kostenstellen.map((k, idx) => (
-              <div key={idx} className={s.kostenstelleRow}>
-                <input
-                  className={s.input}
-                  value={k}
-                  onChange={e => setKostenstelle(idx, e.target.value)}
-                  placeholder={`Kostenstelle ${idx + 1}`}
-                />
-                {form.kostenstellen.length > 1 && (
-                  <button type="button" className={s.ksRemoveBtn} onClick={() => removeKostenstelle(idx)}>✕</button>
-                )}
-              </div>
-            ))}
-            <button type="button" className={s.ksAddBtn} onClick={addKostenstelle}>+ Kostenstelle hinzufügen</button>
-          </div>
-
-          {/* De-/Aktivieren — nur bei bestehenden Objekten */}
-          {editId && editObj && (
-            <>
-              <div className={s.dividerLine} />
-              {editObj.aktiv !== false ? (
-                <button type="button" className={s.deactivateBtn} onClick={() => setConfirmTarget({ id: editId, toAktiv: false })}>
-                  🔒 Objekt deaktivieren
-                </button>
-              ) : (
-                <button type="button" className={s.activateBtn} onClick={() => setConfirmTarget({ id: editId, toAktiv: true })}>
-                  🔓 Objekt aktivieren
-                </button>
-              )}
-            </>
-          )}
-
-          <div className={s.formActions}>
-            <button type="button" className={s.cancelBtn} onClick={() => setShowForm(false)}>Abbrechen</button>
-            <button type="button" className={s.saveBtn} onClick={handleSave} disabled={!canSaveObjekt}>Speichern</button>
-          </div>
-        </div>
-      )}
+      {/* Neues Objekt: Formular oben. Bearbeiten: inline an der Kachel. */}
+      {showForm && !editId && renderForm()}
 
       <div className={s.list}>
         {filtered.length === 0 && <div className={s.emptyState}>Keine Objekte gefunden</div>}
         {filtered.map(o => {
           const isAktiv = o.aktiv !== false;
           const adresse = [o.strasse, o.plz && o.ort ? `${o.plz} ${o.ort}` : ''].filter(Boolean).join(', ') || o.adresse;
+          if (showForm && editId === o.id) return <div key={o.id}>{renderForm()}</div>;
           return (
             <div key={o.id} className={`${s.objektRow} ${!isAktiv ? s.userRowInaktiv : ''}`}>
               <div className={s.objektKuerzel}>{o.kuerzel || '—'}</div>
