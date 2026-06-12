@@ -2,6 +2,9 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { Objekt } from '../types';
 
+/** Sentinel für „Alle Objekte" (z.B. Bereichsleitung sieht alle zugeordneten). */
+export const ALLE_OBJEKTE = 'ALL';
+
 interface ObjektStore {
   /** Alle dem User zugeordneten Objekte (wird nach Login vom API geladen) */
   objekte: Objekt[];
@@ -42,6 +45,7 @@ export const useObjektStore = create<ObjektStore>()(
 
       getAktivesObjekt: () => {
         const { objekte, aktiveObjektId } = get();
+        if (aktiveObjektId === ALLE_OBJEKTE) return null; // „Alle Objekte"-Ansicht
         return objekte.find(o => o.id === aktiveObjektId) ?? objekte[0] ?? null;
       },
 
