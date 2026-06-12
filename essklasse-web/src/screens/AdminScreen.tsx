@@ -237,14 +237,22 @@ function UserTab() {
         <button type="button" className={s.addBtn} onClick={openNew}>+ Neuer Benutzer</button>
       </div>
 
-      {showForm && (
+      {showForm && (() => {
+        // Deaktivierte Benutzer sind nur ansehbar (schreibgeschützt).
+        const readOnly = !!editId && !!editTarget && !editTarget.aktiv;
+        return (
         <div className={s.formCard}>
-          <div className={s.formTitle}>{editId ? 'Benutzer bearbeiten' : 'Neuer Benutzer'}</div>
+          <div className={s.formTitle}>{!editId ? 'Neuer Benutzer' : readOnly ? 'Benutzer ansehen' : 'Benutzer bearbeiten'}</div>
+          {readOnly && (
+            <div style={{ fontSize: 12.5, color: 'var(--ek-muted)', margin: '0 0 12px' }}>
+              🔒 Dieser Benutzer ist deaktiviert und kann nur angesehen, nicht bearbeitet werden.
+            </div>
+          )}
 
           <label className={s.label}>Anrede *</label>
           <div className={s.anredeRow}>
             {(['Herr', 'Frau'] as Anrede[]).map(a => (
-              <button key={a} type="button"
+              <button key={a} type="button" disabled={readOnly}
                 className={`${s.anredeBtn} ${form.anrede === a ? s.anredeBtnActive : ''}`}
                 onClick={() => setForm(f => ({...f, anrede: a}))}
               >{a}</button>
@@ -252,15 +260,16 @@ function UserTab() {
           </div>
 
           <label className={s.label}>Vorname *</label>
-          <input className={s.input} value={form.vorname} onChange={e => setForm(f => ({...f, vorname: e.target.value}))} placeholder="Vorname" />
+          <input className={s.input} disabled={readOnly} value={form.vorname} onChange={e => setForm(f => ({...f, vorname: e.target.value}))} placeholder="Vorname" />
 
           <label className={s.label}>Nachname *</label>
-          <input className={s.input} value={form.nachname} onChange={e => setForm(f => ({...f, nachname: e.target.value}))} placeholder="Nachname" />
+          <input className={s.input} disabled={readOnly} value={form.nachname} onChange={e => setForm(f => ({...f, nachname: e.target.value}))} placeholder="Nachname" />
 
           <label className={s.label}>E-Mail *</label>
           <input
             className={`${s.input} ${emailError ? s.inputError : emailTouched && emailFormatOk ? s.inputOk : ''}`}
             type="email"
+            disabled={readOnly}
             value={form.email}
             onChange={e => setForm(f => ({...f, email: e.target.value}))}
             placeholder="name@hwk.de"
@@ -268,10 +277,10 @@ function UserTab() {
           {emailError && <div className={s.fieldError}>{emailError}</div>}
 
           <label className={s.label}>Telefonnummer</label>
-          <input className={s.input} type="tel" value={form.telefon} onChange={e => setForm(f => ({...f, telefon: e.target.value}))} placeholder="+49 511 123456" />
+          <input className={s.input} type="tel" disabled={readOnly} value={form.telefon} onChange={e => setForm(f => ({...f, telefon: e.target.value}))} placeholder="+49 511 123456" />
 
           <label className={s.label}>Rolle *</label>
-          <select className={s.select} value={form.rolle} onChange={e => {
+          <select className={s.select} disabled={readOnly} value={form.rolle} onChange={e => {
             const rolle = e.target.value as UserRolle;
             setForm(f => ({ ...f, rolle, objektIds: defaultObjektIds(rolle) }));
           }}>
@@ -290,6 +299,7 @@ function UserTab() {
                   <label className={`${s.checkRow} ${s.checkRowAlle}`}>
                     <input
                       type="checkbox"
+                      disabled={readOnly}
                       checked={form.objektIds.includes(ALLE_OBJEKTE_ID)}
                       onChange={toggleAlleObjekte}
                     />
@@ -298,7 +308,7 @@ function UserTab() {
                 )}
                 {objekte.filter(o => o.aktiv !== false).map(o => (
                   <label key={o.id} className={s.checkRow}>
-                    <input type="checkbox" checked={form.objektIds.includes(o.id)} onChange={() => toggleObjekt(o.id)} />
+                    <input type="checkbox" disabled={readOnly} checked={form.objektIds.includes(o.id)} onChange={() => toggleObjekt(o.id)} />
                     <span>{o.kuerzel ? `${o.kuerzel} – ` : ''}{o.name}</span>
                   </label>
                 ))}
@@ -330,7 +340,8 @@ function UserTab() {
             )}
           </div>
         </div>
-      )}
+        );
+      })()}
 
       <div className={s.list}>
         {filtered.length === 0 && <div className={s.emptyState}>Keine Benutzer gefunden</div>}
@@ -357,10 +368,13 @@ function UserTab() {
                 {ROLLE_LABELS[u.rolle]}
               </span>
               <div className={s.userActions}>
-                {/* Deaktivierte Benutzer sind eingefroren → nicht bearbeitbar */}
+                {/* Aktive Benutzer: bearbeiten. Deaktivierte: nur ansehen (schreibgeschützt). */}
                 {u.aktiv
                   ? <button type="button" className={s.iconBtn} onClick={() => openEdit(u)} title="Bearbeiten">✏️</button>
-                  : <span className={s.inaktivLabel}>Inaktiv</span>}
+                  : <>
+                      <button type="button" className={s.iconBtn} onClick={() => openEdit(u)} title="Ansehen">👁</button>
+                      <span className={s.inaktivLabel}>Inaktiv</span>
+                    </>}
               </div>
             </div>
           </div>
