@@ -76,31 +76,27 @@ export function WeekScreen({ onOpenBeleg, onTabAbschluss }: Props) {
         </button>
       )}
 
-      {/* ── Tage Montag bis Sonntag ── */}
-      <div className={s.list}>
-        {weekBelege.length === 0 && (
-          <div className={s.emptyWeek}>
-            <div className={s.emptyIcon}>🍽️</div>
-            <h3>Keine Bewirtungen in dieser Woche</h3>
-          </div>
-        )}
-        {weekBelege.length > 0 && days.map(day => {
+      {/* ── Tage Montag bis Sonntag — je Tag eine Spalte ── */}
+      <div className={s.columns}>
+        {days.map(day => {
           const key      = format(day, 'yyyy-MM-dd');
           const dayBelege = weekBelege.filter(b => b.cateringDatumVon === key).toSorted(byUhrzeit);
           const heute    = isToday(day);
           return (
-            <div key={key} className={s.daySection}>
+            <div key={key} className={`${s.column} ${heute ? s.columnToday : ''}`}>
               <div className={`${s.dayHeader} ${heute ? s.dayHeaderToday : ''}`}>
-                <span className={s.dayName}>{format(day, 'EEEE', { locale: de })}</span>
+                <span className={s.dayName}>{format(day, 'EEEEEE', { locale: de })}</span>
                 <span className={s.dayDate}>{format(day, 'd. MMM', { locale: de })}</span>
                 <span className={s.dayCount}>{dayBelege.length}</span>
               </div>
-              {dayBelege.length === 0
-                ? <p className={s.dayEmpty}>Keine Bewirtungen</p>
-                : dayBelege.map(b => (
-                    <BelegCard key={b.id} beleg={b} onClick={() => onOpenBeleg(b)} />
-                  ))
-              }
+              <div className={s.columnList}>
+                {dayBelege.length === 0
+                  ? <p className={s.dayEmpty}>—</p>
+                  : dayBelege.map(b => (
+                      <BelegCard key={b.id} beleg={b} onClick={() => onOpenBeleg(b)} />
+                    ))
+                }
+              </div>
             </div>
           );
         })}
