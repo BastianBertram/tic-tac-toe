@@ -6,7 +6,7 @@ const ROLES: { rolle: UserRolle; label: string; color: string; user: AuthUser }[
     rolle: 'user',
     label: 'User',
     color: '#2e86c1',
-    user: { id: 'demo-user', name: 'Anna Schmidt', email: 'anna@hwk.de', rolle: 'user', objektIds: ['demo-1'] },
+    user: { id: 'demo-user-1', name: 'Anna Schmidt', email: 'anna@hwk-hannover.de', rolle: 'user', objektIds: ['demo-1'] },
   },
   {
     rolle: 'admin',
@@ -24,7 +24,7 @@ const ROLES: { rolle: UserRolle; label: string; color: string; user: AuthUser }[
     rolle: 'bereichsleitung',
     label: 'Bereichsltg.',
     color: '#6c3483',
-    user: { id: 'demo-bl', name: 'Maria Berger', email: 'berger@hwk.de', rolle: 'bereichsleitung', objektIds: ['demo-1', 'demo-2'] },
+    user: { id: 'demo-bl-1', name: 'Maria Berger', email: 'berger@hwk.de', rolle: 'bereichsleitung', objektIds: ['demo-1', 'demo-2'] },
   },
   {
     rolle: 'geschaeftsfuehrung',

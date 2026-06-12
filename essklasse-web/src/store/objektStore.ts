@@ -56,19 +56,31 @@ export const useObjektStore = create<ObjektStore>()(
   )
 );
 
-import { useAuthStore } from './authStore';
+import { useAuthStore, type AuthUser } from './authStore';
+import { useUserStore } from './userStore';
+import type { AppUser } from '../types';
+
+/**
+ * Ermittelt die einem User zugeordneten Objekt-IDs. Quelle ist der im Admin
+ * verwaltete Benutzer-Datensatz (userStore); ersatzweise die Login-Angaben.
+ */
+export function resolveObjektIds(user: AuthUser | null, users: AppUser[]): string[] {
+  if (!user) return [];
+  const record = users.find(u => u.id === user.id || u.email === user.email);
+  return record?.objektIds ?? user.objektIds ?? [];
+}
 
 /**
  * Objekte, die der aktuell angemeldete User sehen darf.
- * Für `user`/`bereichsleitung` nur die zugeordneten (user.objektIds),
+ * Für `user`/`bereichsleitung` nur die zugeordneten (Admin-Zuordnung),
  * für alle übrigen Rollen (z.B. Admin) sämtliche Objekte.
  */
 export function useSichtbareObjekte(): Objekt[] {
-  const objekte   = useObjektStore(s => s.objekte);
-  const rolle     = useAuthStore(s => s.user?.rolle);
-  const objektIds = useAuthStore(s => s.user?.objektIds);
-  if (rolle === 'user' || rolle === 'bereichsleitung') {
-    const ids = objektIds ?? [];
+  const objekte = useObjektStore(s => s.objekte);
+  const user    = useAuthStore(s => s.user);
+  const users   = useUserStore(s => s.users);
+  if (user?.rolle === 'user' || user?.rolle === 'bereichsleitung') {
+    const ids = resolveObjektIds(user, users);
     return objekte.filter(o => ids.includes(o.id));
   }
   return objekte;

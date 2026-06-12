@@ -13,7 +13,8 @@ import { BuchhaltungScreen } from './screens/BuchhaltungScreen';
 import { AdminScreen } from './screens/AdminScreen';
 import { useAuthStore } from './store/authStore';
 import { useBelegStore } from './store/belegStore';
-import { useObjektStore, ALLE_OBJEKTE } from './store/objektStore';
+import { useObjektStore, resolveObjektIds, ALLE_OBJEKTE } from './store/objektStore';
+import { useUserStore } from './store/userStore';
 import { useSettingsStore } from './store/settingsStore';
 import { initSync } from './services/sync';
 import { GFHomeScreen } from './screens/GFHomeScreen';
@@ -72,9 +73,9 @@ export default function App() {
   useEffect(() => {
     const objStore = useObjektStore.getState();
     const u = useAuthStore.getState().user;
-    // Nur die dem User zugeordneten Objekte berücksichtigen.
+    // Nur die dem User zugeordneten Objekte berücksichtigen (Admin-Zuordnung).
     const meine = (rolle === 'user' || rolle === 'bereichsleitung')
-      ? objStore.objekte.filter(o => (u?.objektIds ?? []).includes(o.id))
+      ? (() => { const ids = resolveObjektIds(u, useUserStore.getState().users); return objStore.objekte.filter(o => ids.includes(o.id)); })()
       : objStore.objekte;
     if (prevRolleRef.current !== rolle) { defaultAppliedRef.current = false; prevRolleRef.current = rolle; }
     const darfAlle = (rolle === 'user' || rolle === 'bereichsleitung') && meine.length > 1;
