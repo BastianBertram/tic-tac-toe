@@ -21,8 +21,15 @@ export function DetailScreen({ beleg: init, onClose, onAbschliessen, onBearbeite
   const [lightbox, setLightbox] = useState<string | null>(null);
   const [pdfViewer, setPdfViewer] = useState<{ dataUrl: string; name: string } | null>(null);
   const [deleteStep, setDeleteStep] = useState<0 | 1 | null>(null);
+  const [showHistorie, setShowHistorie] = useState(false);
 
   const datum = formatDatum(beleg.cateringDatumVon, 'dd.MM.yyyy', { locale: de });
+
+  // Dokumentliste = Versionsliste (neueste zuletzt).
+  const versionen = beleg.fotoDataUrls;
+  const total = versionen.length;
+  const fileBaseFor = (version: number) =>
+    `${beleg.bestellungsnummer ?? 'beleg'}-ursprünglicher-Bewirtungsbeleg-version-${version}`;
 
   function confirmDelete() { store.deleteBeleg(beleg.id); onClose(); }
 
@@ -128,27 +135,62 @@ export function DetailScreen({ beleg: init, onClose, onAbschliessen, onBearbeite
           </div>
         )}
 
-        {/* Bestellfotos (original) */}
-        {beleg.fotoDataUrls.length > 0 && (
-          <div className={`${s.section} ${s.sectionSmall}`}>
-            <div className={s.sectionTitleSmall}>📷 Ursprünglicher Bewirtungsbeleg ({beleg.fotoDataUrls.length})</div>
-            <div className={s.photoGridSmall}>
-              {beleg.fotoDataUrls.map((url, i) => {
-                const suffix = beleg.fotoDataUrls.length > 1 ? `-${i + 1}` : '';
-                const fileBase = `${beleg.bestellungsnummer ?? 'beleg'}-ursprünglicher-Bewirtungsbeleg-version-${beleg.belegVersion ?? 1}${suffix}`;
-                return (
-                  <FileThumb
-                    key={i}
-                    url={url}
-                    filename={fileBase}
-                    onOpenImage={() => setLightbox(url)}
-                    onOpenPdf={() => setPdfViewer({ dataUrl: url, name: `${fileBase}.pdf` })}
-                  />
-                );
-              })}
+        {/* Ursprünglicher Bewirtungsbeleg — neueste Version + Beleghistorie */}
+        {total > 0 && (() => {
+          const newestUrl = versionen[total - 1];
+          const newestBase = fileBaseFor(total);
+          return (
+            <div className={`${s.section} ${s.sectionSmall}`}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+                <div className={s.sectionTitleSmall} style={{ margin: 0 }}>📷 Ursprünglicher Bewirtungsbeleg</div>
+                {total > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => setShowHistorie(v => !v)}
+                    style={{
+                      padding: '5px 10px', borderRadius: 8, border: '1px solid var(--ek-border)',
+                      background: showHistorie ? '#fdf5f5' : 'var(--ek-surface)', color: 'var(--ek-red)',
+                      fontSize: 12, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap',
+                    }}
+                  >
+                    🕓 Beleghistorie ({total - 1})
+                  </button>
+                )}
+              </div>
+
+              <div className={s.photoGridSmall}>
+                <FileThumb
+                  url={newestUrl}
+                  filename={newestBase}
+                  onOpenImage={() => setLightbox(newestUrl)}
+                  onOpenPdf={() => setPdfViewer({ dataUrl: newestUrl, name: `${newestBase}.pdf` })}
+                />
+              </div>
+
+              {showHistorie && total > 1 && (
+                <div style={{ marginTop: 12, borderTop: '1px solid var(--ek-border)', paddingTop: 10 }}>
+                  <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--ek-muted)', textTransform: 'uppercase', letterSpacing: '.4px', marginBottom: 8 }}>
+                    Beleghistorie (älteste zuerst)
+                  </div>
+                  <div className={s.photoGridSmall}>
+                    {versionen.slice(0, total - 1).map((url, i) => {
+                      const base = fileBaseFor(i + 1);
+                      return (
+                        <FileThumb
+                          key={i}
+                          url={url}
+                          filename={base}
+                          onOpenImage={() => setLightbox(url)}
+                          onOpenPdf={() => setPdfViewer({ dataUrl: url, name: `${base}.pdf` })}
+                        />
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* Wünsche */}
         {(beleg.wuensche || beleg.interneNotiz) && (

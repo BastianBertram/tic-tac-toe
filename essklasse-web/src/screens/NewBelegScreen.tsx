@@ -35,7 +35,9 @@ function initFromBeleg(b: Bewirtungsbeleg) {
     uhrzeitVon: b.uhrzeitVon, uhrzeitBis: b.uhrzeitBis, veranstaltung: b.veranstaltung,
     ort: b.ort, raum: b.raum, personenzahl: String(b.personenzahl),
     konto: b.konto, kostenstelle: b.kostenstelle, kostentraeger: b.kostentraeger,
-    positionen: b.positionen, fotoDataUrls: b.fotoDataUrls,
+    // Beim Bearbeiten startet der Upload leer: ein neu hochgeladener bzw.
+    // erzeugter Beleg wird als neue Version angehängt (siehe handleSave).
+    positionen: b.positionen, fotoDataUrls: [] as string[],
     wuensche: b.wuensche, interneNotiz: b.interneNotiz,
     rechnungsanschriftFirma: b.rechnungsanschriftFirma ?? '',
     rechnungsanschriftZuHaenden: b.rechnungsanschriftZuHaenden ?? '',
@@ -108,7 +110,7 @@ export function NewBelegScreen({ onClose, editBeleg }: Props) {
       const neu = norm(data.besteller);
       if (orig && neu && orig !== neu) {
         setMismatchWarn(true);
-        set('fotoDataUrls', editBeleg.fotoDataUrls); // Fremd-Beleg wieder entfernen
+        set('fotoDataUrls', []); // Fremd-Beleg-Upload wieder verwerfen
         return;
       }
     }
@@ -181,9 +183,10 @@ export function NewBelegScreen({ onClose, editBeleg }: Props) {
     });
 
     if (editBeleg) {
-      // Bearbeitung → der bisherige Beleg wird durch den neuen Upload bzw. ein
-      // neu erzeugtes Ersatz-PDF ersetzt; die Versionsnummer wird hochgezählt.
-      const fotoDataUrls = hatDokument ? f.fotoDataUrls : [await buildErsatzPdf(editBeleg.bestellungsnummer)];
+      // Bearbeitung → neue Version(en) an die Beleghistorie anhängen; die bisher
+      // hinterlegten Versionen bleiben erhalten, die neueste steht zuletzt.
+      const neueVersionen = hatDokument ? f.fotoDataUrls : [await buildErsatzPdf(editBeleg.bestellungsnummer)];
+      const fotoDataUrls = [...editBeleg.fotoDataUrls, ...neueVersionen];
       updateBeleg(editBeleg.id, {
         objektId: gewaehltes?.id ?? '', objektName: gewaehltes?.name ?? '',
         besteller: f.besteller, cateringDatumVon: f.cateringDatumVon, cateringDatumBis: f.cateringDatumBis,
@@ -191,7 +194,7 @@ export function NewBelegScreen({ onClose, editBeleg }: Props) {
         ort: f.ort, raum: f.raum, personenzahl: parseInt(f.personenzahl) || 0,
         konto: f.konto, kostenstelle: f.kostenstelle, kostentraeger: f.kostentraeger,
         positionen: f.positionen, fotoDataUrls,
-        belegVersion: (editBeleg.belegVersion ?? 1) + 1,
+        belegVersion: fotoDataUrls.length,
         wuensche: f.wuensche, interneNotiz: f.interneNotiz,
         rechnungsanschriftFirma: f.rechnungsanschriftFirma,
         rechnungsanschriftZuHaenden: f.rechnungsanschriftZuHaenden,
