@@ -357,8 +357,10 @@ function UserTab() {
                 {ROLLE_LABELS[u.rolle]}
               </span>
               <div className={s.userActions}>
-                <button type="button" className={s.iconBtn} onClick={() => openEdit(u)} title="Bearbeiten">✏️</button>
-                {!u.aktiv && <span className={s.inaktivLabel}>Inaktiv</span>}
+                {/* Deaktivierte Benutzer sind eingefroren → nicht bearbeitbar */}
+                {u.aktiv
+                  ? <button type="button" className={s.iconBtn} onClick={() => openEdit(u)} title="Bearbeiten">✏️</button>
+                  : <span className={s.inaktivLabel}>Inaktiv</span>}
               </div>
             </div>
           </div>
