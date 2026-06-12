@@ -125,7 +125,8 @@ function UserTab() {
   const emptyForm = { anrede: 'Herr' as Anrede, vorname: '', nachname: '', email: '', telefon: '', rolle: 'user' as UserRolle, objektIds: [] as string[] };
   const [form, setForm] = useState(emptyForm);
   const [search, setSearch] = useState('');
-  const [filter, setFilter] = useState<FilterStatus>('aktiv');
+  // Standard: alle Benutzer zeigen, deaktivierte erscheinen ausgegraut.
+  const [filter, setFilter] = useState<FilterStatus>('alle');
   const [confirmDeactivate, setConfirmDeactivate] = useState(false);
   const [confirmAlleObjekte, setConfirmAlleObjekte] = useState(false);
   const [confirmGeschaeftsfuehrung, setConfirmGeschaeftsfuehrung] = useState(false);
@@ -320,7 +321,7 @@ function UserTab() {
           )}
           <div className={s.formActions}>
             <button type="button" className={s.cancelBtn} onClick={() => setShowForm(false)}>Abbrechen</button>
-            {/* Inaktive User können nur gespeichert werden (kein Reaktivieren) */}
+            {/* Inaktive User können nicht reaktiviert werden (nur ansehen/schließen) */}
             {(!editId || editTarget?.aktiv) && (
               <button type="button" className={s.saveBtn} onClick={handleSave} disabled={!canSave}>Speichern</button>
             )}
