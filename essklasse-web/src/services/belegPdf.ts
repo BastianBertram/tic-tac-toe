@@ -180,35 +180,60 @@ export async function generateErsatzBelegPdf(b: ErsatzBelegInput): Promise<strin
     txt(MARGIN + 170, y, value, 11, false);
     y -= 16;
   };
+  // Eine Abschnitts-Spalte (Titel + Label/Wert-Zeilen) ab startY; Rückgabe = End-Y.
+  const drawColumn = (colX: number, colRight: number, startY: number, title: string, rows: [string, string][]): number => {
+    let cy = startY;
+    txt(colX, cy, title, 12, true);
+    cy -= 16;
+    for (const [label, value] of rows) {
+      if (!value) continue;
+      const labelStr = label + ': ';
+      const lw = textWidth(labelStr, 9, false);
+      txt(colX, cy, labelStr, 9, false);
+      const maxChars = Math.floor((colRight - colX - lw) / (9 * 0.52));
+      if (value.length <= maxChars) {
+        txt(colX + lw, cy, value, 9, false);
+        cy -= 14;
+      } else {
+        // Wert passt nicht neben das Label → eingerückt darunter umbrechen.
+        cy -= 12;
+        const wrapChars = Math.max(8, Math.floor((colRight - colX - 10) / (9 * 0.52)));
+        for (const part of wrap(value, wrapChars)) { txt(colX + 10, cy, part, 9, false); cy -= 12; }
+        cy -= 2;
+      }
+    }
+    return cy;
+  };
 
-  sectionTitle('Bestelldaten');
-  field('Besteller / Auftraggeber', b.besteller);
-  field('Veranstaltung / Anlass', b.veranstaltung);
-  field('Datum', zeitraum);
-  field('Uhrzeit', uhrzeit);
-  field('Ort', b.ort);
-  field('Raum', b.raum);
-  field('Personenzahl', String(b.personenzahl || 0));
+  // ── Bestelldaten (links) & Rechnungsanschrift (rechts) nebeneinander ──
+  const colTop = y;
+  const leftRows: [string, string][] = [
+    ['Besteller', b.besteller],
+    ['Veranstaltung', b.veranstaltung],
+    ['Datum', zeitraum],
+    ['Uhrzeit', uhrzeit],
+    ['Ort', b.ort],
+    ['Raum', b.raum],
+    ['Personenzahl', String(b.personenzahl || 0)],
+  ];
+  const rightRows: [string, string][] = [
+    ['Firma', b.rechnungsanschriftFirma ?? ''],
+    ['Zu Händen', b.rechnungsanschriftZuHaenden ?? ''],
+    ['Straße / Nr.', b.rechnungsanschriftStrasse ?? ''],
+    ['PLZ / Ort', b.rechnungsanschriftPlzOrt ?? ''],
+    ['Anlass', b.rechnungsanschriftAnlass ?? ''],
+    ['Teilnehmer', b.rechnungsanschriftTeilnehmer ?? ''],
+    ['Telefonnummer für Rückfragen', b.rechnungsanschriftTelefon ?? ''],
+  ];
+  const leftEnd = drawColumn(MARGIN, 292, colTop, 'Bestelldaten', leftRows);
+  const rightEnd = drawColumn(312, 545, colTop, 'Rechnungsanschrift', rightRows);
+  y = Math.min(leftEnd, rightEnd);
 
   if (b.konto || b.kostenstelle || b.kostentraeger) {
-    y -= 10; sectionTitle('Kostenzuordnung');
+    y -= 12; sectionTitle('Kostenzuordnung');
     field('Konto', b.konto ?? '');
     field('Kostenstelle', b.kostenstelle ?? '');
     field('Kostenträger', b.kostentraeger ?? '');
-  }
-
-  const hatRechnung = b.rechnungsanschriftFirma || b.rechnungsanschriftZuHaenden ||
-    b.rechnungsanschriftStrasse || b.rechnungsanschriftPlzOrt || b.rechnungsanschriftAnlass ||
-    b.rechnungsanschriftTeilnehmer || b.rechnungsanschriftTelefon;
-  if (hatRechnung) {
-    y -= 10; sectionTitle('Rechnungsanschrift');
-    field('Firma', b.rechnungsanschriftFirma ?? '');
-    field('Zu Händen', b.rechnungsanschriftZuHaenden ?? '');
-    field('Straße / Nr.', b.rechnungsanschriftStrasse ?? '');
-    field('PLZ / Ort', b.rechnungsanschriftPlzOrt ?? '');
-    field('Anlass', b.rechnungsanschriftAnlass ?? '');
-    field('Teilnehmer', b.rechnungsanschriftTeilnehmer ?? '');
-    field('Telefon', b.rechnungsanschriftTelefon ?? '');
   }
 
   // ── Positionstabelle mit Raster (wie Original-Bewirtungsschein) ──
