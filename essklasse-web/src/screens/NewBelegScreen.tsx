@@ -59,10 +59,18 @@ export function NewBelegScreen({ onClose, editBeleg }: Props) {
   const [saving, setSaving] = useState(false);
   const [showErrors, setShowErrors] = useState(false);
   const [mismatchWarn, setMismatchWarn] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [selectedObjektId, setSelectedObjektId] = useState<string>(editBeleg?.objektId ?? aktivesObjekt?.id ?? '');
   const addBeleg = useBelegStore(s => s.addBeleg);
   const currentUser = useAuthStore(st => st.user);
   const updateBeleg = useBelegStore(s => s.updateBeleg);
+  const deleteBeleg = useBelegStore(s => s.deleteBeleg);
+
+  function handleDelete() {
+    if (editBeleg) deleteBeleg(editBeleg.id);
+    setConfirmDelete(false);
+    onClose();
+  }
 
   function set<K extends keyof typeof INIT>(key: K, val: (typeof INIT)[K]) {
     setF(prev => ({ ...prev, [key]: val }));
@@ -255,10 +263,45 @@ export function NewBelegScreen({ onClose, editBeleg }: Props) {
       <div className={s.header}>
         <button className={s.closeBtn} onClick={onClose} type="button">✕</button>
         <BrandLogo className={s.headerLogo} />
-        <button className={s.saveHdrBtn} onClick={handleSave} disabled={saving} type="button">
-          {saving ? '…' : editBeleg ? 'Speichern' : 'Speichern'}
-        </button>
+        {editBeleg ? (
+          <button
+            onClick={() => setConfirmDelete(true)}
+            type="button"
+            title="Beleg löschen"
+            style={{ background: 'transparent', border: 'none', fontSize: 20, cursor: 'pointer', padding: 4 }}
+          >
+            🗑
+          </button>
+        ) : (
+          <button className={s.saveHdrBtn} onClick={handleSave} disabled={saving} type="button">
+            {saving ? '…' : 'Speichern'}
+          </button>
+        )}
       </div>
+
+      {confirmDelete && (
+        <div
+          onClick={() => setConfirmDelete(false)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.45)', zIndex: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
+        >
+          <div onClick={e => e.stopPropagation()} style={{ background: 'var(--ek-surface)', borderRadius: 14, padding: 20, maxWidth: 340, width: '100%' }}>
+            <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--ek-charcoal)', marginBottom: 8 }}>Beleg löschen?</div>
+            <p style={{ fontSize: 13.5, color: 'var(--ek-muted)', lineHeight: 1.45, margin: '0 0 16px' }}>
+              Diese Bewirtung wird gelöscht. Dieser Schritt kann nicht rückgängig gemacht werden.
+            </p>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button type="button" onClick={() => setConfirmDelete(false)}
+                style={{ flex: 1, padding: '10px', borderRadius: 10, border: '1px solid var(--ek-border)', background: 'var(--ek-surface)', fontWeight: 700, cursor: 'pointer' }}>
+                Abbrechen
+              </button>
+              <button type="button" onClick={handleDelete}
+                style={{ flex: 1, padding: '10px', borderRadius: 10, border: 'none', background: '#c0392b', color: '#fff', fontWeight: 800, cursor: 'pointer' }}>
+                🗑 Löschen
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className={s.scroll}>
         {/* ── FOTOS (prominent oben) ── */}
