@@ -76,7 +76,6 @@ function trunc(text: string, max: number): string {
 interface Line { x: number; size: number; bold?: boolean; text: string; gapBefore?: number; }
 
 export function generateErsatzBelegPdf(b: ErsatzBelegInput): string {
-  const showPreise = b.showPreise ?? false;
   const lines: Line[] = [];
 
   const fmtDatum = (v: string) => {
@@ -127,37 +126,30 @@ export function generateErsatzBelegPdf(b: ErsatzBelegInput): string {
     if (b.rechnungsanschriftTelefon)     row('Telefon', b.rechnungsanschriftTelefon);
   }
 
-  // ── Positionen ──
+  // ── Positionen (Spalten wie auf dem Original-Bewirtungsschein) ──
+  // Bestellt = erfasste Menge; Ausgeliefert / Zurück (Voll, Leer) / Berechnen /
+  // Pfand bleiben leer und werden erst beim Abschluss ausgefüllt.
   lines.push({ x: MARGIN, size: 13, bold: true, text: 'Positionen / Leistungen', gapBefore: 30 });
-  const colMenge = 400, colPreis = 470, colSumme = 525;
-  lines.push({ x: MARGIN, size: 9, bold: true, text: 'Bezeichnung' });
-  // Spaltenüberschriften auf gleicher Höhe → über zusätzliche Felder am selben Y (gapBefore 0)
-  lines.push({ x: colMenge, size: 9, bold: true, text: 'Menge', gapBefore: -11 });
-  if (showPreise) {
-    lines.push({ x: colPreis, size: 9, bold: true, text: 'Preis', gapBefore: -11 });
-    lines.push({ x: colSumme, size: 9, bold: true, text: 'Summe', gapBefore: -11 });
-  }
+  const cBestellt = 232, cAusgel = 288, cVoll = 362, cLeer = 402, cBerechnen = 442, cPfand = 508;
+  // Kopfzeile A: "Zurück" als Überschrift über den Unterspalten Voll / Leer
+  lines.push({ x: (cVoll + cLeer) / 2 - 8, size: 7.5, bold: true, text: 'Zurück' });
+  // Kopfzeile B: Einzelspalten auf einer Höhe
+  lines.push({ x: MARGIN,     size: 7.5, bold: true, text: 'Bezeichnung',  gapBefore: 9 });
+  lines.push({ x: cBestellt,  size: 7.5, bold: true, text: 'Bestellt',     gapBefore: -10.5 });
+  lines.push({ x: cAusgel,    size: 7.5, bold: true, text: 'Ausgeliefert', gapBefore: -10.5 });
+  lines.push({ x: cVoll,      size: 7.5, bold: true, text: 'Voll',         gapBefore: -10.5 });
+  lines.push({ x: cLeer,      size: 7.5, bold: true, text: 'Leer',         gapBefore: -10.5 });
+  lines.push({ x: cBerechnen, size: 7.5, bold: true, text: 'Berechnen',    gapBefore: -10.5 });
+  lines.push({ x: cPfand,     size: 7.5, bold: true, text: 'Pfand',        gapBefore: -10.5 });
 
-  let gesamt = 0;
   let lastKat = '';
   for (const p of b.positionen) {
     if (p.kategorie !== lastKat) {
-      // Erste Kategorie braucht mehr Abstand zur Spaltenüberschrift.
-      lines.push({ x: MARGIN, size: 10, bold: true, text: String(p.kategorie), gapBefore: lastKat === '' ? 22 : 20 });
+      lines.push({ x: MARGIN, size: 10, bold: true, text: String(p.kategorie), gapBefore: lastKat === '' ? 20 : 18 });
       lastKat = p.kategorie;
     }
-    const summe = p.preis * p.menge;
-    gesamt += summe;
-    lines.push({ x: MARGIN + 6, size: 10, text: trunc(p.bezeichnung, 58) });
-    lines.push({ x: colMenge, size: 10, text: `${p.menge} Stk`, gapBefore: -12.5 });
-    if (showPreise) {
-      lines.push({ x: colPreis, size: 10, text: p.preis.toFixed(2), gapBefore: -12.5 });
-      lines.push({ x: colSumme, size: 10, text: summe.toFixed(2), gapBefore: -12.5 });
-    }
-  }
-  if (showPreise) {
-    lines.push({ x: MARGIN, size: 12, bold: true, text: 'Gesamt', gapBefore: 12 });
-    lines.push({ x: colSumme, size: 12, bold: true, text: `${gesamt.toFixed(2)} EUR`, gapBefore: -14 });
+    lines.push({ x: MARGIN + 6, size: 9.5, text: trunc(p.bezeichnung, 34) });
+    lines.push({ x: cBestellt,  size: 9.5, text: String(p.menge), gapBefore: -12 });
   }
 
   if (b.wuensche?.trim()) {
