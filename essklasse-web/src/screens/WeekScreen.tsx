@@ -8,7 +8,6 @@ import { de } from 'date-fns/locale';
 import { useBelegStore } from '../store/belegStore';
 import { useObjektFilter } from '../store/objektStore';
 import { useAuthStore } from '../store/authStore';
-import { BelegCard } from '../components/BelegCard';
 import { ObjektSwitcherButton } from '../components/ObjektSwitcher';
 import { OffeneBanner } from '../components/OffeneBanner';
 import type { Bewirtungsbeleg } from '../types';
@@ -76,7 +75,7 @@ export function WeekScreen({ onOpenBeleg, onTabAbschluss }: Props) {
         </button>
       )}
 
-      {/* ── Tage Montag bis Sonntag — je Tag eine Spalte ── */}
+      {/* ── Tage Montag bis Sonntag — alle 7 Spalten passen in den Frame ── */}
       <div className={s.columns}>
         {days.map(day => {
           const key      = format(day, 'yyyy-MM-dd');
@@ -86,16 +85,21 @@ export function WeekScreen({ onOpenBeleg, onTabAbschluss }: Props) {
             <div key={key} className={`${s.column} ${heute ? s.columnToday : ''}`}>
               <div className={`${s.dayHeader} ${heute ? s.dayHeaderToday : ''}`}>
                 <span className={s.dayName}>{format(day, 'EEEEEE', { locale: de })}</span>
-                <span className={s.dayDate}>{format(day, 'd. MMM', { locale: de })}</span>
-                <span className={s.dayCount}>{dayBelege.length}</span>
+                <span className={s.dayNum}>{format(day, 'd.', { locale: de })}</span>
               </div>
               <div className={s.columnList}>
-                {dayBelege.length === 0
-                  ? <p className={s.dayEmpty}>—</p>
-                  : dayBelege.map(b => (
-                      <BelegCard key={b.id} beleg={b} onClick={() => onOpenBeleg(b)} />
-                    ))
-                }
+                {dayBelege.map(b => (
+                  <button
+                    key={b.id}
+                    type="button"
+                    className={`${s.entry} ${b.abgeschlossen ? s.entryDone : ''}`}
+                    onClick={() => onOpenBeleg(b)}
+                    title={`${b.uhrzeitVon ? b.uhrzeitVon + ' · ' : ''}${b.veranstaltung || 'Bewirtung'}`}
+                  >
+                    {b.uhrzeitVon && <span className={s.entryTime}>{b.uhrzeitVon}</span>}
+                    <span className={s.entryTitle}>{b.veranstaltung || 'Bewirtung'}</span>
+                  </button>
+                ))}
               </div>
             </div>
           );
