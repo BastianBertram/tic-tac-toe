@@ -17,6 +17,7 @@ import { useObjektStore, resolveObjektIds, istObjektGebunden, ALLE_OBJEKTE, ALLE
 import { useUserStore } from './store/userStore';
 import { useSettingsStore } from './store/settingsStore';
 import { initSync } from './services/sync';
+import { fetchMe, setOnDeactivated } from './services/dataService';
 import { GFHomeScreen } from './screens/GFHomeScreen';
 import { GFBewirtungsListScreen } from './screens/GFBewirtungsListScreen';
 import type { GFKategorie } from './screens/GFBewirtungsListScreen';
@@ -63,6 +64,23 @@ export default function App() {
   // App-Daten (Benutzer, Objekte, Belege, Sales) mit dem Server synchronisieren
   useEffect(() => {
     void initSync();
+  }, []);
+
+  // Deaktivierung durch den Admin → sofortiger Logout (Sperre serverseitig).
+  useEffect(() => {
+    const deaktivieren = () => {
+      if (!useAuthStore.getState().user) return;
+      useAuthStore.getState().logout();
+      useObjektStore.getState().reset();
+      alert('Ihr Konto wurde deaktiviert. Sie wurden abgemeldet. Bitte wenden Sie sich an Ihren Administrator.');
+    };
+    setOnDeactivated(deaktivieren);
+    const id = setInterval(async () => {
+      if (!useAuthStore.getState().user) return;
+      const me = await fetchMe();
+      if (me && me.authenticated && !me.active) deaktivieren();
+    }, 8000);
+    return () => clearInterval(id);
   }, []);
 
   // User & Bereichsleitung mit mehreren Objekten: standardmäßig „Alle Objekte".

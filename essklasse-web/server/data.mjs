@@ -69,13 +69,31 @@ function persist(name, data) {
  * @returns { restricted: boolean, objektIds: string[] }
  *   restricted=true nur für die Rollen `user`/`bereichsleitung`.
  */
+/** Ermittelt den persistierten Benutzer-Datensatz (users.json) des Anfragenden. */
+function resolveIdentity(ctx) {
+  const users = load('users').data?.users ?? [];
+  if (ctx.user) {
+    const rec = users.find(u =>
+      u.id === ctx.user.id ||
+      String(u.email ?? '').toLowerCase() === String(ctx.user.email ?? '').toLowerCase());
+    return rec ?? ctx.user;
+  }
+  if (ctx.devEmail) {
+    const mail = String(ctx.devEmail).toLowerCase();
+    return users.find(u => String(u.email ?? '').toLowerCase() === mail) ?? null;
+  }
+  return null;
+}
+
+/** Status des Kontos: authentifiziert? aktiv? */
+export function accountStatus(ctx) {
+  const idn = resolveIdentity(ctx);
+  return { authenticated: !!idn, active: idn ? idn.aktiv !== false : true };
+}
+
 function userScope(ctx) {
   const users = load('users').data?.users ?? [];
-  let identity = ctx.user ?? null;
-  if (!identity && ctx.devEmail) {
-    const mail = String(ctx.devEmail).toLowerCase();
-    identity = users.find(u => String(u.email ?? '').toLowerCase() === mail) ?? null;
-  }
+  let identity = resolveIdentity(ctx);
   if (!identity) return { restricted: false, objektIds: [] };
   // Admin & Geschäftsführung: voller, objektübergreifender Zugriff.
   if (identity.rolle === 'admin' || identity.rolle === 'geschaeftsfuehrung') {
@@ -98,6 +116,11 @@ export function handleData(method, url, body, ctx = {}) {
   const name = m[1];
   const cfg = COLLECTIONS[name];
   if (!cfg) return { status: 404, payload: { error: 'Unknown collection' } };
+
+  // Deaktivierte Konten verlieren sofort jeden Datenzugriff.
+  if (!accountStatus(ctx).active) {
+    return { status: 403, payload: { error: 'ACCOUNT_DEACTIVATED' } };
+  }
 
   if (method === 'GET') {
     const env = load(name);

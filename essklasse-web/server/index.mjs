@@ -12,7 +12,7 @@
 import { createServer } from 'node:http';
 import { handleAuth, getSessionUser } from './auth.mjs';
 import { handleSettings } from './settings.mjs';
-import { handleData } from './data.mjs';
+import { handleData, accountStatus } from './data.mjs';
 
 const PORT           = Number(process.env.PORT ?? 3001);
 const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN ?? 'http://localhost:5173';
@@ -243,6 +243,13 @@ const server = createServer(async (req, res) => {
 
   if (req.method === 'GET' && url === '/health') {
     return send(res, 200, { ok: true, aiConfigured: Boolean(API_KEY) });
+  }
+
+  // ── Konto-Status (für Sofort-Logout bei Deaktivierung) ──
+  if (req.method === 'GET' && url === '/api/me') {
+    const user = getSessionUser(req);
+    const devEmail = req.headers['x-user-email'] ?? null;
+    return send(res, 200, accountStatus({ user, devEmail }));
   }
 
   // ── App-Einstellungen (Branding & Impressum) ──

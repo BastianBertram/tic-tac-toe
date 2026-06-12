@@ -17,6 +17,7 @@
  *     (and gate protected /api routes on the access token)
  */
 import { randomBytes } from 'node:crypto';
+import { accountStatus } from './data.mjs';
 
 const MAGIC_TTL_MS   = 15 * 60 * 1000;            // 15 min, one-time
 const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;  // 30 days
@@ -113,6 +114,10 @@ function verify(body) {
   magicTokens.delete(body.token); // one-time use
   const user = findUser(entry.email);
   if (!user) return { status: 401, payload: { error: 'Konto nicht gefunden.' } };
+  // Vom Admin deaktivierte Konten dürfen sich nicht einloggen.
+  if (!accountStatus({ devEmail: user.email }).active) {
+    return { status: 403, payload: { error: 'Konto deaktiviert. Bitte wenden Sie sich an Ihren Administrator.' } };
+  }
 
   const refresh = newToken();
   sessions.set(refresh, { email: user.email, expiresAt: Date.now() + SESSION_TTL_MS });
@@ -128,6 +133,11 @@ function refresh(_body, req) {
   }
   const user = findUser(entry.email);
   if (!user) return { status: 401, payload: { error: 'Konto nicht gefunden.' } };
+  // Während einer laufenden Sitzung deaktiviert → Sitzung beenden.
+  if (!accountStatus({ devEmail: user.email }).active) {
+    sessions.delete(token);
+    return { status: 403, payload: { error: 'Konto deaktiviert.' }, setCookie: buildSetCookie('', { clear: true }) };
+  }
   return { status: 200, payload: sessionPayload(user) };
 }
 
