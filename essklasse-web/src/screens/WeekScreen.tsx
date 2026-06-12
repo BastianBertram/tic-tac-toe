@@ -20,6 +20,17 @@ function byUhrzeit(a: Bewirtungsbeleg, b: Bewirtungsbeleg): number {
   return (a.uhrzeitVon || '99:99').localeCompare(b.uhrzeitVon || '99:99');
 }
 
+const HOUR_H = 46;          // Pixel-Höhe einer Stunde
+const DEFAULT_VON = 8;      // Standard-Startstunde, wenn keine Belege
+const DEFAULT_BIS = 18;     // Standard-Endstunde, wenn keine Belege
+
+/** "HH:MM" → Minuten seit Mitternacht, sonst null */
+function toMin(t?: string): number | null {
+  if (!t || !/^\d{1,2}:\d{2}$/.test(t)) return null;
+  const [h, m] = t.split(':').map(Number);
+  return h * 60 + m;
+}
+
 export function WeekScreen({ onOpenBeleg, onTabAbschluss }: Props) {
   const belege          = useBelegStore(st => st.belege);
   const { matchObjekt } = useObjektFilter();
@@ -43,6 +54,19 @@ export function WeekScreen({ onOpenBeleg, onTabAbschluss }: Props) {
   );
 
   const spanLabel = `${format(weekStart, 'd.', { locale: de })}–${format(weekEnd, 'd. MMM yyyy', { locale: de })}`;
+
+  // Stundenraster: Bereich aus den Belegen der Woche ableiten (sonst Standard).
+  let minH = DEFAULT_VON, maxH = DEFAULT_BIS;
+  for (const b of weekBelege) {
+    const von = toMin(b.uhrzeitVon);
+    const bis = toMin(b.uhrzeitBis) ?? (von != null ? von + 60 : null);
+    if (von != null) minH = Math.min(minH, Math.floor(von / 60));
+    if (bis != null) maxH = Math.max(maxH, Math.ceil(bis / 60));
+  }
+  minH = Math.max(0, minH);
+  maxH = Math.min(24, Math.max(maxH, minH + 1));
+  const hours = Array.from({ length: maxH - minH + 1 }, (_, i) => minH + i);
+  const gridHeight = (maxH - minH) * HOUR_H;
 
   return (
     <div className={s.screen}>
@@ -75,35 +99,68 @@ export function WeekScreen({ onOpenBeleg, onTabAbschluss }: Props) {
         </button>
       )}
 
-      {/* ── Tage Montag bis Sonntag — alle 7 Spalten passen in den Frame ── */}
-      <div className={s.columns}>
+      {/* ── Kopfzeile: leere Ecke + Wochentage Mo–So ── */}
+      <div className={s.headRow}>
+        <div className={s.gutterHead} />
         {days.map(day => {
-          const key      = format(day, 'yyyy-MM-dd');
-          const dayBelege = weekBelege.filter(b => b.cateringDatumVon === key).toSorted(byUhrzeit);
-          const heute    = isToday(day);
+          const heute = isToday(day);
           return (
-            <div key={key} className={`${s.column} ${heute ? s.columnToday : ''}`}>
-              <div className={`${s.dayHeader} ${heute ? s.dayHeaderToday : ''}`}>
-                <span className={s.dayName}>{format(day, 'EEEEEE', { locale: de })}</span>
-                <span className={s.dayNum}>{format(day, 'd.', { locale: de })}</span>
-              </div>
-              <div className={s.columnList}>
-                {dayBelege.map(b => (
-                  <button
-                    key={b.id}
-                    type="button"
-                    className={`${s.entry} ${b.abgeschlossen ? s.entryDone : ''}`}
-                    onClick={() => onOpenBeleg(b)}
-                    title={`${b.uhrzeitVon ? b.uhrzeitVon + ' · ' : ''}${b.veranstaltung || 'Bewirtung'}`}
-                  >
-                    {b.uhrzeitVon && <span className={s.entryTime}>{b.uhrzeitVon}</span>}
-                    <span className={s.entryTitle}>{b.veranstaltung || 'Bewirtung'}</span>
-                  </button>
-                ))}
-              </div>
+            <div key={format(day, 'yyyy-MM-dd')} className={`${s.dayHeader} ${heute ? s.dayHeaderToday : ''}`}>
+              <span className={s.dayName}>{format(day, 'EEEEEE', { locale: de })}</span>
+              <span className={s.dayNum}>{format(day, 'd.', { locale: de })}</span>
             </div>
           );
         })}
+      </div>
+
+      {/* ── Stundenraster: links Stunden, rechts 7 Tagesspalten ── */}
+      <div className={s.gridScroll}>
+        <div className={s.grid} style={{ height: gridHeight }}>
+          {/* Stunden-Beschriftung links */}
+          <div className={s.gutter}>
+            {hours.map(h => (
+              <div key={h} className={s.hourLabel} style={{ top: (h - minH) * HOUR_H }}>
+                {h}:00
+              </div>
+            ))}
+          </div>
+
+          {/* 7 Tagesspalten */}
+          {days.map(day => {
+            const key       = format(day, 'yyyy-MM-dd');
+            const dayBelege = weekBelege.filter(b => b.cateringDatumVon === key).toSorted(byUhrzeit);
+            const heute     = isToday(day);
+            return (
+              <div key={key} className={`${s.dayCol} ${heute ? s.dayColToday : ''}`}>
+                {/* Stundenlinien */}
+                {hours.map(h => (
+                  <div key={h} className={s.hourLine} style={{ top: (h - minH) * HOUR_H }} />
+                ))}
+                {/* Bewirtungen als Zeitblöcke */}
+                {dayBelege.map(b => {
+                  const von = toMin(b.uhrzeitVon);
+                  if (von == null) return null;
+                  const bis = toMin(b.uhrzeitBis) ?? von + 60;
+                  const top = (von - minH * 60) / 60 * HOUR_H;
+                  const height = Math.max((bis - von) / 60 * HOUR_H, 22);
+                  return (
+                    <button
+                      key={b.id}
+                      type="button"
+                      className={`${s.entry} ${b.abgeschlossen ? s.entryDone : ''}`}
+                      style={{ top, height }}
+                      onClick={() => onOpenBeleg(b)}
+                      title={`${b.uhrzeitVon}–${b.uhrzeitBis || ''} · ${b.veranstaltung || 'Bewirtung'}`}
+                    >
+                      <span className={s.entryTime}>{b.uhrzeitVon}</span>
+                      <span className={s.entryTitle}>{b.veranstaltung || 'Bewirtung'}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
