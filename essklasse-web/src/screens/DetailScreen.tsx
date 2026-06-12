@@ -15,12 +15,11 @@ function downloadDataUrl(url: string, filename: string) {
   a.click();
 }
 
-export function DetailScreen({ beleg: init, onClose, onAbschliessen, onBearbeiten, onRechnungErstellen, canDelete = true }: Props) {
+export function DetailScreen({ beleg: init, onClose, onAbschliessen, onBearbeiten, onRechnungErstellen }: Props) {
   const store = useBelegStore();
   const beleg = store.belege.find(b => b.id === init.id) ?? init;
   const [lightbox, setLightbox] = useState<string | null>(null);
   const [pdfViewer, setPdfViewer] = useState<{ dataUrl: string; name: string } | null>(null);
-  const [deleteStep, setDeleteStep] = useState<0 | 1 | null>(null);
   const [showHistorie, setShowHistorie] = useState(false);
 
   const datum = formatDatum(beleg.cateringDatumVon, 'dd.MM.yyyy', { locale: de });
@@ -31,7 +30,6 @@ export function DetailScreen({ beleg: init, onClose, onAbschliessen, onBearbeite
   const fileBaseFor = (version: number) =>
     `${beleg.bestellungsnummer ?? 'beleg'}-ursprünglicher-Bewirtungsbeleg-version-${version}`;
 
-  function confirmDelete() { store.deleteBeleg(beleg.id); onClose(); }
 
   return (
     <div className={s.screen}>
@@ -41,34 +39,7 @@ export function DetailScreen({ beleg: init, onClose, onAbschliessen, onBearbeite
           <span className={s.title}>{beleg.veranstaltung || 'Bewirtungsbeleg'}</span>
           {beleg.bestellungsnummer && <span className={s.bestellNr}>{beleg.bestellungsnummer}</span>}
         </div>
-        {canDelete && !beleg.abgeschlossen && (
-          <button className={s.delBtn} onClick={() => setDeleteStep(0)} type="button">🗑</button>
-        )}
       </div>
-
-      {/* Zweistufiger Lösch-Dialog */}
-      {deleteStep !== null && (
-        <div className={s.modalOverlay} onClick={() => setDeleteStep(null)}>
-          <div className={s.modalSheet} onClick={e => e.stopPropagation()}>
-            <div className={s.modalStep}>Schritt {deleteStep + 1} von 2</div>
-            <div className={s.modalTitle}>
-              {deleteStep === 0 ? 'Beleg löschen?' : 'Wirklich endgültig löschen?'}
-            </div>
-            <div className={s.modalBody}>
-              {deleteStep === 0
-                ? `„${beleg.veranstaltung || 'Bewirtungsbeleg'}" wird gelöscht. Bitte beachte: Buchhaltung und Bereichsleitung können den gelöschten Beleg weiterhin einsehen und ggf. Rückfragen stellen.`
-                : 'Wirklich fortfahren? Der Beleg bleibt für Buchhaltung und Bereichsleitung sichtbar und kann nicht wiederhergestellt werden.'}
-            </div>
-            <div className={s.modalActions}>
-              <button type="button" className={s.cancelBtn} onClick={() => setDeleteStep(null)}>Abbrechen</button>
-              <button type="button" className={s.dangerBtn}
-                onClick={() => deleteStep === 0 ? setDeleteStep(1) : confirmDelete()}>
-                {deleteStep === 0 ? 'Weiter →' : 'Ja, endgültig löschen'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       <div className={s.scroll}>
         {/* Kopfdaten */}
