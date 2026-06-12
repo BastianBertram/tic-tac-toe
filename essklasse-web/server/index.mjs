@@ -12,7 +12,7 @@
 import { createServer } from 'node:http';
 import { handleAuth, getSessionUser } from './auth.mjs';
 import { handleSettings } from './settings.mjs';
-import { handleData, accountStatus } from './data.mjs';
+import { handleData, accountStatus, ensureSeeded } from './data.mjs';
 
 const PORT           = Number(process.env.PORT ?? 3001);
 const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN ?? 'http://localhost:5173';
@@ -357,6 +357,7 @@ const server = createServer(async (req, res) => {
   }
 });
 
+ensureSeeded(); // Stammdaten anlegen, damit kein öffentlicher Bootstrap nötig ist
 server.listen(PORT, () => {
   console.log(`EssKlasse AI proxy listening on http://localhost:${PORT}`);
   console.log(`  allowed origin: ${ALLOWED_ORIGIN}`);

@@ -16,6 +16,7 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { SEED_USERS, SEED_OBJEKTE } from './seed.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DATA_DIR  = join(__dirname, 'data');
@@ -54,6 +55,19 @@ function persist(name, data) {
   cache.set(name, data);
   mkdirSync(DATA_DIR, { recursive: true });
   writeFileSync(fileFor(name), JSON.stringify(data, null, 2), 'utf8');
+}
+
+/**
+ * Stellt beim Serverstart sicher, dass die Stammdaten-Kollektionen
+ * (users/objekte) angelegt und nicht leer sind. Dadurch ist kein öffentlicher
+ * „Bootstrap"-Schreibzugriff nötig — der Admin-Write-Gate gilt ausnahmslos.
+ * Bestehende, befüllte Dateien werden NICHT überschrieben.
+ */
+export function ensureSeeded() {
+  const usersOk = existsSync(fileFor('users')) && (load('users').data?.users ?? []).length > 0;
+  if (!usersOk) persist('users', { users: SEED_USERS });
+  const objekteOk = existsSync(fileFor('objekte')) && (load('objekte').data?.objekte ?? []).length > 0;
+  if (!objekteOk) persist('objekte', { objekte: SEED_OBJEKTE });
 }
 
 /**
@@ -150,15 +164,11 @@ export function handleData(method, url, body, ctx = {}) {
   if (method === 'PUT') {
     // Autorisierung anhand der EINEN Rollenquelle (resolveIdentity → users.json),
     // konsistent zum Lese-Scoping. Admin-Schreibrechte (users/objekte) werden in
-    // Dev wie Prod erzwungen — verhindert Privilege Escalation. Ausnahme: das
-    // initiale Befüllen einer noch leeren Kollektion (Bootstrap/Seed).
+    // Dev wie Prod AUSNAHMSLOS erzwungen — Stammdaten werden serverseitig geseedet
+    // (ensureSeeded), daher ist kein öffentlicher Bootstrap-Schreibzugriff nötig.
     const identity = resolveIdentity(ctx);
     if (cfg.write === 'admin' && identity?.rolle !== 'admin') {
-      const existing = load(name).data?.[name];
-      const bootstrapping = !Array.isArray(existing) || existing.length === 0;
-      if (!bootstrapping) {
-        return { status: 403, payload: { error: 'Nur Admins dürfen diese Daten ändern.' } };
-      }
+      return { status: 403, payload: { error: 'Nur Admins dürfen diese Daten ändern.' } };
     }
     // Auth-Schreibrechte (belege/sales) sind in Produktion zwingend.
     if (IS_PROD && cfg.write === 'auth' && !identity) {
