@@ -153,7 +153,7 @@ export function WeekScreen({ onOpenBeleg, onTabAbschluss }: Props) {
           return (
             <div key={format(day, 'yyyy-MM-dd')} className={`${s.dayHeader} ${heute ? s.dayHeaderToday : ''}`}>
               <span className={s.dayName}>{format(day, 'EEEEEE', { locale: de })}</span>
-              <span className={s.dayNum}>{format(day, 'd.', { locale: de })}</span>
+              <span className={s.dayNum}>{format(day, 'd.M.', { locale: de })}</span>
             </div>
           );
         })}
