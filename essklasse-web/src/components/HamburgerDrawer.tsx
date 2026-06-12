@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAuthStore } from '../store/authStore';
-import { useObjektStore } from '../store/objektStore';
+import { useObjektStore, ALLE_OBJEKTE } from '../store/objektStore';
 import type { UserRolle } from '../types';
 import s from './ProfilSheet.module.css';
 import d from './HamburgerDrawer.module.css';
@@ -28,10 +28,12 @@ export function HamburgerDrawer({ onClose, onAbgeschlossene }: Props) {
   const resetObjekte      = useObjektStore(st => st.reset);
   const objekte           = useObjektStore(st => st.objekte);
   const aktiv             = useObjektStore(st => st.getAktivesObjekt());
+  const aktiveObjektId    = useObjektStore(st => st.aktiveObjektId);
   const setAktiveObjektId = useObjektStore(st => st.setAktiveObjektId);
   const isBuchhaltung     = user?.rolle === 'buchhaltung';
   const isAdmin           = user?.rolle === 'admin';
   const isGf              = user?.rolle === 'geschaeftsfuehrung';
+  const isBereichsleitung = user?.rolle === 'bereichsleitung';
   const [loading, setLoading] = useState(false);
 
   function handleRolleSwitch(rolle: UserRolle) {
@@ -82,6 +84,22 @@ export function HamburgerDrawer({ onClose, onAbgeschlossene }: Props) {
           <>
             <div className={s.objekteInfo}>
               <div className={s.objekteLabel}>Zugeordnete Objekte</div>
+              {/* Bereichsleitung: alle zugeordneten Objekte gemeinsam ansehen */}
+              {isBereichsleitung && objekte.length > 1 && (() => {
+                const alleAktiv = aktiveObjektId === ALLE_OBJEKTE;
+                return (
+                  <button
+                    type="button"
+                    onClick={() => { if (!alleAktiv) setAktiveObjektId(ALLE_OBJEKTE); }}
+                    className={`${s.objektItem} ${alleAktiv ? s.objektActive : ''}`}
+                    style={{ width: '100%', textAlign: 'left', font: 'inherit', cursor: alleAktiv ? 'default' : 'pointer' }}
+                  >
+                    <span className={s.objektKuerzel}>∑</span>
+                    <span className={s.objektName}>Alle Objekte</span>
+                    <span className={s.objektAktivLabel}>{alleAktiv ? 'aktiv' : 'wechseln'}</span>
+                  </button>
+                );
+              })()}
               {objekte.map(o => {
                 const istAktiv = o.id === aktiv?.id;
                 const wechselbar = objekte.length > 1;
