@@ -1,6 +1,7 @@
 import { format, subDays } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { useBelegStore } from '../store/belegStore';
+import { useObjektFilter } from '../store/objektStore';
 import type { Bewirtungsbeleg } from '../types';
 import s from './AbgeschlossenScreen.module.css';
 
@@ -11,12 +12,13 @@ interface Props {
 
 export function AbgeschlossenScreen({ onClose, onOpenBeleg }: Props) {
   const belege = useBelegStore(st => st.belege);
+  const { matchObjekt } = useObjektFilter();
 
   const today     = format(new Date(), 'yyyy-MM-dd');
   const yesterday = format(subDays(new Date(), 1), 'yyyy-MM-dd');
 
   const abgeschlossen = belege
-    .filter(b => !b.deleted && b.abgeschlossen && (b.cateringDatumVon === today || b.cateringDatumVon === yesterday))
+    .filter(b => !b.deleted && b.abgeschlossen && matchObjekt(b.objektId) && (b.cateringDatumVon === today || b.cateringDatumVon === yesterday))
     .sort((a, b) => b.cateringDatumVon.localeCompare(a.cateringDatumVon));
 
   const todayList     = abgeschlossen.filter(b => b.cateringDatumVon === today);
