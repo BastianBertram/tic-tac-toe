@@ -12,13 +12,13 @@ const ROLES: { rolle: UserRolle; label: string; color: string; user: AuthUser }[
     rolle: 'admin',
     label: 'Admin',
     color: '#922b21',
-    user: { id: 'demo-admin', name: 'Max Mustermann', email: 'max@hwk.de', rolle: 'admin' },
+    user: { id: 'demo-admin', name: 'Max Mustermann', email: 'max@hwk-hannover.de', rolle: 'admin' },
   },
   {
     rolle: 'buchhaltung',
     label: 'Buchhaltung',
     color: '#1a5276',
-    user: { id: 'demo-buch', name: 'Klaus Weber', email: 'buch@hwk.de', rolle: 'buchhaltung' },
+    user: { id: 'demo-buch-1', name: 'Klaus Weber', email: 'buchhaltung@hwk-hannover.de', rolle: 'buchhaltung', objektIds: ['demo-1'] },
   },
   {
     rolle: 'bereichsleitung',
@@ -30,7 +30,7 @@ const ROLES: { rolle: UserRolle; label: string; color: string; user: AuthUser }[
     rolle: 'geschaeftsfuehrung',
     label: 'GF',
     color: '#1e6b4a',
-    user: { id: 'demo-gf', name: 'Hans Müller', email: 'gf@hwk.de', rolle: 'geschaeftsfuehrung' },
+    user: { id: 'demo-gf-1', name: 'Hans Müller', email: 'gf@hwk-hannover.de', rolle: 'geschaeftsfuehrung' },
   },
   {
     rolle: 'sales',

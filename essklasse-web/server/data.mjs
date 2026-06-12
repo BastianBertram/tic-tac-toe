@@ -77,10 +77,12 @@ function userScope(ctx) {
     identity = users.find(u => String(u.email ?? '').toLowerCase() === mail) ?? null;
   }
   if (!identity) return { restricted: false, objektIds: [] };
-  if (identity.rolle !== 'user' && identity.rolle !== 'bereichsleitung') {
+  // Admin & Geschäftsführung: voller, objektübergreifender Zugriff.
+  if (identity.rolle === 'admin' || identity.rolle === 'geschaeftsfuehrung') {
     return { restricted: false, objektIds: [] };
   }
-  // Maßgeblich ist die im Admin gepflegte Zuordnung.
+  // Alle übrigen Rollen sind auf ihre vom Admin zugeordneten Objekte beschränkt
+  // (leere Zuordnung = keine Objekte). Maßgeblich ist die users.json (Admin).
   const rec = users.find(u =>
     u.id === identity.id ||
     String(u.email ?? '').toLowerCase() === String(identity.email ?? '').toLowerCase());

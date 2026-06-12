@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useObjektStore, useSichtbareObjekte, useObjektFilter, ALLE_OBJEKTE } from '../store/objektStore';
+import { useObjektStore, useSichtbareObjekte, useObjektFilter, istObjektGebunden, ALLE_OBJEKTE } from '../store/objektStore';
 import { useAuthStore } from '../store/authStore';
 import s from './ObjektSwitcher.module.css';
 
@@ -30,7 +30,7 @@ function ObjektSheet({ onClose }: { onClose: () => void }) {
   const aktiveObjektId   = useObjektStore(s => s.aktiveObjektId);
   const setAktiveObjektId = useObjektStore(s => s.setAktiveObjektId);
   const rolle = useAuthStore(st => st.user?.rolle);
-  const darfAlle = (rolle === 'user' || rolle === 'bereichsleitung') && objekte.length > 1;
+  const darfAlle = istObjektGebunden(rolle) && objekte.length > 1;
 
   function select(id: string) {
     setAktiveObjektId(id);

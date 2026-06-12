@@ -71,15 +71,24 @@ export function resolveObjektIds(user: AuthUser | null, users: AppUser[]): strin
 }
 
 /**
+ * Ist die Rolle an die zugeordneten Objekte gebunden?
+ * Admin & Geschäftsführung haben vollen, objektübergreifenden Zugriff;
+ * alle übrigen Rollen sind auf ihre Admin-Zuordnung beschränkt.
+ */
+export function istObjektGebunden(rolle?: string | null): boolean {
+  return !!rolle && rolle !== 'admin' && rolle !== 'geschaeftsfuehrung';
+}
+
+/**
  * Objekte, die der aktuell angemeldete User sehen darf.
- * Für `user`/`bereichsleitung` nur die zugeordneten (Admin-Zuordnung),
- * für alle übrigen Rollen (z.B. Admin) sämtliche Objekte.
+ * Objektgebundene Rollen sehen nur ihre zugeordneten Objekte (leere Zuordnung
+ * = keine), Admin & Geschäftsführung sämtliche Objekte.
  */
 export function useSichtbareObjekte(): Objekt[] {
   const objekte = useObjektStore(s => s.objekte);
   const user    = useAuthStore(s => s.user);
   const users   = useUserStore(s => s.users);
-  if (user?.rolle === 'user' || user?.rolle === 'bereichsleitung') {
+  if (istObjektGebunden(user?.rolle)) {
     const ids = resolveObjektIds(user, users);
     return objekte.filter(o => ids.includes(o.id));
   }
