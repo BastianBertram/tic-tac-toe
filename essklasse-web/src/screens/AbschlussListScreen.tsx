@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { BrandLogo } from '../components/BrandLogo';
 import { format } from 'date-fns';
 import { useBelegStore } from '../store/belegStore';
-import { useObjektStore } from '../store/objektStore';
+import { useObjektFilter } from '../store/objektStore';
 import { BelegCard } from '../components/BelegCard';
 import { AbschlussScreen } from './AbschlussScreen';
 import type { Bewirtungsbeleg } from '../types';
@@ -12,7 +12,7 @@ interface Props { onOpenBeleg: (b: Bewirtungsbeleg) => void; }
 
 export function AbschlussListScreen({ onOpenBeleg }: Props) {
   const belege        = useBelegStore(st => st.belege);
-  const aktivesObjekt = useObjektStore(st => st.getAktivesObjekt());
+  const { matchObjekt } = useObjektFilter();
   const [abschlussBeleg, setAbschlussBeleg] = useState<Bewirtungsbeleg | null>(null);
 
   const offene = useMemo(() => {
@@ -20,12 +20,12 @@ export function AbschlussListScreen({ onOpenBeleg }: Props) {
     const today = format(new Date(), 'yyyy-MM-dd');
     return belege.filter(b => {
       if (b.deleted || b.abgeschlossen) return false;
-      if (aktivesObjekt && b.objektId !== aktivesObjekt.id) return false;
+      if (!matchObjekt(b.objektId)) return false;
       if (b.cateringDatumVon < today) return true;
       if (b.cateringDatumVon === today && b.uhrzeitBis && b.uhrzeitBis < now) return true;
       return false;
     });
-  }, [belege, aktivesObjekt]);
+  }, [belege, matchObjekt]);
 
   if (abschlussBeleg) {
     return (

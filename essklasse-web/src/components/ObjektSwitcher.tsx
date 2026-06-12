@@ -1,13 +1,13 @@
 import { useState } from 'react';
-import { useObjektStore, ALLE_OBJEKTE } from '../store/objektStore';
+import { useObjektStore, useSichtbareObjekte, useObjektFilter, ALLE_OBJEKTE } from '../store/objektStore';
 import { useAuthStore } from '../store/authStore';
 import s from './ObjektSwitcher.module.css';
 
 export function ObjektSwitcherButton() {
   const [open, setOpen] = useState(false);
-  const aktiv          = useObjektStore(s => s.getAktivesObjekt());
   const aktiveObjektId = useObjektStore(s => s.aktiveObjektId);
-  const objekte        = useObjektStore(s => s.objekte);
+  const objekte        = useSichtbareObjekte();
+  const { aktivesObjekt: aktiv } = useObjektFilter();
 
   const alleAktiv = aktiveObjektId === ALLE_OBJEKTE;
   if (!aktiv && !alleAktiv) return null;
@@ -26,7 +26,7 @@ export function ObjektSwitcherButton() {
 }
 
 function ObjektSheet({ onClose }: { onClose: () => void }) {
-  const objekte          = useObjektStore(s => s.objekte);
+  const objekte          = useSichtbareObjekte();
   const aktiveObjektId   = useObjektStore(s => s.aktiveObjektId);
   const setAktiveObjektId = useObjektStore(s => s.setAktiveObjektId);
   const rolle = useAuthStore(st => st.user?.rolle);

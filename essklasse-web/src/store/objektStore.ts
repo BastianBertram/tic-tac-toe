@@ -55,3 +55,41 @@ export const useObjektStore = create<ObjektStore>()(
     { name: 'ek-objekte' }
   )
 );
+
+import { useAuthStore } from './authStore';
+
+/**
+ * Objekte, die der aktuell angemeldete User sehen darf.
+ * Für `user`/`bereichsleitung` nur die zugeordneten (user.objektIds),
+ * für alle übrigen Rollen (z.B. Admin) sämtliche Objekte.
+ */
+export function useSichtbareObjekte(): Objekt[] {
+  const objekte   = useObjektStore(s => s.objekte);
+  const rolle     = useAuthStore(s => s.user?.rolle);
+  const objektIds = useAuthStore(s => s.user?.objektIds);
+  if (rolle === 'user' || rolle === 'bereichsleitung') {
+    const ids = objektIds ?? [];
+    return objekte.filter(o => ids.includes(o.id));
+  }
+  return objekte;
+}
+
+/**
+ * Liefert das aktive Objekt (auf die sichtbaren beschränkt) sowie eine
+ * Filter-Funktion für Belege. Im „Alle Objekte"-Modus werden alle sichtbaren
+ * Objekte einbezogen.
+ */
+export function useObjektFilter() {
+  const aktiveObjektId = useObjektStore(s => s.aktiveObjektId);
+  const sichtbare      = useSichtbareObjekte();
+  const aktivesObjekt  = aktiveObjektId === ALLE_OBJEKTE
+    ? null
+    : (sichtbare.find(o => o.id === aktiveObjektId) ?? sichtbare[0] ?? null);
+  const sichtbareIds = new Set(sichtbare.map(o => o.id));
+  const matchObjekt = (objektId: string) => {
+    if (aktivesObjekt) return objektId === aktivesObjekt.id;       // einzelnes Objekt
+    if (sichtbareIds.size === 0) return true;                      // keine Einschränkung
+    return sichtbareIds.has(objektId);                             // alle zugeordneten
+  };
+  return { aktivesObjekt, sichtbare, matchObjekt };
+}

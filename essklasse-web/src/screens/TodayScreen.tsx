@@ -3,7 +3,7 @@ import { BrandLogo } from '../components/BrandLogo';
 import { format, addDays, isToday } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { useBelegStore } from '../store/belegStore';
-import { useObjektStore } from '../store/objektStore';
+import { useObjektFilter } from '../store/objektStore';
 import { useAuthStore } from '../store/authStore';
 import { BelegCard, type BelegHighlight } from '../components/BelegCard';
 import { ObjektSwitcherButton } from '../components/ObjektSwitcher';
@@ -36,7 +36,7 @@ function isFuture(beleg: Bewirtungsbeleg, now: string): boolean {
 
 export function TodayScreen({ onOpenBeleg, onAbschliessen, onTabAbschluss }: Props) {
   const belege        = useBelegStore(st => st.belege);
-  const aktivesObjekt = useObjektStore(st => st.getAktivesObjekt());
+  const { matchObjekt } = useObjektFilter();
   const rolle = useAuthStore(st => st.user?.rolle);
   // offset: Basis-Tag (0 = heute ist linker Button, 1 = morgen ist linker Button, …)
   const [offset, setOffset]   = useState(0);
@@ -68,7 +68,7 @@ export function TodayScreen({ onOpenBeleg, onAbschliessen, onTabAbschluss }: Pro
   const isSelectedToday = selected === 0 ? leftIsToday : rightIsToday;
 
   // React Compiler übernimmt die Memoisierung automatisch – kein manuelles useMemo nötig.
-  const belegeForObjekt = belege.filter(b => !b.deleted && (!aktivesObjekt || b.objektId === aktivesObjekt.id));
+  const belegeForObjekt = belege.filter(b => !b.deleted && matchObjekt(b.objektId));
 
   const leftBelege  = belegeForObjekt.filter(b => b.cateringDatumVon === leftDateStr).toSorted(byUhrzeit);
   const rightBelege = belegeForObjekt.filter(b => b.cateringDatumVon === rightDateStr).toSorted(byUhrzeit);

@@ -3,7 +3,7 @@ import { BrandLogo } from '../components/BrandLogo';
 import { v4 as uuidv4 } from 'uuid';
 import { format } from 'date-fns';
 import { useBelegStore } from '../store/belegStore';
-import { useObjektStore } from '../store/objektStore';
+import { useObjektStore, useSichtbareObjekte } from '../store/objektStore';
 import { useAuthStore } from '../store/authStore';
 import { useSettingsStore } from '../store/settingsStore';
 import { PhotoCapture } from '../components/PhotoCapture';
@@ -50,8 +50,8 @@ function initFromBeleg(b: Bewirtungsbeleg) {
 }
 
 export function NewBelegScreen({ onClose, editBeleg }: Props) {
-  const aktivesObjekt = useObjektStore(st => st.getAktivesObjekt());
-  const objekte       = useObjektStore(st => st.objekte);
+  const objekte       = useSichtbareObjekte();
+  const aktivesObjekt = useObjektStore(st => st.getAktivesObjekt()) ?? objekte[0] ?? null;
   const currentRolle  = useAuthStore(st => st.user?.rolle);
   const showRechnung  = currentRolle !== 'user';
 

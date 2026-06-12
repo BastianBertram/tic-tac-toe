@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAuthStore } from '../store/authStore';
-import { useObjektStore, ALLE_OBJEKTE } from '../store/objektStore';
+import { useObjektStore, useSichtbareObjekte, ALLE_OBJEKTE } from '../store/objektStore';
 import type { UserRolle } from '../types';
 import s from './ProfilSheet.module.css';
 import d from './HamburgerDrawer.module.css';
@@ -26,7 +26,7 @@ export function HamburgerDrawer({ onClose, onAbgeschlossene }: Props) {
   const switchRolleAs     = useAuthStore(st => st.switchRolleAs);
   const isGfBase          = useAuthStore(st => st.isGeschaeftsfuehrungBase());
   const resetObjekte      = useObjektStore(st => st.reset);
-  const objekte           = useObjektStore(st => st.objekte);
+  const objekte           = useSichtbareObjekte();
   const aktiv             = useObjektStore(st => st.getAktivesObjekt());
   const aktiveObjektId    = useObjektStore(st => st.aktiveObjektId);
   const setAktiveObjektId = useObjektStore(st => st.setAktiveObjektId);

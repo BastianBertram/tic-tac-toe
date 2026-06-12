@@ -71,13 +71,22 @@ export default function App() {
   const defaultAppliedRef = useRef(false);
   useEffect(() => {
     const objStore = useObjektStore.getState();
+    const u = useAuthStore.getState().user;
+    // Nur die dem User zugeordneten Objekte berücksichtigen.
+    const meine = (rolle === 'user' || rolle === 'bereichsleitung')
+      ? objStore.objekte.filter(o => (u?.objektIds ?? []).includes(o.id))
+      : objStore.objekte;
     if (prevRolleRef.current !== rolle) { defaultAppliedRef.current = false; prevRolleRef.current = rolle; }
-    const darfAlle = (rolle === 'user' || rolle === 'bereichsleitung') && objStore.objekte.length > 1;
+    const darfAlle = (rolle === 'user' || rolle === 'bereichsleitung') && meine.length > 1;
     if (darfAlle && !defaultAppliedRef.current) {
       objStore.setAktiveObjektId(ALLE_OBJEKTE);
       defaultAppliedRef.current = true;
-    } else if (!darfAlle && objStore.aktiveObjektId === ALLE_OBJEKTE) {
-      objStore.setAktiveObjektId(objStore.objekte[0]?.id ?? '');
+    } else if (objStore.aktiveObjektId === ALLE_OBJEKTE && !darfAlle) {
+      objStore.setAktiveObjektId(meine[0]?.id ?? '');
+    } else if (objStore.aktiveObjektId !== ALLE_OBJEKTE && meine.length > 0
+               && !meine.some(o => o.id === objStore.aktiveObjektId)) {
+      // Aktives Objekt gehört nicht (mehr) zu den zugeordneten → korrigieren.
+      objStore.setAktiveObjektId(meine[0].id);
     }
   }, [rolle, objekteCount]);
 
