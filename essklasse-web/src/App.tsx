@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { BottomNav } from './components/BottomNav';
 import type { Tab } from './components/BottomNav';
 import { AuthGuard } from './components/AuthGuard';
@@ -13,6 +13,7 @@ import { BuchhaltungScreen } from './screens/BuchhaltungScreen';
 import { AdminScreen } from './screens/AdminScreen';
 import { useAuthStore } from './store/authStore';
 import { useBelegStore } from './store/belegStore';
+import { useObjektStore, ALLE_OBJEKTE } from './store/objektStore';
 import { useSettingsStore } from './store/settingsStore';
 import { initSync } from './services/sync';
 import { GFHomeScreen } from './screens/GFHomeScreen';
@@ -62,6 +63,19 @@ export default function App() {
   useEffect(() => {
     void initSync();
   }, []);
+
+  // Bereichsleitung: beim Eintritt in die Rolle standardmäßig „Alle Objekte".
+  // Andere Rollen kennen „Alle Objekte" nicht → ggf. auf ein Einzelobjekt zurücksetzen.
+  const prevRolleRef = useRef<typeof rolle>(undefined);
+  useEffect(() => {
+    const objStore = useObjektStore.getState();
+    if (rolle === 'bereichsleitung') {
+      if (prevRolleRef.current !== 'bereichsleitung') objStore.setAktiveObjektId(ALLE_OBJEKTE);
+    } else if (objStore.aktiveObjektId === ALLE_OBJEKTE) {
+      objStore.setAktiveObjektId(objStore.objekte[0]?.id ?? '');
+    }
+    prevRolleRef.current = rolle;
+  }, [rolle]);
 
   // Duplikat-Prüfung + Rechnungsnummer-Modal
   const [duplikatBeleg, setDuplikatBeleg] = useState<Bewirtungsbeleg | null>(null);

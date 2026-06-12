@@ -27,6 +27,7 @@ export const useObjektStore = create<ObjektStore>()(
 
       setObjekte: (objekte) => {
         const current = get().aktiveObjektId;
+        if (current === ALLE_OBJEKTE) { set({ objekte }); return; } // „Alle Objekte" beibehalten
         // Falls das aktive Objekt nicht mehr in der Liste ist → erstes wählen
         const stillValid = objekte.some(o => o.id === current);
         set({
