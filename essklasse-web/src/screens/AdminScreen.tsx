@@ -210,6 +210,107 @@ function UserTab() {
   const countAktiv   = users.filter(u => u.aktiv).length;
   const countInaktiv = users.filter(u => !u.aktiv).length;
 
+  // Benutzer-Formular (neu/bearbeiten/ansehen) — wird oben (neu) oder inline an
+  // der Kachel-Position (bearbeiten) gerendert.
+  const renderForm = () => {
+    const readOnly = !!editId && !!editTarget && !editTarget.aktiv;
+    return (
+      <div className={s.formCard}>
+        <div className={s.formTitle}>{!editId ? 'Neuer Benutzer' : readOnly ? 'Benutzer ansehen' : 'Benutzer bearbeiten'}</div>
+        {readOnly && (
+          <div style={{ fontSize: 12.5, color: 'var(--ek-muted)', margin: '0 0 12px' }}>
+            🔒 Dieser Benutzer ist deaktiviert und kann nur angesehen, nicht bearbeitet werden.
+          </div>
+        )}
+
+        <label className={s.label}>Anrede *</label>
+        <div className={s.anredeRow}>
+          {(['Herr', 'Frau'] as Anrede[]).map(a => (
+            <button key={a} type="button" disabled={readOnly}
+              className={`${s.anredeBtn} ${form.anrede === a ? s.anredeBtnActive : ''}`}
+              onClick={() => setForm(f => ({...f, anrede: a}))}
+            >{a}</button>
+          ))}
+        </div>
+
+        <label className={s.label}>Vorname *</label>
+        <input className={s.input} disabled={readOnly} value={form.vorname} onChange={e => setForm(f => ({...f, vorname: e.target.value}))} placeholder="Vorname" />
+
+        <label className={s.label}>Nachname *</label>
+        <input className={s.input} disabled={readOnly} value={form.nachname} onChange={e => setForm(f => ({...f, nachname: e.target.value}))} placeholder="Nachname" />
+
+        <label className={s.label}>E-Mail *</label>
+        <input
+          className={`${s.input} ${emailError ? s.inputError : emailTouched && emailFormatOk ? s.inputOk : ''}`}
+          type="email"
+          disabled={readOnly}
+          value={form.email}
+          onChange={e => setForm(f => ({...f, email: e.target.value}))}
+          placeholder="name@hwk.de"
+        />
+        {emailError && <div className={s.fieldError}>{emailError}</div>}
+
+        <label className={s.label}>Telefonnummer</label>
+        <input className={s.input} type="tel" disabled={readOnly} value={form.telefon} onChange={e => setForm(f => ({...f, telefon: e.target.value}))} placeholder="+49 511 123456" />
+
+        <label className={s.label}>Rolle *</label>
+        <select className={s.select} disabled={readOnly} value={form.rolle} onChange={e => {
+          const rolle = e.target.value as UserRolle;
+          setForm(f => ({ ...f, rolle, objektIds: defaultObjektIds(rolle) }));
+        }}>
+          <option value="user">User</option>
+          <option value="bereichsleitung">Bereichsleitung</option>
+          <option value="buchhaltung">Buchhaltung</option>
+          <option value="geschaeftsfuehrung">Geschäftsführung</option>
+          <option value="admin">Admin</option>
+        </select>
+
+        {(form.rolle === 'user' || form.rolle === 'buchhaltung' || form.rolle === 'bereichsleitung') && objekte.length > 0 && (
+          <>
+            <label className={s.label}>Objekte zuordnen *</label>
+            <div className={s.objektCheckList}>
+              {form.rolle === 'buchhaltung' && (
+                <label className={`${s.checkRow} ${s.checkRowAlle}`}>
+                  <input
+                    type="checkbox"
+                    disabled={readOnly}
+                    checked={form.objektIds.includes(ALLE_OBJEKTE_ID)}
+                    onChange={toggleAlleObjekte}
+                  />
+                  <span className={s.checkRowAlleLabel}>🌐 Alle Objekte</span>
+                </label>
+              )}
+              {objekte.filter(o => o.aktiv !== false).map(o => (
+                <label key={o.id} className={s.checkRow}>
+                  <input type="checkbox" disabled={readOnly} checked={form.objektIds.includes(o.id)} onChange={() => toggleObjekt(o.id)} />
+                  <span>{o.kuerzel ? `${o.kuerzel} – ` : ''}{o.name}</span>
+                </label>
+              ))}
+            </div>
+          </>
+        )}
+
+        {editId && editTarget?.aktiv && (
+          <>
+            <div className={s.dividerLine} />
+            <button type="button" className={s.deactivateBtn} onClick={() => setConfirmDeactivate(true)}>
+              🔒 Benutzer deaktivieren
+            </button>
+          </>
+        )}
+        <div className={s.formActions}>
+          <button type="button" className={s.cancelBtn} onClick={() => setShowForm(false)}>Abbrechen</button>
+          {(!editId || editTarget?.aktiv) && (
+            <button type="button" className={s.saveBtn} onClick={handleSave} disabled={!canSave}>Speichern</button>
+          )}
+          {editId && !editTarget?.aktiv && (
+            <button type="button" className={s.cancelBtn} onClick={() => setShowForm(false)}>Schließen</button>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className={s.tabContent}>
       <div className={s.searchRow}>
@@ -237,116 +338,15 @@ function UserTab() {
         <button type="button" className={s.addBtn} onClick={openNew}>+ Neuer Benutzer</button>
       </div>
 
-      {showForm && (() => {
-        // Deaktivierte Benutzer sind nur ansehbar (schreibgeschützt).
-        const readOnly = !!editId && !!editTarget && !editTarget.aktiv;
-        return (
-        <div className={s.formCard}>
-          <div className={s.formTitle}>{!editId ? 'Neuer Benutzer' : readOnly ? 'Benutzer ansehen' : 'Benutzer bearbeiten'}</div>
-          {readOnly && (
-            <div style={{ fontSize: 12.5, color: 'var(--ek-muted)', margin: '0 0 12px' }}>
-              🔒 Dieser Benutzer ist deaktiviert und kann nur angesehen, nicht bearbeitet werden.
-            </div>
-          )}
-
-          <label className={s.label}>Anrede *</label>
-          <div className={s.anredeRow}>
-            {(['Herr', 'Frau'] as Anrede[]).map(a => (
-              <button key={a} type="button" disabled={readOnly}
-                className={`${s.anredeBtn} ${form.anrede === a ? s.anredeBtnActive : ''}`}
-                onClick={() => setForm(f => ({...f, anrede: a}))}
-              >{a}</button>
-            ))}
-          </div>
-
-          <label className={s.label}>Vorname *</label>
-          <input className={s.input} disabled={readOnly} value={form.vorname} onChange={e => setForm(f => ({...f, vorname: e.target.value}))} placeholder="Vorname" />
-
-          <label className={s.label}>Nachname *</label>
-          <input className={s.input} disabled={readOnly} value={form.nachname} onChange={e => setForm(f => ({...f, nachname: e.target.value}))} placeholder="Nachname" />
-
-          <label className={s.label}>E-Mail *</label>
-          <input
-            className={`${s.input} ${emailError ? s.inputError : emailTouched && emailFormatOk ? s.inputOk : ''}`}
-            type="email"
-            disabled={readOnly}
-            value={form.email}
-            onChange={e => setForm(f => ({...f, email: e.target.value}))}
-            placeholder="name@hwk.de"
-          />
-          {emailError && <div className={s.fieldError}>{emailError}</div>}
-
-          <label className={s.label}>Telefonnummer</label>
-          <input className={s.input} type="tel" disabled={readOnly} value={form.telefon} onChange={e => setForm(f => ({...f, telefon: e.target.value}))} placeholder="+49 511 123456" />
-
-          <label className={s.label}>Rolle *</label>
-          <select className={s.select} disabled={readOnly} value={form.rolle} onChange={e => {
-            const rolle = e.target.value as UserRolle;
-            setForm(f => ({ ...f, rolle, objektIds: defaultObjektIds(rolle) }));
-          }}>
-            <option value="user">User</option>
-            <option value="bereichsleitung">Bereichsleitung</option>
-            <option value="buchhaltung">Buchhaltung</option>
-            <option value="geschaeftsfuehrung">Geschäftsführung</option>
-            <option value="admin">Admin</option>
-          </select>
-
-          {(form.rolle === 'user' || form.rolle === 'buchhaltung' || form.rolle === 'bereichsleitung') && objekte.length > 0 && (
-            <>
-              <label className={s.label}>Objekte zuordnen *</label>
-              <div className={s.objektCheckList}>
-                {form.rolle === 'buchhaltung' && (
-                  <label className={`${s.checkRow} ${s.checkRowAlle}`}>
-                    <input
-                      type="checkbox"
-                      disabled={readOnly}
-                      checked={form.objektIds.includes(ALLE_OBJEKTE_ID)}
-                      onChange={toggleAlleObjekte}
-                    />
-                    <span className={s.checkRowAlleLabel}>🌐 Alle Objekte</span>
-                  </label>
-                )}
-                {objekte.filter(o => o.aktiv !== false).map(o => (
-                  <label key={o.id} className={s.checkRow}>
-                    <input type="checkbox" disabled={readOnly} checked={form.objektIds.includes(o.id)} onChange={() => toggleObjekt(o.id)} />
-                    <span>{o.kuerzel ? `${o.kuerzel} – ` : ''}{o.name}</span>
-                  </label>
-                ))}
-              </div>
-            </>
-          )}
-
-          {/* Deaktivieren — nur bei bestehenden aktiven Usern */}
-          {editId && editTarget?.aktiv && (
-            <>
-              <div className={s.dividerLine} />
-              <button
-                type="button"
-                className={s.deactivateBtn}
-                onClick={() => setConfirmDeactivate(true)}
-              >
-                🔒 Benutzer deaktivieren
-              </button>
-            </>
-          )}
-          <div className={s.formActions}>
-            <button type="button" className={s.cancelBtn} onClick={() => setShowForm(false)}>Abbrechen</button>
-            {/* Inaktive User können nicht reaktiviert werden (nur ansehen/schließen) */}
-            {(!editId || editTarget?.aktiv) && (
-              <button type="button" className={s.saveBtn} onClick={handleSave} disabled={!canSave}>Speichern</button>
-            )}
-            {editId && !editTarget?.aktiv && (
-              <button type="button" className={s.cancelBtn} onClick={() => setShowForm(false)}>Schließen</button>
-            )}
-          </div>
-        </div>
-        );
-      })()}
+      {/* Neuer Benutzer: Formular oben. Bearbeiten/Ansehen: inline an der Kachel. */}
+      {showForm && !editId && renderForm()}
 
       <div className={s.list}>
         {filtered.length === 0 && <div className={s.emptyState}>Keine Benutzer gefunden</div>}
         {filtered.map(u => (
-          <div key={u.id} className={`${s.userRow} ${!u.aktiv ? s.userRowInaktiv : ''}`}>
+          showForm && editId === u.id
+          ? <div key={u.id}>{renderForm()}</div>
+          : <div key={u.id} className={`${s.userRow} ${!u.aktiv ? s.userRowInaktiv : ''}`}>
             <div className={s.userAvatar} style={{ background: ROLLE_COLORS[u.rolle] }}>
               {u.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
             </div>
