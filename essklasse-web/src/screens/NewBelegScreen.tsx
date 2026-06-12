@@ -5,6 +5,7 @@ import { format } from 'date-fns';
 import { useBelegStore } from '../store/belegStore';
 import { useObjektStore } from '../store/objektStore';
 import { useAuthStore } from '../store/authStore';
+import { useSettingsStore } from '../store/settingsStore';
 import { PhotoCapture } from '../components/PhotoCapture';
 import { PositionEditor } from '../components/PositionEditor';
 import type { BelegPosition, Bewirtungsbeleg, Kategorie } from '../types';
@@ -130,7 +131,7 @@ export function NewBelegScreen({ onClose, editBeleg }: Props) {
     // (validierten) Pflichtangaben erzeugen und als Dokument ablegen.
     let fotoDataUrls = f.fotoDataUrls;
     if (!hatDokument) {
-      const ersatzPdf = generateErsatzBelegPdf({
+      const ersatzPdf = await generateErsatzBelegPdf({
         objektName: gewaehltes?.name ?? '',
         besteller: f.besteller, veranstaltung: f.veranstaltung,
         cateringDatumVon: f.cateringDatumVon, cateringDatumBis: f.cateringDatumBis,
@@ -146,7 +147,7 @@ export function NewBelegScreen({ onClose, editBeleg }: Props) {
         rechnungsanschriftTeilnehmer: f.rechnungsanschriftTeilnehmer,
         rechnungsanschriftTelefon: f.rechnungsanschriftTelefon,
         positionen: f.positionen,
-        showPreise: showRechnung,
+        logoDataUrl: useSettingsStore.getState().logoDataUrl,
       });
       fotoDataUrls = [ersatzPdf];
     }
