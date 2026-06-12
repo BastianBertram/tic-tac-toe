@@ -59,7 +59,7 @@ export function NewBelegScreen({ onClose, editBeleg }: Props) {
   const [saving, setSaving] = useState(false);
   const [showErrors, setShowErrors] = useState(false);
   const [mismatchWarn, setMismatchWarn] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleteStep, setDeleteStep] = useState<0 | 1 | null>(null);
   const [selectedObjektId, setSelectedObjektId] = useState<string>(editBeleg?.objektId ?? aktivesObjekt?.id ?? '');
   const addBeleg = useBelegStore(s => s.addBeleg);
   const currentUser = useAuthStore(st => st.user);
@@ -68,7 +68,7 @@ export function NewBelegScreen({ onClose, editBeleg }: Props) {
 
   function handleDelete() {
     if (editBeleg) deleteBeleg(editBeleg.id);
-    setConfirmDelete(false);
+    setDeleteStep(null);
     onClose();
   }
 
@@ -265,7 +265,7 @@ export function NewBelegScreen({ onClose, editBeleg }: Props) {
         <BrandLogo className={s.headerLogo} />
         {editBeleg ? (
           <button
-            onClick={() => setConfirmDelete(true)}
+            onClick={() => setDeleteStep(0)}
             type="button"
             title="Beleg löschen"
             style={{ background: 'transparent', border: 'none', fontSize: 20, cursor: 'pointer', padding: 4 }}
@@ -279,24 +279,31 @@ export function NewBelegScreen({ onClose, editBeleg }: Props) {
         )}
       </div>
 
-      {confirmDelete && (
+      {deleteStep !== null && (
         <div
-          onClick={() => setConfirmDelete(false)}
+          onClick={() => setDeleteStep(null)}
           style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.45)', zIndex: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
         >
-          <div onClick={e => e.stopPropagation()} style={{ background: 'var(--ek-surface)', borderRadius: 14, padding: 20, maxWidth: 340, width: '100%' }}>
-            <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--ek-charcoal)', marginBottom: 8 }}>Beleg löschen?</div>
+          <div onClick={e => e.stopPropagation()} style={{ background: 'var(--ek-surface)', borderRadius: 14, padding: 20, maxWidth: 360, width: '100%' }}>
+            <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--ek-red)', textTransform: 'uppercase', letterSpacing: '.5px', marginBottom: 6 }}>
+              Schritt {deleteStep + 1} von 2
+            </div>
+            <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--ek-charcoal)', marginBottom: 8 }}>
+              {deleteStep === 0 ? 'Beleg löschen?' : 'Wirklich endgültig löschen?'}
+            </div>
             <p style={{ fontSize: 13.5, color: 'var(--ek-muted)', lineHeight: 1.45, margin: '0 0 16px' }}>
-              Diese Bewirtung wird gelöscht. Dieser Schritt kann nicht rückgängig gemacht werden.
+              {deleteStep === 0
+                ? `„${editBeleg?.veranstaltung || 'Bewirtungsbeleg'}" wird gelöscht. Bitte beachte: Buchhaltung und Bereichsleitung können den gelöschten Beleg weiterhin einsehen und ggf. Rückfragen stellen.`
+                : 'Wirklich fortfahren? Der Beleg bleibt für Buchhaltung und Bereichsleitung sichtbar und kann nicht wiederhergestellt werden.'}
             </p>
             <div style={{ display: 'flex', gap: 10 }}>
-              <button type="button" onClick={() => setConfirmDelete(false)}
+              <button type="button" onClick={() => setDeleteStep(null)}
                 style={{ flex: 1, padding: '10px', borderRadius: 10, border: '1px solid var(--ek-border)', background: 'var(--ek-surface)', fontWeight: 700, cursor: 'pointer' }}>
                 Abbrechen
               </button>
-              <button type="button" onClick={handleDelete}
+              <button type="button" onClick={() => deleteStep === 0 ? setDeleteStep(1) : handleDelete()}
                 style={{ flex: 1, padding: '10px', borderRadius: 10, border: 'none', background: '#c0392b', color: '#fff', fontWeight: 800, cursor: 'pointer' }}>
-                🗑 Löschen
+                {deleteStep === 0 ? 'Weiter →' : 'Ja, endgültig löschen'}
               </button>
             </div>
           </div>
