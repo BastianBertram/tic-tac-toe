@@ -131,6 +131,7 @@ function UserTab() {
   const [objektSuche, setObjektSuche] = useState(''); // Suche in „Objekte zuordnen"
   // Standard: alle Benutzer zeigen, deaktivierte erscheinen ausgegraut.
   const [filter, setFilter] = useState<FilterStatus>('alle');
+  const [rolleFilter, setRolleFilter] = useState<UserRolle | 'alle'>('alle');
   const [confirmDeactivate, setConfirmDeactivate] = useState(false);
   const [confirmAlleObjekte, setConfirmAlleObjekte] = useState(false);
   const [confirmGeschaeftsfuehrung, setConfirmGeschaeftsfuehrung] = useState(false);
@@ -214,7 +215,8 @@ function UserTab() {
   const filtered = users.filter(u => {
     const matchSearch = !q || u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q);
     const matchFilter = filter === 'alle' || (filter === 'aktiv' ? u.aktiv : !u.aktiv);
-    return matchSearch && matchFilter;
+    const matchRolle = rolleFilter === 'alle' || u.rolle === rolleFilter;
+    return matchSearch && matchFilter && matchRolle;
   });
 
   const countAktiv   = users.filter(u => u.aktiv).length;
@@ -370,6 +372,17 @@ function UserTab() {
           ))}
         </div>
         <button type="button" className={s.addBtn} onClick={openNew}>+ Neuer Benutzer</button>
+      </div>
+
+      <div className={s.filterChips}>
+        {(['alle', 'user', 'buchhaltung', 'bereichsleitung', 'geschaeftsfuehrung', 'admin'] as (UserRolle | 'alle')[]).map(r => (
+          <button key={r} type="button"
+            className={`${s.filterChip} ${rolleFilter === r ? s.filterChipActive : ''}`}
+            onClick={() => setRolleFilter(r)}
+          >
+            {r === 'alle' ? 'Alle Rollen' : `${ROLLE_LABELS[r]} (${users.filter(u => u.rolle === r).length})`}
+          </button>
+        ))}
       </div>
 
       {/* Neuer Benutzer: Formular oben. Bearbeiten/Ansehen: inline an der Kachel. */}
