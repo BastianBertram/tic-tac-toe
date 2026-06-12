@@ -189,25 +189,42 @@ export function handleData(method, url, body, ctx = {}) {
       }
     }
 
-    // Eingeschränkte Nutzer dürfen nur Belege ihrer Objekte schreiben; Belege
-    // anderer Objekte bleiben unangetastet (Merge statt vollständigem Ersetzen).
+    // Belege werden NIE physisch gelöscht (auch nicht die eines deaktivierten
+    // Nutzers): bestehende Datensätze bleiben erhalten, eingehende aktualisieren
+    // bzw. ergänzen sie nur (id-erhaltend). So bleiben sie im System und für
+    // andere Nutzer desselben Objekts zugreifbar.
     if (name === 'belege') {
+      const cur = load(name).data ?? COLLECTIONS.belege.default;
+      const bestehend = Array.isArray(cur.belege) ? cur.belege : [];
+      const mergedZaehler = mergeZaehler(cur.bestellungZaehler, body.bestellungZaehler);
       const scope = userScope(ctx);
       if (scope.restricted) {
         const ids = new Set(scope.objektIds);
-        const bestehend = Array.isArray(load(name).data?.belege) ? load(name).data.belege : [];
-        const fremde    = bestehend.filter(b => !ids.has(b.objektId));      // unverändert lassen
+        const fremde    = bestehend.filter(b => !ids.has(b.objektId));   // andere Objekte: unangetastet
         const eigenAlt  = bestehend.filter(b => ids.has(b.objektId));
-        let eigenNeu    = Array.isArray(body.belege) ? body.belege.filter(b => ids.has(b.objektId)) : [];
-        // Schutz: ein leerer Eigen-Push (z.B. uninitialisierter Client) darf die
-        // bereits vorhandenen Belege des Nutzers nicht versehentlich löschen.
-        if (eigenNeu.length === 0 && eigenAlt.length > 0) eigenNeu = eigenAlt;
-        const mergedZaehler = mergeZaehler(load(name).data?.bestellungZaehler, body.bestellungZaehler);
-        const merged = { ...load(name).data, ...body, belege: [...fremde, ...eigenNeu], bestellungZaehler: mergedZaehler };
+        const eingehend = Array.isArray(body.belege) ? body.belege.filter(b => ids.has(b.objektId)) : [];
+        const eigenNeu  = mergeById(eigenAlt, eingehend);               // eigene Objekte: nur ergänzen/aktualisieren
+        const merged = { ...cur, ...body, belege: [...fremde, ...eigenNeu], bestellungZaehler: mergedZaehler };
         persist(name, merged);
-        // Antwort wieder auf den Geltungsbereich beschränken.
         return { status: 200, payload: { initialized: true, data: { ...merged, belege: eigenNeu } } };
       }
+      // Admin/GF: voller Zugriff, aber ebenfalls id-erhaltend (kein Hard-Delete).
+      const merged = { ...cur, ...body, belege: mergeById(bestehend, Array.isArray(body.belege) ? body.belege : []), bestellungZaehler: mergedZaehler };
+      persist(name, merged);
+      return { status: 200, payload: { initialized: true, data: merged } };
+    }
+
+    // Sales-Anfragen werden ebenfalls nie physisch gelöscht (id-erhaltend).
+    if (name === 'sales') {
+      const cur = load(name).data ?? COLLECTIONS.sales.default;
+      const bestehend = Array.isArray(cur.anfragen) ? cur.anfragen : [];
+      const merged = {
+        ...cur, ...body,
+        anfragen: mergeById(bestehend, Array.isArray(body.anfragen) ? body.anfragen : []),
+        leadZaehler: mergeZaehler(cur.leadZaehler, body.leadZaehler),
+      };
+      persist(name, merged);
+      return { status: 200, payload: { initialized: true, data: merged } };
     }
 
     persist(name, body);
@@ -217,7 +234,15 @@ export function handleData(method, url, body, ctx = {}) {
   return { status: 405, payload: { error: 'Method not allowed' } };
 }
 
-/** Führt zwei Bestellungszähler zusammen (höchster Wert je Jahr gewinnt). */
+/** Führt zwei Datensatz-Listen id-erhaltend zusammen: bestehende bleiben
+ *  erhalten, eingehende aktualisieren (gleiche id) oder ergänzen sie. */
+function mergeById(existing = [], incoming = [], key = 'id') {
+  const map = new Map(existing.map(r => [r[key], r]));
+  for (const r of incoming) map.set(r[key], r);
+  return [...map.values()];
+}
+
+/** Führt zwei Zähler zusammen (höchster Wert je Schlüssel gewinnt). */
 function mergeZaehler(a = {}, b = {}) {
   const out = { ...a };
   for (const [k, v] of Object.entries(b ?? {})) {
