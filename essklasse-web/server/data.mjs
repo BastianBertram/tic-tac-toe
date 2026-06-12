@@ -178,12 +178,12 @@ export function handleData(method, url, body, ctx = {}) {
       return { status: 400, payload: { error: 'Body muss ein Objekt sein.' } };
     }
     // Datenintegrität: ein bestehender Stammdatenbestand darf nicht durch eine
-    // leere Liste komplett gelöscht werden (Schutz vor versehentlichem Wipe).
+    // leere ODER ungültige (Nicht-Array, z.B. null/{}) Liste gelöscht werden.
     if (name === 'users' || name === 'objekte') {
       const vorhanden = Array.isArray(load(name).data?.[name]) ? load(name).data[name] : [];
-      const eingehend = Array.isArray(body[name]) ? body[name] : null;
-      if (vorhanden.length > 0 && eingehend && eingehend.length === 0) {
-        return { status: 400, payload: { error: 'Leere Stammdatenliste nicht erlaubt.' } };
+      const eingehend = body[name];
+      if (vorhanden.length > 0 && (!Array.isArray(eingehend) || eingehend.length === 0)) {
+        return { status: 400, payload: { error: 'Ungültige oder leere Stammdatenliste.' } };
       }
     }
 
