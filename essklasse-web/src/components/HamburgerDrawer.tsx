@@ -28,6 +28,7 @@ export function HamburgerDrawer({ onClose, onAbgeschlossene }: Props) {
   const resetObjekte      = useObjektStore(st => st.reset);
   const objekte           = useObjektStore(st => st.objekte);
   const aktiv             = useObjektStore(st => st.getAktivesObjekt());
+  const setAktiveObjektId = useObjektStore(st => st.setAktiveObjektId);
   const isBuchhaltung     = user?.rolle === 'buchhaltung';
   const isAdmin           = user?.rolle === 'admin';
   const isGf              = user?.rolle === 'geschaeftsfuehrung';
@@ -81,13 +82,24 @@ export function HamburgerDrawer({ onClose, onAbgeschlossene }: Props) {
           <>
             <div className={s.objekteInfo}>
               <div className={s.objekteLabel}>Zugeordnete Objekte</div>
-              {objekte.map(o => (
-                <div key={o.id} className={`${s.objektItem} ${o.id === aktiv?.id ? s.objektActive : ''}`}>
-                  <span className={s.objektKuerzel}>{o.kuerzel ?? '🏢'}</span>
-                  <span className={s.objektName}>{o.name}</span>
-                  {o.id === aktiv?.id && <span className={s.objektAktivLabel}>aktiv</span>}
-                </div>
-              ))}
+              {objekte.map(o => {
+                const istAktiv = o.id === aktiv?.id;
+                const wechselbar = objekte.length > 1;
+                return (
+                  <button
+                    key={o.id}
+                    type="button"
+                    onClick={() => { if (!istAktiv) setAktiveObjektId(o.id); }}
+                    disabled={!wechselbar}
+                    className={`${s.objektItem} ${istAktiv ? s.objektActive : ''}`}
+                    style={{ width: '100%', textAlign: 'left', font: 'inherit', cursor: wechselbar && !istAktiv ? 'pointer' : 'default' }}
+                  >
+                    <span className={s.objektKuerzel}>{o.kuerzel ?? '🏢'}</span>
+                    <span className={s.objektName}>{o.name}</span>
+                    <span className={s.objektAktivLabel}>{istAktiv ? 'aktiv' : (wechselbar ? 'wechseln' : '')}</span>
+                  </button>
+                );
+              })}
             </div>
             <div className={s.divider} />
           </>
