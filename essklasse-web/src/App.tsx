@@ -4,6 +4,7 @@ import type { Tab } from './components/BottomNav';
 import { AuthGuard } from './components/AuthGuard';
 import { TodayScreen } from './screens/TodayScreen';
 import { CalendarScreen } from './screens/CalendarScreen';
+import { WeekScreen } from './screens/WeekScreen';
 import { NewBelegScreen } from './screens/NewBelegScreen';
 import { DetailScreen } from './screens/DetailScreen';
 import { AbschlussScreen } from './screens/AbschlussScreen';
@@ -282,6 +283,7 @@ export default function App() {
       <div className={s.app}>
         <div className={s.content}>
           {tab === 'today'     && <TodayScreen     onOpenBeleg={openBeleg} onAbschliessen={openAbschluss} onTabAbschluss={() => setTab('abschluss')} />}
+          {tab === 'week'      && <WeekScreen      onOpenBeleg={openBeleg} onTabAbschluss={() => setTab('abschluss')} />}
           {tab === 'calendar'  && <CalendarScreen  onOpenBeleg={openBeleg} onTabAbschluss={() => setTab('abschluss')} />}
           {tab === 'abschluss' && <AbschlussListScreen onOpenBeleg={openBeleg} />}
           {tab === 'admin'     && <AdminScreen />}

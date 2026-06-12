@@ -6,7 +6,7 @@ import { format } from 'date-fns';
 import s from './BottomNav.module.css';
 import { HamburgerDrawer } from './HamburgerDrawer';
 
-export type Tab = 'today' | 'calendar' | 'abschluss' | 'admin' | 'gf-home' | 'gf-statistik';
+export type Tab = 'today' | 'week' | 'calendar' | 'abschluss' | 'admin' | 'gf-home' | 'gf-statistik';
 interface Props { active: Tab; onTab: (t: Tab) => void; onNew: () => void; onAbgeschlossene: () => void; }
 
 export function BottomNav({ active, onTab, onNew, onAbgeschlossene }: Props) {
@@ -39,6 +39,7 @@ export function BottomNav({ active, onTab, onNew, onAbgeschlossene }: Props) {
           <span className={s.tabLabel}>Menü</span>
         </button>
         <TabBtn icon="📋" label="Heute" active={active === 'today'} onClick={() => onTab('today')} hidden={isGf} />
+        <TabBtn icon="🗓️" label="Woche" active={active === 'week'} onClick={() => onTab('week')} hidden={isGf} />
 
         {isGf ? (
           <button

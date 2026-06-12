@@ -1,0 +1,72 @@
+.screen { display: flex; flex-direction: column; height: 100%; background: var(--ek-bg); }
+
+/* ── Header ──────────────────────────────────────────────────── */
+.header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 14px 10px;
+  background: var(--ek-surface);
+  border-bottom: 1px solid var(--ek-border);
+  box-shadow: 0 1px 4px rgba(0,0,0,.06);
+  gap: 10px;
+}
+.logo { height: 36px; width: auto; object-fit: contain; flex-shrink: 0; }
+.headerSection { flex: 1; font-size: 16px; font-weight: 800; color: var(--ek-charcoal); text-align: center; }
+.headerRight { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+/* ── Wochen-Navigator ────────────────────────────────────────── */
+.weekNav {
+  display: flex; align-items: center; gap: 8px;
+  margin: 10px 14px 4px;
+}
+.navBtn {
+  flex-shrink: 0; width: 36px; height: 36px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--ek-surface); border: 1.5px solid var(--ek-border);
+  border-radius: 10px; color: var(--ek-charcoal);
+  font-size: 22px; font-weight: 700; line-height: 1;
+  cursor: pointer; transition: background .15s, transform .1s;
+}
+.navBtn:active { transform: scale(.92); }
+
+.weekLabelWrap {
+  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px;
+}
+.weekKw   { font-size: 13px; font-weight: 900; color: var(--ek-red); letter-spacing: .3px; }
+.weekSpan { font-size: 13px; font-weight: 600; color: var(--ek-charcoal); }
+
+/* Zurück-zu-dieser-Woche Button */
+.backToWeek {
+  display: block; margin: 4px 14px 0; padding: 7px 14px;
+  background: var(--ek-surface); border: 1.5px solid var(--ek-border);
+  border-radius: 10px; font-size: 12px; font-weight: 700;
+  color: var(--ek-red); cursor: pointer;
+  text-align: center; transition: background .15s;
+}
+.backToWeek:active { background: var(--ek-surface2); }
+
+/* ── Liste ────────────────────────────────────────────────────── */
+.list { flex: 1; overflow-y: auto; padding: 8px 14px 110px; }
+
+/* ── Tages-Abschnitte ─────────────────────────────────────────── */
+.daySection { margin-bottom: 14px; }
+.dayHeader {
+  display: flex; align-items: center; gap: 8px;
+  padding: 4px 2px 8px;
+}
+.dayName { font-size: 13px; font-weight: 800; color: var(--ek-charcoal); }
+.dayDate { font-size: 12px; font-weight: 600; color: var(--ek-muted); }
+.dayCount {
+  margin-left: auto; min-width: 20px; height: 20px; padding: 0 6px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--ek-surface2); color: var(--ek-muted);
+  border-radius: 10px; font-size: 11px; font-weight: 800;
+}
+.dayHeaderToday .dayName { color: var(--ek-red); }
+.dayHeaderToday .dayCount { background: var(--ek-red); color: #fff; }
+
+.dayEmpty { color: var(--ek-muted); font-size: 12px; padding: 0 2px 4px; }
+
+/* ── Leerzustand ──────────────────────────────────────────────── */
+.emptyWeek { text-align: center; padding: 60px 24px; }
+.emptyIcon { font-size: 56px; margin-bottom: 16px; }
+.emptyWeek h3 { color: var(--ek-charcoal); font-size: 18px; font-weight: 700; }
