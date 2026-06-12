@@ -230,7 +230,7 @@ function UserTab() {
           <div className={s.formTitle} style={{ margin: 0 }}>{!editId ? 'Neuer Benutzer' : editMode ? 'Benutzer bearbeiten' : 'Benutzer ansehen'}</div>
           {/* Aktive Benutzer: in der Ansicht oben rechts auf „Bearbeiten" schalten */}
           {editId && editTarget?.aktiv && !editMode && (
-            <button type="button" className={s.iconBtn} title="Bearbeiten" onClick={() => setEditMode(true)}>✏️ Bearbeiten</button>
+            <button type="button" className={s.iconBtn} title="Bearbeiten" onClick={() => setEditMode(true)}>✏️</button>
           )}
         </div>
         {istInaktiv && (
