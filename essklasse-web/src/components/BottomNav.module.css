@@ -11,6 +11,10 @@
   flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px;
   background: transparent; color: var(--ek-muted); position: relative; padding: 4px 2px;
 }
+/* Nicht-GF: Tabs inhaltsbreit + Gruppe zentriert, damit der FAB mittig liegt und
+   die Badge direkt am Text sitzt (statt am Rand einer breiten flex-Spalte). */
+.navCentered { justify-content: center; gap: 22px; }
+.tabCompact { flex: 0 0 92px; }
 /* Menü als Ecke links aus dem Fluss nehmen, damit Bewirtungen + Abschließen
    die Leiste füllen und symmetrisch um den mittigen FAB liegen. */
 .menuCorner {

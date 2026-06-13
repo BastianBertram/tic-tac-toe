@@ -31,7 +31,7 @@ export function BottomNav({ active, onTab, onNew, onAbgeschlossene }: Props) {
 
   return (
     <>
-      <nav className={s.nav}>
+      <nav className={`${s.nav} ${!isGf ? s.navCentered : ''}`}>
         <button
           className={`${s.tab} ${drawerOpen ? s.tabActive : ''} ${!isGf ? s.menuCorner : ''}`}
           onClick={() => setDrawerOpen(true)}
@@ -43,7 +43,7 @@ export function BottomNav({ active, onTab, onNew, onAbgeschlossene }: Props) {
           <span className={s.tabLabel}>Menü</span>
         </button>
         {/* Heute/Woche/Kalender sind unter „Bewirtungen" zusammengefasst (Zeit-Zoom). */}
-        <TabBtn icon="📋" label="Bewirtungen" active={active === 'bewirtungen'} onClick={() => onTab('bewirtungen')} hidden={isGf} />
+        <TabBtn icon="📋" label="Bewirtungen" active={active === 'bewirtungen'} onClick={() => onTab('bewirtungen')} hidden={isGf} compact={!isGf} />
 
         {isGf ? (
           <button
@@ -64,9 +64,9 @@ export function BottomNav({ active, onTab, onNew, onAbgeschlossene }: Props) {
           <TabBtn icon="📊" label="Statistik" active={active === 'gf-statistik'} onClick={() => onTab('gf-statistik')} />
         )}
         {rolle === 'admin' ? (
-          <TabBtn icon="⚙️" label={<>Admin<br />Verwaltung</>} active={active === 'admin'} onClick={() => onTab('admin')} hidden={isGf} />
+          <TabBtn icon="⚙️" label={<>Admin<br />Verwaltung</>} active={active === 'admin'} onClick={() => onTab('admin')} hidden={isGf} compact={!isGf} />
         ) : (
-          <TabBtn icon="✓" label={<>Bewirtung<br />Abschließen</>} active={active === 'abschluss'} onClick={() => onTab('abschluss')} badge={offene} urgent={offene > 0} hidden={isGf} />
+          <TabBtn icon="✓" label={<>Bewirtung<br />Abschließen</>} active={active === 'abschluss'} onClick={() => onTab('abschluss')} badge={offene} urgent={offene > 0} hidden={isGf} compact={!isGf} />
         )}
       </nav>
 
@@ -80,13 +80,13 @@ export function BottomNav({ active, onTab, onNew, onAbgeschlossene }: Props) {
   );
 }
 
-function TabBtn({ icon, label, active, onClick, badge = 0, urgent = false, hidden = false }: {
+function TabBtn({ icon, label, active, onClick, badge = 0, urgent = false, hidden = false, compact = false }: {
   icon: string; label: React.ReactNode; active: boolean;
-  onClick: () => void; badge?: number; urgent?: boolean; hidden?: boolean;
+  onClick: () => void; badge?: number; urgent?: boolean; hidden?: boolean; compact?: boolean;
 }) {
   return (
     <button
-      className={`${s.tab} ${active ? s.tabActive : ''} ${urgent && !active ? s.tabUrgent : ''}`}
+      className={`${s.tab} ${compact ? s.tabCompact : ''} ${active ? s.tabActive : ''} ${urgent && !active ? s.tabUrgent : ''}`}
       onClick={onClick} type="button"
       style={hidden ? { visibility: 'hidden', pointerEvents: 'none' } : undefined}
     >
