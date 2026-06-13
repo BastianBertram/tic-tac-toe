@@ -11,6 +11,12 @@
   flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px;
   background: transparent; color: var(--ek-muted); position: relative; padding: 4px 2px;
 }
+/* Menü als Ecke links aus dem Fluss nehmen, damit Bewirtungen + Abschließen
+   die Leiste füllen und symmetrisch um den mittigen FAB liegen. */
+.menuCorner {
+  position: absolute; left: 12px; top: 10px; bottom: 24px;
+  flex: none; width: auto; justify-content: center;
+}
 .tabActive  { color: var(--ek-red); }
 .tabUrgent  { color: #2d8a4e; }
 .tabIcon    { font-size: 20px; }
