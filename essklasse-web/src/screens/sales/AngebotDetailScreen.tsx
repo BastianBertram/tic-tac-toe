@@ -31,6 +31,7 @@ export function AngebotDetailScreen({ angebotId, onClose, onEdit }: Props) {
   const [pdf, setPdf] = useState<{ url: string; name: string } | null>(null);
   const [sending, setSending] = useState(false);
   const [versand, setVersand] = useState<{ link: string; mailOk: boolean; empfaenger: string | null } | null>(null);
+  const [deleteStep, setDeleteStep] = useState<number | null>(null);
 
   async function pdfErstellen() {
     if (!angebot) return;
@@ -121,13 +122,39 @@ export function AngebotDetailScreen({ angebotId, onClose, onEdit }: Props) {
               <button type="button" className={s.btnReject} onClick={() => ablehnen(angebot.id, userName)}>✕ Ablehnen</button>
             </>
           )}
-          <button type="button" className={s.btnSecondary} onClick={() => {
-            if (window.confirm(`Angebot ${angebot.nummer} löschen? Es wird aus den Listen entfernt (wiederherstellbar nur über die Datenbank).`)) {
-              deleteAngebot(angebot.id);
-              onClose();
-            }
-          }}>🗑 Löschen</button>
+          <button type="button" className={s.btnSecondary} onClick={() => setDeleteStep(0)}>🗑 Löschen</button>
         </div>
+
+        {deleteStep !== null && (
+          <div
+            onClick={() => setDeleteStep(null)}
+            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.45)', zIndex: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
+          >
+            <div onClick={e => e.stopPropagation()} style={{ background: 'var(--ek-surface)', borderRadius: 14, padding: 20, maxWidth: 360, width: '100%' }}>
+              <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--ek-red)', textTransform: 'uppercase', letterSpacing: '.5px', marginBottom: 6 }}>
+                Schritt {deleteStep + 1} von 2
+              </div>
+              <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--ek-charcoal)', marginBottom: 8 }}>
+                {deleteStep === 0 ? 'Angebot löschen?' : 'Wirklich endgültig löschen?'}
+              </div>
+              <p style={{ fontSize: 13.5, color: 'var(--ek-muted)', lineHeight: 1.45, margin: '0 0 16px' }}>
+                {deleteStep === 0
+                  ? `Angebot ${angebot.nummer} („${angebot.kundeFirma || 'Angebot'}") wird aus den Listen entfernt.`
+                  : 'Wirklich fortfahren? Das Angebot verschwindet aus allen Ansichten und kann nicht über die App wiederhergestellt werden.'}
+              </p>
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button type="button" onClick={() => setDeleteStep(null)}
+                  style={{ flex: 1, padding: '10px', borderRadius: 10, border: '1px solid var(--ek-border)', background: 'var(--ek-surface)', fontWeight: 700, cursor: 'pointer' }}>
+                  Abbrechen
+                </button>
+                <button type="button" onClick={() => { if (deleteStep === 0) { setDeleteStep(1); } else { deleteAngebot(angebot.id); onClose(); } }}
+                  style={{ flex: 1, padding: '10px', borderRadius: 10, border: 'none', background: '#c0392b', color: '#fff', fontWeight: 800, cursor: 'pointer' }}>
+                  {deleteStep === 0 ? 'Weiter →' : 'Ja, endgültig löschen'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {versand && (
           <div className={s.infoCard} style={{ padding: 12, marginBottom: 8 }}>
