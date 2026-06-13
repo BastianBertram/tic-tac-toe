@@ -141,6 +141,12 @@
   border: 1.5px solid #a8d5b5; background: #f0faf3;
   color: #2d8a4e; font-size: 13px; font-weight: 700; cursor: pointer; text-align: left;
 }
+.deactivateBtn:disabled { opacity: .5; cursor: not-allowed; }
+.lastAdminHint {
+  margin: 8px 0 0; padding: 8px 10px; border-radius: 8px;
+  background: #fff8e1; border: 1px solid #fce08a;
+  color: #7a5010; font-size: 12px; line-height: 1.4;
+}
 
 /* User list */
 .list { display: flex; flex-direction: column; gap: 10px; }

@@ -222,6 +222,11 @@ function UserTab() {
   const countAktiv   = users.filter(u => u.aktiv).length;
   const countInaktiv = users.filter(u => !u.aktiv).length;
 
+  // Aussperr-Schutz (UI): der letzte aktive Admin darf nicht deaktiviert werden.
+  // Der Server erzwingt das ohnehin (400); hier wird es im Bedienfluss klar gemacht.
+  const aktiveAdmins      = users.filter(u => u.rolle === 'admin' && u.aktiv).length;
+  const istLetzterAdmin   = !!editTarget && editTarget.rolle === 'admin' && editTarget.aktiv && aktiveAdmins <= 1;
+
   // Benutzer-Formular (neu/bearbeiten/ansehen) — wird oben (neu) oder inline an
   // der Kachel-Position (bearbeiten) gerendert.
   const renderForm = () => {
@@ -332,9 +337,20 @@ function UserTab() {
         {editId && editTarget?.aktiv && editMode && (
           <>
             <div className={s.dividerLine} />
-            <button type="button" className={s.deactivateBtn} onClick={() => setConfirmDeactivate(true)}>
+            <button
+              type="button"
+              className={s.deactivateBtn}
+              onClick={() => setConfirmDeactivate(true)}
+              disabled={istLetzterAdmin}
+            >
               🔒 Benutzer deaktivieren
             </button>
+            {istLetzterAdmin && (
+              <p className={s.lastAdminHint}>
+                ⚠️ Der letzte aktive Administrator kann nicht deaktiviert werden. Lege zuerst
+                einen weiteren Administrator an, damit der Zugang zur Verwaltung erhalten bleibt.
+              </p>
+            )}
           </>
         )}
         <div className={s.formActions}>
