@@ -12,7 +12,9 @@
 import { createServer } from 'node:http';
 import { handleAuth, getSessionUser, sessionDeviceState, claimSessionDevice } from './auth.mjs';
 import { handleSettings } from './settings.mjs';
-import { handleData, allocateNummer, accountStatus, ensureSeeded } from './data.mjs';
+import { handleData, allocateNummer, accountStatus, ensureSeeded, findAngebot, markVersendet, angebotAnnehmen } from './data.mjs';
+import { createPortal, resolvePortal } from './angebotPortal.mjs';
+import { sendAngebot } from './mail.mjs';
 
 const PORT           = Number(process.env.PORT ?? 3001);
 // ALLOWED_ORIGIN ist in Produktion Pflicht (kein localhost-Fallback) — sonst
@@ -48,6 +50,80 @@ function aiRateLimited(key) {
   }
   e.count += 1;
   return e.count > AI_RL_MAX;
+}
+
+// Öffentliches Kundenportal: striktes Rate-Limit pro IP (Token-Bruteforce/DoS-Schutz).
+const PORTAL_RL_MAX = 30;
+const portalHits = new Map();
+function portalRateLimited(ip) {
+  const now = Date.now();
+  const e = portalHits.get(ip);
+  if (!e || e.resetAt < now) {
+    if (portalHits.size > 500) for (const [k, v] of portalHits) if (v.resetAt < now) portalHits.delete(k);
+    portalHits.set(ip, { count: 1, resetAt: now + 60_000 });
+    return false;
+  }
+  e.count += 1;
+  return e.count > PORTAL_RL_MAX;
+}
+
+/** HTML-Escaping für server-gerenderte Portalseite (XSS-Schutz). */
+function escapeHtml(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+const PUBLIC_BASE = process.env.EK_PUBLIC_BASE ?? `http://localhost:${PORT}`;
+
+const euroFmt = (n) => Number(n || 0).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
+
+/**
+ * Server-gerenderte Kundenportal-Seite (kein Login). Zeigt AUSSCHLIESSLICH
+ * kundenrelevante, freigegebene Felder — keine internen Notizen, keine objektId,
+ * keine anderen Angebote. Alle dynamischen Werte werden HTML-escaped (XSS-Schutz).
+ */
+function renderPortalPage(a, token) {
+  const pos = (Array.isArray(a.positionen) ? a.positionen : []).filter(p => !p.geloescht);
+  const rows = pos.map(p => `<tr><td>${escapeHtml(p.bezeichnung)}</td><td class="r">${escapeHtml(String(p.menge))} ${escapeHtml(p.einheit)}</td><td class="r">${euroFmt(p.einzelpreis)}</td><td class="r">${p.rabattProzent ? escapeHtml(String(p.rabattProzent)) + '%' : '–'}</td><td class="r">${euroFmt(p.gesamt)}</td></tr>`).join('');
+  const angenommen = a.status === 'angenommen';
+  const versendet = a.status === 'versendet';
+  const tEsc = encodeURIComponent(token);
+  const aktion = angenommen
+    ? `<div class="ok">✓ Angebot angenommen${a.signatur?.name ? ' von ' + escapeHtml(a.signatur.name) : ''}.</div>`
+    : versendet
+      ? `<div class="accept"><p>Mit der Annahme bestätigen Sie das Angebot verbindlich.</p>
+           <input id="nm" type="text" placeholder="Ihr Name" maxlength="120" />
+           <button id="btn" type="button">Angebot annehmen</button>
+           <div id="msg"></div></div>
+         <script>
+           document.getElementById('btn').onclick=async function(){
+             var n=document.getElementById('nm').value.trim();
+             if(!n){document.getElementById('msg').textContent='Bitte Namen eingeben.';return;}
+             this.disabled=true;
+             try{var r=await fetch('/api/angebot/public/${tEsc}/annehmen',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:n})});
+               if(r.ok){location.reload();}else{document.getElementById('msg').textContent='Fehler bei der Annahme.';this.disabled=false;}
+             }catch(e){document.getElementById('msg').textContent='Netzwerkfehler.';this.disabled=false;}
+           };
+         </script>`
+      : `<div class="info">Dieses Angebot ist derzeit nicht zur Annahme verfügbar.</div>`;
+  return `<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Angebot ${escapeHtml(a.nummer)}</title>
+<style>body{font-family:system-ui,Arial,sans-serif;max-width:720px;margin:0 auto;padding:24px;color:#222}
+h1{font-size:22px}.muted{color:#666;font-size:14px}table{width:100%;border-collapse:collapse;margin:16px 0}
+th,td{text-align:left;padding:8px;border-bottom:1px solid #eee;font-size:14px}.r{text-align:right}
+.total{font-weight:800;font-size:18px;text-align:right;margin:8px 0}
+.btn,button{display:inline-block;background:#b9770e;color:#fff;border:none;border-radius:8px;padding:10px 16px;font-size:15px;cursor:pointer;text-decoration:none}
+input{padding:10px;border:1px solid #ccc;border-radius:8px;font-size:15px;width:100%;max-width:280px;margin:8px 0;box-sizing:border-box}
+.ok{background:#e7f5ec;color:#2d8a4e;padding:14px;border-radius:8px;font-weight:700}
+.accept,.info{margin-top:16px}#msg{color:#c0392b;margin-top:8px;font-size:14px}</style></head>
+<body>
+<h1>Angebot ${escapeHtml(a.nummer)}</h1>
+<div class="muted">${escapeHtml(a.betreff || '')}</div>
+<p>Für: <strong>${escapeHtml(a.kundeFirma || '')}</strong>${a.gueltigBis ? ` &middot; gültig bis ${escapeHtml(a.gueltigBis)}` : ''}</p>
+<table><thead><tr><th>Position</th><th class="r">Menge</th><th class="r">Einzel</th><th class="r">Rabatt</th><th class="r">Gesamt</th></tr></thead><tbody>${rows}</tbody></table>
+<div class="total">Endpreis (netto): ${euroFmt(a.gesamtsumme)}</div>
+<p><a class="btn" href="/api/angebot/public/${tEsc}/pdf" target="_blank">📄 PDF ansehen</a></p>
+${aktion}
+</body></html>`;
 }
 
 // ── Single-Device-Sessions ───────────────────────────────────────────────────
@@ -325,6 +401,51 @@ const server = createServer(async (req, res) => {
     return send(res, 200, { ok: true });
   }
 
+  // ── Öffentliches Kundenportal (kein Login; striktes IP-Rate-Limit) ──
+  const portalPage = url.match(/^\/angebot\/([A-Za-z0-9_-]{16,64})$/);
+  if (req.method === 'GET' && portalPage) {
+    const ip = req.socket?.remoteAddress ?? 'unknown';
+    if (portalRateLimited(ip)) { res.writeHead(429, { 'Content-Type': 'text/plain; charset=utf-8' }); return res.end('Zu viele Anfragen.'); }
+    const entry = resolvePortal(portalPage[1]);
+    const a = entry ? findAngebot(entry.angebotId) : null;
+    res.writeHead(a ? 200 : 404, { 'Content-Type': 'text/html; charset=utf-8' });
+    return res.end(a
+      ? renderPortalPage(a, portalPage[1])
+      : '<!doctype html><html lang="de"><meta charset="utf-8"><body style="font-family:system-ui;max-width:600px;margin:40px auto;padding:0 16px"><h1>Angebot nicht gefunden</h1><p>Dieser Link ist ungültig oder abgelaufen.</p></body></html>');
+  }
+
+  const portalPdf = url.match(/^\/api\/angebot\/public\/([A-Za-z0-9_-]{16,64})\/pdf$/);
+  if (req.method === 'GET' && portalPdf) {
+    const ip = req.socket?.remoteAddress ?? 'unknown';
+    if (portalRateLimited(ip)) { res.writeHead(429); return res.end(); }
+    const entry = resolvePortal(portalPdf[1]);
+    if (!entry || typeof entry.pdfDataUrl !== 'string' || !entry.pdfDataUrl.startsWith('data:application/pdf')) {
+      res.writeHead(404, { 'Content-Type': 'text/plain' }); return res.end('Not found');
+    }
+    const buf = Buffer.from(entry.pdfDataUrl.split(',')[1] ?? '', 'base64');
+    res.writeHead(200, { 'Content-Type': 'application/pdf', 'Content-Disposition': 'inline; filename="Angebot.pdf"', 'X-Content-Type-Options': 'nosniff' });
+    return res.end(buf);
+  }
+
+  const portalAccept = url.match(/^\/api\/angebot\/public\/([A-Za-z0-9_-]{16,64})\/annehmen$/);
+  if (req.method === 'POST' && portalAccept) {
+    const ip = req.socket?.remoteAddress ?? 'unknown';
+    if (portalRateLimited(ip)) return send(res, 429, { error: 'Zu viele Anfragen.' });
+    const entry = resolvePortal(portalAccept[1]);
+    if (!entry) return send(res, 404, { error: 'Ungültiger oder abgelaufener Link.' });
+    // Schlanker Body erwartet (nur { name }); großes Payload früh abweisen.
+    if (Number(req.headers['content-length'] ?? 0) > 8 * 1024) {
+      return send(res, 413, { error: 'Payload too large' });
+    }
+    try {
+      const body = await readJsonBody(req);
+      const result = angebotAnnehmen(entry.angebotId, body?.name);
+      return send(res, result.status, result.payload);
+    } catch (e) {
+      return send(res, e?.status ?? 400, { error: 'Bad request' });
+    }
+  }
+
   // ── Single-Device: dieses Gerät als aktives beanspruchen (Login) ──
   if (req.method === 'POST' && url === '/api/session/claim') {
     const ok = claimDevice(req);
@@ -364,6 +485,34 @@ const server = createServer(async (req, res) => {
       const body = await readJsonBody(req);
       const result = allocateNummer({ user, devEmail: devEmailHeader(req) }, body?.typ, body?.jahr);
       return send(res, result.status, result.payload);
+    } catch (e) {
+      return send(res, e?.status ?? 400, { error: e?.message ?? 'Bad request' });
+    }
+  }
+
+  // ── Angebot versenden (authentifiziert): Portal-Token + Mail ──
+  if (req.method === 'POST' && url === '/api/angebot/versenden') {
+    const user = getSessionUser(req);
+    if (!accountStatus({ user, devEmail: devEmailHeader(req) }).authenticated) {
+      return send(res, 401, { error: 'Anmeldung erforderlich.' });
+    }
+    if (!isCurrentDevice(req)) return send(res, 401, { error: 'SESSION_SUPERSEDED' });
+    try {
+      const body = await readJsonBody(req);
+      const pdf = body?.pdfDataUrl;
+      if (pdf != null && (typeof pdf !== 'string' || !pdf.startsWith('data:application/pdf'))) {
+        return send(res, 400, { error: 'Ungültiges PDF.' });
+      }
+      const ctx = { user, devEmail: devEmailHeader(req) };
+      const von = user?.name ?? devEmailHeader(req) ?? 'Vertrieb';
+      const vr = markVersendet(ctx, body?.angebotId, von);
+      if (vr.status !== 200) return send(res, vr.status, vr.payload);
+      const a = vr.payload.angebot;
+      const token = createPortal({ angebotId: a.id, pdfDataUrl: pdf ?? null, gueltigBis: a.gueltigBis });
+      const portalLink = `${PUBLIC_BASE}/angebot/${token}`;
+      const to = (typeof body?.empfaenger === 'string' && body.empfaenger.trim()) || a.email || '';
+      const mailOk = to ? await sendAngebot({ to, kundeFirma: a.kundeFirma, nummer: a.nummer, portalLink, pdfDataUrl: pdf ?? null }) : false;
+      return send(res, 200, { ok: true, portalLink, empfaenger: to || null, mailOk });
     } catch (e) {
       return send(res, e?.status ?? 400, { error: e?.message ?? 'Bad request' });
     }

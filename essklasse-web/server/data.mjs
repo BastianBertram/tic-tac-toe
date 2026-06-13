@@ -168,6 +168,67 @@ export function allocateNummer(ctx, typ, jahr) {
   return { status: 200, payload: { nummer, wert: naechste, jahr, typ } };
 }
 
+// ── Angebote: System-Operationen (Versenden / Kundenannahme) ─────────────────
+/** Liefert ein Angebot per id (oder null). */
+export function findAngebot(id) {
+  const liste = load('angebote').data?.angebote;
+  return (Array.isArray(liste) ? liste : []).find(a => a.id === id && !a.deleted) ?? null;
+}
+
+/** Darf der anfragende Nutzer auf dieses Angebot (Objekt-Scope) zugreifen? */
+export function darfAngebot(ctx, angebot) {
+  if (!angebot) return false;
+  const scope = userScope(ctx);
+  if (!scope.restricted) return true;               // admin/GF
+  return scope.objektIds.includes(angebot.objektId);
+}
+
+/**
+ * Markiert ein Angebot als versendet. Server-autoritativ:
+ *  - Zugriff nur im eigenen Objekt-Scope (bzw. admin/GF).
+ *  - Eine offene Freigabe (Rabatt über Limit, nicht genehmigt) blockiert den Versand.
+ * Persistiert id-erhaltend. Gibt { status, payload } zurück.
+ */
+export function markVersendet(ctx, id, von) {
+  const cur = load('angebote').data ?? COLLECTIONS.angebote.default;
+  const liste = Array.isArray(cur.angebote) ? cur.angebote : [];
+  const a = liste.find(x => x.id === id && !x.deleted);
+  if (!a) return { status: 404, payload: { error: 'Angebot nicht gefunden.' } };
+  if (!darfAngebot(ctx, a)) return { status: 403, payload: { error: 'Kein Zugriff auf dieses Angebot.' } };
+  if (a.genehmigungErforderlich && !a.genehmigtVon) {
+    return { status: 409, payload: { error: 'GENEHMIGUNG_OFFEN' } };
+  }
+  const now = new Date().toISOString();
+  const neu = liste.map(x => x.id === id
+    ? { ...x, status: 'versendet', versendetAm: now, versendetVon: von ?? x.versendetVon, aktualisiertAm: now }
+    : x);
+  persist('angebote', { ...cur, angebote: neu });
+  return { status: 200, payload: { ok: true, angebot: neu.find(x => x.id === id) } };
+}
+
+/**
+ * Kundenannahme über das Portal (kein Login). Nur ein versendetes Angebot kann
+ * angenommen werden; idempotent (erneute Annahme ändert nichts). Setzt Signatur
+ * (Name + Zeitstempel) und Status 'angenommen'.
+ */
+export function angebotAnnehmen(id, name) {
+  const cur = load('angebote').data ?? COLLECTIONS.angebote.default;
+  const liste = Array.isArray(cur.angebote) ? cur.angebote : [];
+  const a = liste.find(x => x.id === id && !x.deleted);
+  if (!a) return { status: 404, payload: { error: 'Angebot nicht gefunden.' } };
+  if (a.status === 'angenommen') return { status: 200, payload: { ok: true, bereits: true } };
+  if (a.status !== 'versendet') return { status: 409, payload: { error: 'NICHT_OFFEN' } };
+  if (typeof name !== 'string') return { status: 400, payload: { error: 'Name erforderlich.' } };
+  const sauber = name.trim().slice(0, 120);
+  if (!sauber) return { status: 400, payload: { error: 'Name erforderlich.' } };
+  const now = new Date().toISOString();
+  const neu = liste.map(x => x.id === id
+    ? { ...x, status: 'angenommen', signatur: { name: sauber, angenommenAm: now }, aktualisiertAm: now }
+    : x);
+  persist('angebote', { ...cur, angebote: neu });
+  return { status: 200, payload: { ok: true } };
+}
+
 /** Nicht-sensible Anzeigefelder eines Benutzers (für eingeschränkte Rollen). */
 function projektUser(u) {
   return {

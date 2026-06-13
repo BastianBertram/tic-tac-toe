@@ -52,3 +52,40 @@ export async function sendMagicLink({ to, link }) {
   console.log(`[mail] (dev) Anmeldelink für ${to}:\n  ${link}`);
   return true;
 }
+
+/**
+ * Versendet ein Angebot an den Kunden (Portal-Link + optional PDF-Anhang).
+ * Gleiche Webhook-Strategie wie sendMagicLink.
+ */
+export async function sendAngebot({ to, kundeFirma, nummer, portalLink, pdfDataUrl }) {
+  const url     = process.env.EK_MAIL_WEBHOOK_URL;
+  const from    = process.env.EK_MAIL_FROM ?? 'no-reply@essklasse.local';
+  const subject = `Ihr Angebot ${nummer}`;
+  const text =
+    `Guten Tag,\n\nanbei erhalten Sie unser Angebot ${nummer}` +
+    `${kundeFirma ? ` für ${kundeFirma}` : ''}.\n\n` +
+    `Sie können das Angebot hier ansehen und annehmen:\n${portalLink}\n\n` +
+    `Mit freundlichen Grüßen`;
+
+  if (url) {
+    try {
+      const headers = { 'Content-Type': 'application/json' };
+      if (process.env.EK_MAIL_WEBHOOK_AUTH) headers['Authorization'] = process.env.EK_MAIL_WEBHOOK_AUTH;
+      const body = { to, from, subject, text, link: portalLink };
+      if (pdfDataUrl) body.attachments = [{ filename: `Angebot_${nummer}.pdf`, dataUrl: pdfDataUrl }];
+      const res = await fetch(url, { method: 'POST', headers, body: JSON.stringify(body) });
+      if (!res.ok) { console.error(`[mail] Angebot-Zustellung fehlgeschlagen: HTTP ${res.status}`); return false; }
+      return true;
+    } catch (e) {
+      console.error('[mail] Angebot-Webhook-Fehler:', e?.message);
+      return false;
+    }
+  }
+
+  if (IS_PROD) {
+    console.error(`[mail] KEIN Mailprovider konfiguriert — Angebot ${nummer} an ${to} NICHT zugestellt.`);
+    return false;
+  }
+  console.log(`[mail] (dev) Angebot ${nummer} für ${to}:\n  ${portalLink}`);
+  return true;
+}

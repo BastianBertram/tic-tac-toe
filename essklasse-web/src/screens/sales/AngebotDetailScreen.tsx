@@ -9,6 +9,7 @@ import { euroFull } from './salesUtils';
 import { angebotStatusColor } from './angebotUtils';
 import { AngebotVersionenTab } from './AngebotVersionenTab';
 import { generateAngebotPdf } from '../../services/angebotPdf';
+import { versendeAngebot } from '../../services/dataService';
 import { angebotPdfInput, downloadDataUrl } from './angebotPdfUtils';
 import { PdfViewer } from '../../components/PdfViewer';
 import s from './AngeboteScreen.module.css';
@@ -27,11 +28,35 @@ export function AngebotDetailScreen({ angebotId, onClose, onEdit }: Props) {
   const impressum   = useSettingsStore(st => st.impressum);
   const [tab, setTab] = useState<'uebersicht' | 'versionen'>('uebersicht');
   const [pdf, setPdf] = useState<{ url: string; name: string } | null>(null);
+  const [sending, setSending] = useState(false);
+  const [versand, setVersand] = useState<{ link: string; mailOk: boolean; empfaenger: string | null } | null>(null);
 
   async function pdfErstellen() {
     if (!angebot) return;
     const url = await generateAngebotPdf(angebotPdfInput(angebot, logoDataUrl, impressum));
     setPdf({ url, name: `Angebot_${angebot.nummer}.pdf` });
+  }
+
+  async function versenden() {
+    if (!angebot) return;
+    const to = angebot.email?.trim();
+    const ok = window.confirm(to
+      ? `Angebot ${angebot.nummer} an ${to} senden?`
+      : `Angebot ${angebot.nummer} versenden? Es ist keine E-Mail hinterlegt — es wird nur ein Portal-Link erzeugt.`);
+    if (!ok) return;
+    setSending(true);
+    try {
+      const pdfUrl = await generateAngebotPdf(angebotPdfInput(angebot, logoDataUrl, impressum));
+      const r = await versendeAngebot(angebot.id, pdfUrl, to || undefined);
+      if (r.ok) {
+        setStatus(angebot.id, 'versendet');
+        setVersand({ link: r.portalLink ?? '', mailOk: !!r.mailOk, empfaenger: r.empfaenger ?? null });
+      } else {
+        window.alert('Versand fehlgeschlagen: ' + (r.error === 'GENEHMIGUNG_OFFEN' ? 'Die Freigabe steht noch aus.' : (r.error ?? 'Unbekannter Fehler')));
+      }
+    } finally {
+      setSending(false);
+    }
   }
 
   if (!angebot) {
@@ -85,8 +110,8 @@ export function AngebotDetailScreen({ angebotId, onClose, onEdit }: Props) {
           </button>
           <button type="button" className={s.btnSecondary} onClick={pdfErstellen}>📄 PDF</button>
           {angebot.status !== 'versendet' && angebot.status !== 'angenommen' && (
-            <button type="button" className={s.btnPrimary} disabled={wartetFreigabe} onClick={() => setStatus(angebot.id, 'versendet')}>
-              ✉ Als versendet markieren
+            <button type="button" className={s.btnPrimary} disabled={wartetFreigabe || sending} onClick={versenden}>
+              {sending ? '… sendet' : '✉ Versenden'}
             </button>
           )}
           {darfFreigeben && wartetFreigabe && (
@@ -96,6 +121,17 @@ export function AngebotDetailScreen({ angebotId, onClose, onEdit }: Props) {
             </>
           )}
         </div>
+
+        {versand && (
+          <div className={s.infoCard} style={{ padding: 12, marginBottom: 8 }}>
+            <div style={{ fontWeight: 800, color: '#2d8a4e', marginBottom: 6 }}>
+              ✓ Versendet{versand.empfaenger ? ` an ${versand.empfaenger}` : ''}{versand.empfaenger ? (versand.mailOk ? ' (Mail zugestellt)' : ' (Mailversand fehlgeschlagen)') : ''}
+            </div>
+            <div className={s.posLineSub} style={{ marginBottom: 4 }}>Kundenportal-Link:</div>
+            <input readOnly value={versand.link} onFocus={e => e.currentTarget.select()}
+              style={{ width: '100%', boxSizing: 'border-box', padding: '8px 10px', borderRadius: 8, border: '1.5px solid var(--ek-border)', fontSize: 12, color: 'var(--ek-charcoal)', background: 'var(--ek-bg)' }} />
+          </div>
+        )}
 
         {/* Positionen */}
         <div className={s.sectionLabel}>Positionen</div>

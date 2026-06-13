@@ -78,6 +78,29 @@ export async function naechsteNummer(typ: 'bestellung' | 'lead' | 'angebot', jah
   }
 }
 
+export interface VersandErgebnis { ok: boolean; portalLink?: string; empfaenger?: string | null; mailOk?: boolean; error?: string; }
+
+/**
+ * Versendet ein Angebot: der Server prüft Freigabe/Scope, erzeugt den Portal-
+ * Token, verschickt die Mail und setzt den Status auf „versendet". Das PDF wird
+ * clientseitig erzeugt und mitgeschickt (für Mailanhang + Portal-Ansicht).
+ */
+export async function versendeAngebot(angebotId: string, pdfDataUrl: string | null, empfaenger?: string): Promise<VersandErgebnis> {
+  try {
+    const res = await fetch(`${BASE}/api/angebot/versenden`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json', ...identityHeaders() },
+      body: JSON.stringify({ angebotId, pdfDataUrl, empfaenger }),
+    });
+    const j = await res.json().catch(() => ({}));
+    if (!res.ok) { await checkAuthError(res); return { ok: false, error: j?.error ?? `HTTP ${res.status}` }; }
+    return { ok: true, ...j };
+  } catch {
+    return { ok: false, error: 'NETZWERK' };
+  }
+}
+
 /** Lädt eine Kollektion vom Server. null bei Netzwerkfehler (Server offline). */
 export async function fetchData<T = unknown>(name: string): Promise<DataEnvelope<T> | null> {
   try {
