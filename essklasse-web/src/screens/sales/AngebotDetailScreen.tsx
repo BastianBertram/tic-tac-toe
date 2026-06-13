@@ -22,6 +22,7 @@ export function AngebotDetailScreen({ angebotId, onClose, onEdit }: Props) {
   const neueVersion = useAngeboteStore(st => st.neueVersion);
   const genehmigen  = useAngeboteStore(st => st.genehmigen);
   const ablehnen    = useAngeboteStore(st => st.ablehnen);
+  const deleteAngebot = useAngeboteStore(st => st.deleteAngebot);
   const userName    = useAuthStore(st => st.user?.name);
   const darfFreigeben = useAuthStore(st => st.isAdmin() || st.isGeschaeftsfuehrung());
   const logoDataUrl = useSettingsStore(st => st.logoDataUrl);
@@ -120,6 +121,12 @@ export function AngebotDetailScreen({ angebotId, onClose, onEdit }: Props) {
               <button type="button" className={s.btnReject} onClick={() => ablehnen(angebot.id, userName)}>✕ Ablehnen</button>
             </>
           )}
+          <button type="button" className={s.btnSecondary} onClick={() => {
+            if (window.confirm(`Angebot ${angebot.nummer} löschen? Es wird aus den Listen entfernt (wiederherstellbar nur über die Datenbank).`)) {
+              deleteAngebot(angebot.id);
+              onClose();
+            }
+          }}>🗑 Löschen</button>
         </div>
 
         {versand && (
