@@ -289,9 +289,15 @@ export function handleData(method, url, body, ctx = {}) {
     if (name === 'users') {
       const vorher = Array.isArray(load(name).data?.users) ? load(name).data.users : [];
       const inaktiv = new Map(vorher.filter(u => u.aktiv === false).map(u => [u.id, u]));
-      const users = Array.isArray(body.users)
+      // Eingehende Nutzer: deaktivierte bleiben eingefroren (alter Datensatz).
+      const eingehend = Array.isArray(body.users)
         ? body.users.map(u => inaktiv.has(u.id) ? inaktiv.get(u.id) : u)
-        : body.users;
+        : [];
+      // Id-erhaltend mergen: bestehende Nutzer werden NIE hart gelöscht — „Löschen"
+      // existiert im Modell nicht, nur Deaktivieren (Flag). Ein unvollständiger PUT
+      // (fehlende ids) entfernt also keine aktiven Nutzer mehr (kein stiller
+      // Stammdatenverlust); eingehende ergänzen/aktualisieren nur.
+      const users = mergeById(vorher, eingehend);
       // Aussperr-Schutz: es muss immer mindestens ein aktiver Admin übrig bleiben,
       // sonst könnten die Stammdaten danach von niemandem mehr verwaltet werden.
       const aktiveAdminsVorher = vorher.filter(u => u.rolle === 'admin' && u.aktiv !== false).length;
