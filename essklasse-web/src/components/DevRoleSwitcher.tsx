@@ -36,7 +36,7 @@ const ROLES: { rolle: UserRolle; label: string; color: string; user: AuthUser }[
     rolle: 'sales',
     label: 'Sales',
     color: '#b9770e',
-    user: { id: 'demo-sales', name: 'Lena Vogel', email: 'sales@hwk.de', rolle: 'sales' },
+    user: { id: 'demo-sales', name: 'Lena Vogel', email: 'sales@hwk.de', rolle: 'sales', objektIds: ['demo-1', 'demo-2'] },
   },
 ];
 

@@ -190,6 +190,19 @@ export function handleData(method, url, body, ctx = {}) {
         } };
       }
     }
+    // Sales-Anfragen (Leads) sind mandantengetrennt: nur die der zugeordneten
+    // Objekte ausliefern. Admin/GF (unrestricted) erhalten alle.
+    if (name === 'sales') {
+      const scope = userScope(ctx);
+      if (scope.restricted) {
+        const ids = new Set(scope.objektIds);
+        const alle = Array.isArray(env.data?.anfragen) ? env.data.anfragen : [];
+        return { status: 200, payload: {
+          initialized: env.initialized,
+          data: { ...env.data, anfragen: alle.filter(a => ids.has(a.objektId)) },
+        } };
+      }
+    }
     return { status: 200, payload: env };
   }
 
@@ -283,9 +296,9 @@ export function handleData(method, url, body, ctx = {}) {
         const eingehend = (Array.isArray(body.belege) ? body.belege : [])
           .filter(b => ids.has(b.objektId) && !fremdeIds.has(b.id));
         const eigenNeu  = mergeById(eigenAlt, eingehend);               // eigene Objekte: nur ergänzen/aktualisieren
-        // Zähler nur für die eigenen Objekte übernehmen (kein Hochsetzen fremder).
-        const eingehendZaehler = scopeZaehler(body.bestellungZaehler, ids);
-        const zaehler = mergeZaehler(cur.bestellungZaehler, eingehendZaehler);
+        // Bestell-Zähler ist pro Jahr (nicht pro Objekt) und wird per Max gemerged
+        // (kann nicht verkleinert werden) — daher kein Objekt-Scoping.
+        const zaehler = mergeZaehler(cur.bestellungZaehler, body.bestellungZaehler);
         // Nur whitelistete Top-Level-Felder persistieren — KEIN ...body-Spread,
         // damit ein eingeschränkter Nutzer keine beliebigen Keys in die geteilte
         // Kollektion schreiben kann.
@@ -302,10 +315,27 @@ export function handleData(method, url, body, ctx = {}) {
     }
 
     // Sales-Anfragen werden ebenfalls nie physisch gelöscht (id-erhaltend);
-    // nur whitelistete Felder (kein ...body-Spread).
+    // mandantengetrennt wie Belege (Objekt-Scope) + nur whitelistete Felder.
     if (name === 'sales') {
       const cur = load(name).data ?? COLLECTIONS.sales.default;
       const bestehend = Array.isArray(cur.anfragen) ? cur.anfragen : [];
+      const scope = userScope(ctx);
+      if (scope.restricted) {
+        const ids = new Set(scope.objektIds);
+        const fremde    = bestehend.filter(a => !ids.has(a.objektId));   // andere Objekte: unangetastet
+        const eigenAlt  = bestehend.filter(a => ids.has(a.objektId));
+        const fremdeIds = new Set(fremde.map(a => a.id));
+        const eingehend = (Array.isArray(body.anfragen) ? body.anfragen : [])
+          .filter(a => ids.has(a.objektId) && !fremdeIds.has(a.id));     // keine fremden IDs/Objekte
+        const eigenNeu  = mergeById(eigenAlt, eingehend);
+        // Lead-Zähler ist pro Jahr (nicht pro Objekt) und wird per Max gemerged
+        // (kann nicht verkleinert werden) — daher kein Objekt-Scoping.
+        const zaehler   = mergeZaehler(cur.leadZaehler, body.leadZaehler);
+        const merged    = { ...cur, anfragen: [...fremde, ...eigenNeu], leadZaehler: zaehler };
+        persist(name, merged);
+        return { status: 200, payload: { initialized: true, data: { ...merged, anfragen: eigenNeu } } };
+      }
+      // Admin/GF: voller Zugriff, id-erhaltend, nur whitelistete Felder.
       const merged = {
         ...cur,
         anfragen: mergeById(bestehend, Array.isArray(body.anfragen) ? body.anfragen : []),
@@ -335,15 +365,6 @@ function mergeZaehler(a = {}, b = {}) {
   const out = { ...a };
   for (const [k, v] of Object.entries(b ?? {})) {
     out[k] = Math.max(Number(out[k] ?? 0), Number(v ?? 0));
-  }
-  return out;
-}
-
-/** Behält nur Zähler-Einträge für Objekte im erlaubten Scope (Set von IDs). */
-function scopeZaehler(zaehler = {}, ids) {
-  const out = {};
-  for (const [k, v] of Object.entries(zaehler ?? {})) {
-    if (ids.has(k)) out[k] = v;
   }
   return out;
 }

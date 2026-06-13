@@ -31,6 +31,7 @@ function make(o: Partial<SalesAnfrage> & {
   return {
     id: uuidv4(),
     nummer: nr(datum),
+    objektId: 'demo-1',          // Default; unten round-robin auf demo-1/2/3 verteilt
     quelle: 'website',
     ansprechpartner: 'Frau Beispiel',
     email: 'kontakt@beispiel.de',
@@ -131,6 +132,11 @@ const ANFRAGEN: SalesAnfrage[] = [
     erstelltAm: iso(9), aktualisiertAm: iso(5),
   }),
 ];
+
+// Leads auf die Demo-Objekte verteilen, damit die Mandantentrennung sichtbar ist
+// (demo-1/demo-2 für den Sales-Demo-User; demo-3 nur für Admin/GF sichtbar).
+const DEMO_OBJEKTE = ['demo-1', 'demo-2', 'demo-3'];
+ANFRAGEN.forEach((a, i) => { a.objektId = DEMO_OBJEKTE[i % DEMO_OBJEKTE.length]; });
 
 export function seedSales() {
   const existing = useSalesStore.getState().anfragen;

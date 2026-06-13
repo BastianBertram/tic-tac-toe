@@ -109,6 +109,7 @@ export interface SalesAktivitaet {
 export interface SalesAnfrage {
   id: string;
   nummer: string;             // z.B. "L260001"
+  objektId: string;           // Mandant/Objekt — bestimmt die Sichtbarkeit (wie bei Belegen)
   segment: SalesSegment;
   status: SalesStatus;
   quelle: SalesQuelle;

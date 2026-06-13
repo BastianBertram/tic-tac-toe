@@ -22,6 +22,7 @@ export const SEED_USERS = [
   { id: 'demo-buch-2', anrede: 'Frau', vorname: 'Britta', nachname: 'Hoffmann',   name: 'Britta Hoffmann', email: 'b.hoffmann@hwk.de',           telefon: '0511 99001-50', rolle: 'buchhaltung',      objektIds: [],                   aktiv: true,  erstelltAm: T },
   { id: 'demo-bl-1',   anrede: 'Frau', vorname: 'Maria',  nachname: 'Berger',     name: 'Maria Berger',    email: 'berger@hwk.de',               telefon: '0511 99001-60', rolle: 'bereichsleitung',  objektIds: ['demo-1', 'demo-2'], aktiv: true,  erstelltAm: T },
   { id: 'demo-gf-1',   anrede: 'Herr', vorname: 'Hans',   nachname: 'Müller',     name: 'Hans Müller',     email: 'gf@hwk-hannover.de',          telefon: '0511 99001-10', rolle: 'geschaeftsfuehrung', objektIds: [],                 aktiv: true,  erstelltAm: T },
+  { id: 'demo-sales',  anrede: 'Frau', vorname: 'Lena',   nachname: 'Vogel',      name: 'Lena Vogel',      email: 'sales@hwk.de',                telefon: '0511 99001-70', rolle: 'sales',            objektIds: ['demo-1', 'demo-2'], aktiv: true,  erstelltAm: T },
 ];
 
 export const SEED_OBJEKTE = [

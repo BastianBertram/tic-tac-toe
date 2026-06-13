@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useSalesStore } from '../../store/salesStore';
 import { useAuthStore } from '../../store/authStore';
+import { useObjektStore, useSichtbareObjekte } from '../../store/objektStore';
 import { SALES_SEGMENTE, SALES_QUELLEN } from '../../types';
 import type { SalesSegment, SalesQuelle } from '../../types';
 import s from './SalesNewAnfrageScreen.module.css';
@@ -10,6 +11,10 @@ interface Props { onClose: () => void; onCreated: (id: string) => void; }
 export function SalesNewAnfrageScreen({ onClose, onCreated }: Props) {
   const addAnfrage = useSalesStore(st => st.addAnfrage);
   const userName   = useAuthStore(st => st.user?.name);
+  // Mandant/Objekt der Anfrage — bestimmt die Sichtbarkeit (Objekt-Scoping).
+  const objekte    = useSichtbareObjekte();
+  const aktivesObjekt = useObjektStore(st => st.getAktivesObjekt()) ?? objekte[0] ?? null;
+  const [objektId, setObjektId] = useState<string>(aktivesObjekt?.id ?? '');
 
   const [segment, setSegment]         = useState<SalesSegment>('catering');
   const [quelle, setQuelle]           = useState<SalesQuelle>('website');
@@ -25,11 +30,12 @@ export function SalesNewAnfrageScreen({ onClose, onCreated }: Props) {
   const [wiedervorlage, setWv]        = useState('');
   const [notiz, setNotiz]             = useState('');
 
-  const canSave = kundeFirma.trim() && veranstaltung.trim();
+  const canSave = kundeFirma.trim() && veranstaltung.trim() && objektId;
 
   function save() {
     if (!canSave) return;
     const id = addAnfrage({
+      objektId,
       segment,
       quelle,
       kundeFirma: kundeFirma.trim(),
@@ -57,6 +63,15 @@ export function SalesNewAnfrageScreen({ onClose, onCreated }: Props) {
       </div>
 
       <div className={s.scroll}>
+        {objekte.length > 1 && (
+          <>
+            <Label>Objekt *</Label>
+            <select className={s.input} value={objektId} onChange={e => setObjektId(e.target.value)}>
+              {objekte.map(o => <option key={o.id} value={o.id}>{o.kuerzel ? `${o.kuerzel} – ` : ''}{o.name}</option>)}
+            </select>
+          </>
+        )}
+
         <Label>Segment</Label>
         <div className={s.segRow}>
           {SALES_SEGMENTE.map(seg => (
