@@ -1,16 +1,15 @@
 import { useMemo } from 'react';
 import { format, parseISO, subMonths, startOfMonth, isWithinInterval, endOfMonth } from 'date-fns';
 import { de } from 'date-fns/locale';
-import { useSalesStore } from '../../store/salesStore';
 import { SALES_PIPELINE, SALES_STATUS_LABEL } from '../../types';
 import type { SalesStatus } from '../../types';
-import { euro, euroFull, statusColor, isOffen } from './salesUtils';
+import { euro, euroFull, statusColor, isOffen, useSichtbareAnfragen } from './salesUtils';
 import s from './SalesStatistikScreen.module.css';
 
 const C = { blue: '#5b8def', green: '#2d8a4e', red: '#c0392b', orange: '#e8a020', teal: '#16a3a3', muted: '#8a9bb0' };
 
 export function SalesStatistikScreen() {
-  const anfragen = useSalesStore(st => st.anfragen);
+  const anfragen = useSichtbareAnfragen();
 
   const data = useMemo(() => {
     // Funnel: Anzahl + Wert pro offener Stufe

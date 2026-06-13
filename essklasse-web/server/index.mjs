@@ -322,7 +322,10 @@ const server = createServer(async (req, res) => {
   // ── Atomare Nummernvergabe (Bestell-/Lead-Nummern) ──
   if (req.method === 'POST' && url === '/api/nummer') {
     const user = getSessionUser(req);
-    if (!DEV_HEADERS && !user) return send(res, 401, { error: 'Anmeldung erforderlich.' });
+    // Auflösbare Identität zwingend (Session in Prod, gültiger Dev-Header in Dev).
+    if (!accountStatus({ user, devEmail: devEmailHeader(req) }).authenticated) {
+      return send(res, 401, { error: 'Anmeldung erforderlich.' });
+    }
     if (!isCurrentDevice(req)) return send(res, 401, { error: 'SESSION_SUPERSEDED' });
     try {
       const body = await readJsonBody(req);
@@ -336,10 +339,10 @@ const server = createServer(async (req, res) => {
   // ── App-Daten (Benutzer, Objekte, Belege, Sales) ──
   if (url.startsWith('/api/data/') && (req.method === 'GET' || req.method === 'PUT')) {
     const user = getSessionUser(req);
-    // Außerhalb des expliziten Dev-Header-Modus ist eine authentifizierte
-    // Sitzung zwingend (fail-closed, gilt auch bei versehentlich fehlendem
-    // NODE_ENV=production).
-    if (!DEV_HEADERS && !user) {
+    // Auflösbare Identität zwingend: in Prod die signierte Session, in Dev ein
+    // gültiger X-User-Email-Header (EK_DEV_HEADERS). Unbekannte Identität → 401
+    // (symmetrisch zu Prod, fail-closed; kein 200 mit leeren Daten in Dev).
+    if (!accountStatus({ user, devEmail: devEmailHeader(req) }).authenticated) {
       return send(res, 401, { error: 'Anmeldung erforderlich.' });
     }
     // Verdrängte Sitzung (anderes Gerät) → Zugriff verweigern.

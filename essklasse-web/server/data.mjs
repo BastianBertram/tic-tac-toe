@@ -164,6 +164,14 @@ export function allocateNummer(ctx, typ, jahr) {
   return { status: 200, payload: { nummer, wert: naechste, jahr, typ } };
 }
 
+/** Nicht-sensible Anzeigefelder eines Benutzers (für eingeschränkte Rollen). */
+function projektUser(u) {
+  return {
+    id: u.id, name: u.name, anrede: u.anrede, vorname: u.vorname, nachname: u.nachname,
+    rolle: u.rolle, aktiv: u.aktiv,
+  };
+}
+
 export function handleData(method, url, body, ctx = {}) {
   const m = url.match(/^\/api\/data\/([a-z]+)$/);
   if (!m) return null;
@@ -188,10 +196,15 @@ export function handleData(method, url, body, ctx = {}) {
         const ids = new Set(scope.objektIds);
         const ich = resolveIdentity(ctx);
         const alle = Array.isArray(env.data?.users) ? env.data.users : [];
-        const sichtbar = alle.filter(u =>
-          (ich && (u.id === ich.id ||
-            String(u.email ?? '').toLowerCase() === String(ich.email ?? '').toLowerCase())) ||
-          (Array.isArray(u.objektIds) && u.objektIds.some(oid => ids.has(oid))));
+        const sichtbar = alle
+          .filter(u =>
+            (ich && (u.id === ich.id ||
+              String(u.email ?? '').toLowerCase() === String(ich.email ?? '').toLowerCase())) ||
+            (Array.isArray(u.objektIds) && u.objektIds.some(oid => ids.has(oid))))
+          // Datensparsamkeit: eingeschränkte Rollen erhalten nur nicht-sensible
+          // Anzeigefelder — KEINE E-Mail/Telefon/Objektzuordnung/erstelltAm der
+          // Kollegen. Vollständige Records nur für Admin/GF (unrestricted).
+          .map(projektUser);
         return { status: 200, payload: {
           initialized: env.initialized,
           data: { ...env.data, users: sichtbar },
@@ -283,6 +296,17 @@ export function handleData(method, url, body, ctx = {}) {
         : 0;
       if (aktiveAdminsVorher > 0 && aktiveAdminsNachher === 0) {
         return { status: 400, payload: { error: 'Mindestens ein aktiver Administrator muss erhalten bleiben.' } };
+      }
+      // Self-Lockout-Schutz: der ANFRAGENDE Admin muss im Ergebnis weiterhin
+      // aktiver Admin sein. Verhindert (versehentliche oder feindliche)
+      // Selbst-Herabstufung/-Deaktivierung des handelnden Admins.
+      if (identity?.rolle === 'admin' && Array.isArray(users)) {
+        const ich = users.find(u =>
+          u.id === identity.id ||
+          String(u.email ?? '').toLowerCase() === String(identity.email ?? '').toLowerCase());
+        if (!ich || ich.rolle !== 'admin' || ich.aktiv === false) {
+          return { status: 400, payload: { error: 'Sie können Ihre eigenen Administratorrechte nicht entziehen.' } };
+        }
       }
       const merged = { ...body, users };
       persist(name, merged);

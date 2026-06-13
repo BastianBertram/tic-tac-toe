@@ -1,10 +1,9 @@
 import { useMemo, useState } from 'react';
 import { format, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
-import { useSalesStore } from '../../store/salesStore';
 import { SALES_PIPELINE, SALES_STATUS_LABEL } from '../../types';
 import type { SalesAnfrage, SalesStatus } from '../../types';
-import { euroFull, statusColor, isOffen, segmentLabel } from './salesUtils';
+import { euroFull, statusColor, isOffen, segmentLabel, useSichtbareAnfragen } from './salesUtils';
 import s from './SalesPipelineScreen.module.css';
 
 type Filter = SalesStatus | 'alle' | 'wiedervorlage';
@@ -12,7 +11,7 @@ type Filter = SalesStatus | 'alle' | 'wiedervorlage';
 interface Props { initialFilter?: Filter; onOpen: (a: SalesAnfrage) => void; }
 
 export function SalesPipelineScreen({ initialFilter = 'alle', onOpen }: Props) {
-  const anfragen = useSalesStore(st => st.anfragen);
+  const anfragen = useSichtbareAnfragen();
   const [filter, setFilter] = useState<Filter>(initialFilter);
   const [suche, setSuche]   = useState('');
 

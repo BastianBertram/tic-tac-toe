@@ -1,15 +1,14 @@
 import { useMemo } from 'react';
 import { BrandLogo } from '../../components/BrandLogo';
 import { format, startOfMonth, endOfMonth, isWithinInterval, parseISO } from 'date-fns';
-import { useSalesStore } from '../../store/salesStore';
 import type { SalesStatus } from '../../types';
-import { euro, isOffen } from './salesUtils';
+import { euro, isOffen, useSichtbareAnfragen } from './salesUtils';
 import s from './SalesHomeScreen.module.css';
 
 interface Props { onKachelClick: (filter: SalesStatus | 'alle' | 'wiedervorlage') => void; }
 
 export function SalesHomeScreen({ onKachelClick }: Props) {
-  const anfragen = useSalesStore(st => st.anfragen);
+  const anfragen = useSichtbareAnfragen();
 
   const k = useMemo(() => {
     const now    = new Date();

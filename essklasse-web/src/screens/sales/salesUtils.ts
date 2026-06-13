@@ -1,6 +1,20 @@
 import type { SalesAnfrage, SalesStatus } from '../../types';
+import { useSalesStore } from '../../store/salesStore';
+import { useObjektFilter } from '../../store/objektStore';
 
 export const OFFENE_STATUS: SalesStatus[] = ['neu', 'qualifiziert', 'angebot', 'verhandlung'];
+
+/**
+ * Leads, die der aktuelle Nutzer sehen darf — auf die zugeordneten Objekte
+ * gefiltert (Mandantentrennung). Defense-in-Depth zusätzlich zum Server-Scoping:
+ * greift auch im Dev-/Offline-Betrieb, wo der lokale Store ungescopte Seed-Daten
+ * enthalten kann.
+ */
+export function useSichtbareAnfragen(): SalesAnfrage[] {
+  const anfragen = useSalesStore(st => st.anfragen);
+  const { matchObjekt } = useObjektFilter();
+  return anfragen.filter(a => matchObjekt(a.objektId));
+}
 
 /** Kompakte Euro-Darstellung: 1.250 €, 12,5 T€, 1,8 Mio € */
 export function euro(v: number): string {

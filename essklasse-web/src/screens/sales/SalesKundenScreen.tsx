@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react';
-import { useSalesStore } from '../../store/salesStore';
 import type { SalesAnfrage } from '../../types';
-import { euroFull, isOffen, statusColor, segmentLabel } from './salesUtils';
+import { euroFull, isOffen, statusColor, segmentLabel, useSichtbareAnfragen } from './salesUtils';
 import { SALES_STATUS_LABEL } from '../../types';
 import s from './SalesKundenScreen.module.css';
 
@@ -16,7 +15,7 @@ interface Kunde {
 }
 
 export function SalesKundenScreen({ onOpen }: Props) {
-  const anfragen = useSalesStore(st => st.anfragen);
+  const anfragen = useSichtbareAnfragen();
   const [suche, setSuche]   = useState('');
   const [offen, setOffen]   = useState<string | null>(null);
 
