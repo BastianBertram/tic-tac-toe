@@ -17,6 +17,7 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { SEED_USERS, SEED_OBJEKTE } from './seed.mjs';
+import { getRabattLimit } from './settings.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DATA_DIR  = join(__dirname, 'data');
@@ -437,8 +438,11 @@ export function handleData(method, url, body, ctx = {}) {
         const fremde    = bestehend.filter(a => !ids.has(a.objektId));   // andere Objekte: unangetastet
         const eigenAlt  = bestehend.filter(a => ids.has(a.objektId));
         const fremdeIds = new Set(fremde.map(a => a.id));
+        const altById   = new Map(eigenAlt.map(a => [a.id, a]));
+        const limit     = getRabattLimit();
         const eingehend = (Array.isArray(body.angebote) ? body.angebote : [])
-          .filter(a => ids.has(a.objektId) && !fremdeIds.has(a.id));     // keine fremden IDs/Objekte
+          .filter(a => ids.has(a.objektId) && !fremdeIds.has(a.id))      // keine fremden IDs/Objekte
+          .map(a => enforceAngebotFreigabe(a, altById.get(a.id), limit)); // Selbst-Freigabe verhindern
         const eigenNeu  = mergeById(eigenAlt, eingehend);
         const zaehler   = mergeZaehler(cur.angebotZaehler, body.angebotZaehler);
         const merged    = { ...cur, angebote: [...fremde, ...eigenNeu], angebotZaehler: zaehler };
@@ -494,6 +498,39 @@ function mergeById(existing = [], incoming = [], key = 'id') {
   const map = new Map(existing.map(r => [r[key], r]));
   for (const r of incoming) map.set(r[key], mergeRecord(map.get(r[key]), r));
   return [...map.values()];
+}
+
+/** Höchster vergebener Rabatt (Positions- oder Gesamtrabatt) eines Angebots in %. */
+function angebotRabattMax(a) {
+  const pos = Array.isArray(a?.positionen) ? a.positionen : [];
+  const posMax = pos.reduce((m, p) => p?.geloescht ? m : Math.max(m, Number(p?.rabattProzent) || 0), 0);
+  return Math.max(posMax, Number(a?.rabattGesamtProzent) || 0);
+}
+
+/**
+ * Serverseitige Genehmigungs-Durchsetzung für Angebote eines EINGESCHRÄNKTEN
+ * Nutzers (sales). Verhindert Selbst-Freigabe von Rabatten über dem Limit:
+ *  - `genehmigungErforderlich` wird serverseitig berechnet (nicht dem Client vertraut).
+ *  - Freigabe-Felder (`genehmigtVon`/`genehmigtAm`) werden NUR aus dem bestehenden
+ *    Server-Datensatz übernommen — eingehende Werte werden ignoriert (keine Forgery).
+ *  - Eine nachträgliche Rabatt-ERHÖHUNG lässt eine frühere Freigabe erlöschen.
+ *  - Ohne gültige Freigabe kann ein über dem Limit liegendes Angebot nicht auf
+ *    `versendet`/`angenommen` gesetzt werden (→ zurück auf `genehmigung`).
+ * Admin/GF (unrestricted) durchlaufen diese Funktion NICHT (volles Vertrauen).
+ */
+function enforceAngebotFreigabe(inc, existing, limit) {
+  const incMax = angebotRabattMax(inc);
+  const exMax  = existing ? angebotRabattMax(existing) : 0;
+  let genehmigtVon = existing?.genehmigtVon;
+  let genehmigtAm  = existing?.genehmigtAm;
+  // Rabatt nachträglich erhöht → bestehende Freigabe erlischt (Re-Genehmigung nötig).
+  if (incMax > exMax) { genehmigtVon = undefined; genehmigtAm = undefined; }
+  const genehmigungErforderlich = incMax > limit;
+  let status = inc.status;
+  if (genehmigungErforderlich && !genehmigtVon && (status === 'versendet' || status === 'angenommen')) {
+    status = 'genehmigung';
+  }
+  return { ...inc, genehmigungErforderlich, genehmigtVon, genehmigtAm, status };
 }
 
 /** Führt zwei Zähler zusammen (höchster Wert je Schlüssel gewinnt). */

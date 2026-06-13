@@ -103,6 +103,13 @@ function sanitize(body, base = DEFAULT_SETTINGS) {
   };
 }
 
+/** Aktuelles Rabattlimit (%) für die sales-Rolle — Quelle der Wahrheit für die
+ *  serverseitige Genehmigungs-Durchsetzung (Angebote). */
+export function getRabattLimit() {
+  const v = Number(load().rabattLimitProzent);
+  return Number.isFinite(v) ? v : DEFAULT_SETTINGS.rabattLimitProzent;
+}
+
 /**
  * Behandelt /api/settings.
  * @param ctx { user } — eingeloggter Nutzer (oder null) für die Admin-Prüfung
