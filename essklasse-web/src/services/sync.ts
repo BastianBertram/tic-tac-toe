@@ -15,6 +15,8 @@ import { useUserStore } from '../store/userStore';
 import { useObjektStore } from '../store/objektStore';
 import { useBelegStore } from '../store/belegStore';
 import { useSalesStore } from '../store/salesStore';
+import { useAngeboteStore } from '../store/angeboteStore';
+import { useProduktStore } from '../store/produktStore';
 
 interface SyncReg<S> {
   name: string;
@@ -58,6 +60,21 @@ const REGS: SyncReg<unknown>[] = [
       anfragen: Array.isArray(d.anfragen) ? d.anfragen : [],
       leadZaehler: (d.leadZaehler ?? {}) as Record<string, number>,
     }),
+  }),
+  reg({
+    name: 'angebote',
+    store: useAngeboteStore,
+    select: s => ({ angebote: s.angebote, angebotZaehler: s.angebotZaehler }),
+    apply: d => useAngeboteStore.setState({
+      angebote: Array.isArray(d.angebote) ? d.angebote : [],
+      angebotZaehler: (d.angebotZaehler ?? {}) as Record<string, number>,
+    }),
+  }),
+  reg({
+    name: 'produkte',
+    store: useProduktStore,
+    select: s => ({ produkte: s.produkte }),
+    apply: d => useProduktStore.setState({ produkte: Array.isArray(d.produkte) ? d.produkte : [] }),
   }),
 ];
 

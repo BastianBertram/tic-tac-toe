@@ -62,7 +62,7 @@ export async function claimSession(): Promise<boolean> {
  * Gibt null zurück, wenn der Server nicht erreichbar ist → Aufrufer fällt dann
  * auf die lokale Vergabe zurück (offline-Notbetrieb).
  */
-export async function naechsteNummer(typ: 'bestellung' | 'lead', jahr: string): Promise<string | null> {
+export async function naechsteNummer(typ: 'bestellung' | 'lead' | 'angebot', jahr: string): Promise<string | null> {
   try {
     const res = await fetch(`${BASE}/api/nummer`, {
       method: 'POST',

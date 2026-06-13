@@ -32,6 +32,8 @@ const COLLECTIONS = {
   objekte: { write: 'admin', default: { objekte: [] } },
   belege:  { write: 'auth',  default: { belege: [], bestellungZaehler: {} } },
   sales:   { write: 'auth',  default: { anfragen: [], leadZaehler: {} } },
+  angebote:{ write: 'auth',  default: { angebote: [], angebotZaehler: {} } },
+  produkte:{ write: 'admin', default: { produkte: [] } },
 };
 
 const cache = new Map(); // name → data
@@ -146,6 +148,7 @@ function userScope(ctx) {
 const NUMMERN = {
   bestellung: { collection: 'belege', zaehlerKey: 'bestellungZaehler', prefix: 'A', pad: 7 },
   lead:       { collection: 'sales',  zaehlerKey: 'leadZaehler',       prefix: 'L', pad: 4 },
+  angebot:    { collection: 'angebote', zaehlerKey: 'angebotZaehler',  prefix: 'AN', pad: 4 },
 };
 
 export function allocateNummer(ctx, typ, jahr) {
@@ -244,6 +247,18 @@ export function handleData(method, url, body, ctx = {}) {
         return { status: 200, payload: {
           initialized: env.initialized,
           data: { ...env.data, anfragen: alle.filter(a => ids.has(a.objektId)) },
+        } };
+      }
+    }
+    // Angebote sind mandantengetrennt wie Sales-Anfragen (Objekt-Scope).
+    if (name === 'angebote') {
+      const scope = userScope(ctx);
+      if (scope.restricted) {
+        const ids = new Set(scope.objektIds);
+        const alle = Array.isArray(env.data?.angebote) ? env.data.angebote : [];
+        return { status: 200, payload: {
+          initialized: env.initialized,
+          data: { ...env.data, angebote: alle.filter(a => ids.has(a.objektId)) },
         } };
       }
     }
@@ -408,6 +423,45 @@ export function handleData(method, url, body, ctx = {}) {
         anfragen: mergeById(bestehend, Array.isArray(body.anfragen) ? body.anfragen : []),
         leadZaehler: mergeZaehler(cur.leadZaehler, body.leadZaehler),
       };
+      persist(name, merged);
+      return { status: 200, payload: { initialized: true, data: merged } };
+    }
+
+    // Angebote: id-erhaltend + mandantengetrennt wie Sales-Anfragen.
+    if (name === 'angebote') {
+      const cur = load(name).data ?? COLLECTIONS.angebote.default;
+      const bestehend = Array.isArray(cur.angebote) ? cur.angebote : [];
+      const scope = userScope(ctx);
+      if (scope.restricted) {
+        const ids = new Set(scope.objektIds);
+        const fremde    = bestehend.filter(a => !ids.has(a.objektId));   // andere Objekte: unangetastet
+        const eigenAlt  = bestehend.filter(a => ids.has(a.objektId));
+        const fremdeIds = new Set(fremde.map(a => a.id));
+        const eingehend = (Array.isArray(body.angebote) ? body.angebote : [])
+          .filter(a => ids.has(a.objektId) && !fremdeIds.has(a.id));     // keine fremden IDs/Objekte
+        const eigenNeu  = mergeById(eigenAlt, eingehend);
+        const zaehler   = mergeZaehler(cur.angebotZaehler, body.angebotZaehler);
+        const merged    = { ...cur, angebote: [...fremde, ...eigenNeu], angebotZaehler: zaehler };
+        persist(name, merged);
+        return { status: 200, payload: { initialized: true, data: { ...merged, angebote: eigenNeu } } };
+      }
+      // Admin/GF: voller Zugriff, id-erhaltend, nur whitelistete Felder.
+      const merged = {
+        ...cur,
+        angebote: mergeById(bestehend, Array.isArray(body.angebote) ? body.angebote : []),
+        angebotZaehler: mergeZaehler(cur.angebotZaehler, body.angebotZaehler),
+      };
+      persist(name, merged);
+      return { status: 200, payload: { initialized: true, data: merged } };
+    }
+
+    // Produkte (Stammdaten, nur Admin): id-erhaltend mergen — „Entfernen" gibt es
+    // nicht, nur Deaktivieren (aktiv:false) bzw. Soft-Delete (deleted:true). Ein
+    // unvollständiger/veralteter PUT löscht daher keine Katalogartikel.
+    if (name === 'produkte') {
+      const cur = load(name).data ?? COLLECTIONS.produkte.default;
+      const alle = Array.isArray(cur.produkte) ? cur.produkte : [];
+      const merged = { ...cur, produkte: mergeById(alle, Array.isArray(body.produkte) ? body.produkte : []) };
       persist(name, merged);
       return { status: 200, payload: { initialized: true, data: merged } };
     }
