@@ -52,8 +52,11 @@ export const useSalesStore = create<SalesStore>()(
           ),
         })),
 
+      // Soft-Delete (Tombstone) statt Hard-Remove: sonst hält der Server den Lead
+      // (mergeById) und er taucht beim nächsten Sync wieder auf. Aus den Anzeigen
+      // wird `deleted` herausgefiltert (useSichtbareAnfragen).
       deleteAnfrage: (id) =>
-        set(s => ({ anfragen: s.anfragen.filter(a => a.id !== id) })),
+        set(s => ({ anfragen: s.anfragen.map(a => a.id === id ? { ...a, deleted: true, aktualisiertAm: new Date().toISOString() } : a) })),
 
       setStatus: (id, status, von, verlustgrund) =>
         set(s => ({

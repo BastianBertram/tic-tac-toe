@@ -140,6 +140,8 @@ export interface SalesAnfrage {
 
   erstelltAm: string;
   aktualisiertAm: string;
+  /** Soft-Delete: bleibt als Tombstone erhalten, wird aus Anzeigen gefiltert. */
+  deleted?: boolean;
 }
 
 export type Anrede = 'Herr' | 'Frau';
@@ -198,6 +200,8 @@ export interface Bewirtungsbeleg {
   rechnungsanschriftTeilnehmer?: string;
   rechnungsanschriftTelefon?: string;
   erstelltAm: string;
+  /** Letzte Änderung — für versionssicheres Merge (neuere gewinnt beim Sync). */
+  aktualisiertAm?: string;
   erstelltVon?: string;
   deleted?: boolean;
   isDoppelt?: boolean;

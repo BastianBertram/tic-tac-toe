@@ -413,11 +413,26 @@ export function handleData(method, url, body, ctx = {}) {
   return { status: 405, payload: { error: 'Method not allowed' } };
 }
 
-/** Führt zwei Datensatz-Listen id-erhaltend zusammen: bestehende bleiben
- *  erhalten, eingehende aktualisieren (gleiche id) oder ergänzen sie. */
+/**
+ * Führt zwei Datensatz-Listen id-erhaltend zusammen. Pro Datensatz gilt:
+ *  - **Tombstone:** Ein bereits gelöschter Datensatz (`deleted:true`) wird durch
+ *    einen eingehenden OHNE `deleted` NICHT wiederbelebt (kein „Auferstehen").
+ *  - **Versions-LWW:** Tragen beide einen Zeitstempel (`aktualisiertAm`, sonst
+ *    `erstelltAm`), gewinnt der NEUERE — ein veralteter Push (anderes Gerät/Tab)
+ *    überschreibt also keine neueren Feld-/Statusänderungen mehr.
+ *  - Fehlen Zeitstempel (z.B. Objekte/Users): klassisch „eingehend gewinnt".
+ */
+function mergeRecord(cur, inc) {
+  if (!cur) return inc;
+  if (cur.deleted && !inc.deleted) return cur;            // Tombstone bleibt gelöscht
+  const ta = Date.parse(cur.aktualisiertAm ?? cur.erstelltAm ?? '');
+  const tb = Date.parse(inc.aktualisiertAm ?? inc.erstelltAm ?? '');
+  if (Number.isFinite(ta) && Number.isFinite(tb) && tb < ta) return cur; // eingehender älter → verwerfen
+  return inc;
+}
 function mergeById(existing = [], incoming = [], key = 'id') {
   const map = new Map(existing.map(r => [r[key], r]));
-  for (const r of incoming) map.set(r[key], r);
+  for (const r of incoming) map.set(r[key], mergeRecord(map.get(r[key]), r));
   return [...map.values()];
 }
 

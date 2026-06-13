@@ -39,6 +39,7 @@ export const useBelegStore = create<BelegStore>()(
             ...b, id, bestellungsnummer,
             belegVersion: 1,
             erstelltAm: new Date().toISOString(),
+            aktualisiertAm: new Date().toISOString(),
             ...(erstelltVon ? { erstelltVon } : {}),
             abgeschlossen: false,
           }, ...s.belege],
@@ -47,13 +48,13 @@ export const useBelegStore = create<BelegStore>()(
       },
 
       updateBeleg: (id, partial) =>
-        set(s => ({ belege: s.belege.map(b => b.id === id ? { ...b, ...partial } : b) })),
+        set(s => ({ belege: s.belege.map(b => b.id === id ? { ...b, ...partial, aktualisiertAm: new Date().toISOString() } : b) })),
 
       deleteBeleg: (id) =>
-        set(s => ({ belege: s.belege.map(b => b.id === id ? { ...b, deleted: true } : b) })),
+        set(s => ({ belege: s.belege.map(b => b.id === id ? { ...b, deleted: true, aktualisiertAm: new Date().toISOString() } : b) })),
 
       markDoppelt: (id) =>
-        set(s => ({ belege: s.belege.map(b => b.id === id ? { ...b, isDoppelt: true } : b) })),
+        set(s => ({ belege: s.belege.map(b => b.id === id ? { ...b, isDoppelt: true, aktualisiertAm: new Date().toISOString() } : b) })),
 
       schliesseBeleg: (id, positionen, user, abschlussfotos) =>
         set(s => ({
@@ -61,6 +62,7 @@ export const useBelegStore = create<BelegStore>()(
             ...b,
             abgeschlossen: true,
             abgeschlossenAm: new Date().toISOString(),
+            aktualisiertAm: new Date().toISOString(),
             abgeschlossenVon: user,
             abschlussPositionen: positionen,
             ...(abschlussfotos?.length ? { abschlussfotos } : {}),
@@ -73,6 +75,7 @@ export const useBelegStore = create<BelegStore>()(
             ...b,
             rechnungErstellt: true,
             rechnungErstelltAm: new Date().toISOString(),
+            aktualisiertAm: new Date().toISOString(),
             rechnungErstelltVon: userName,
             rechnungsnummer: rechnungsnummer ?? b.rechnungsnummer,
           } : b),

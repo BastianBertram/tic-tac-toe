@@ -13,7 +13,7 @@ export const OFFENE_STATUS: SalesStatus[] = ['neu', 'qualifiziert', 'angebot', '
 export function useSichtbareAnfragen(): SalesAnfrage[] {
   const anfragen = useSalesStore(st => st.anfragen);
   const { matchObjekt } = useObjektFilter();
-  return anfragen.filter(a => matchObjekt(a.objektId));
+  return anfragen.filter(a => !a.deleted && matchObjekt(a.objektId));
 }
 
 /** Kompakte Euro-Darstellung: 1.250 €, 12,5 T€, 1,8 Mio € */
