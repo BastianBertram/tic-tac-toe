@@ -16,6 +16,7 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { randomUUID } from 'node:crypto';
 import { SEED_USERS, SEED_OBJEKTE } from './seed.mjs';
 import { getRabattLimit } from './settings.mjs';
 
@@ -226,7 +227,24 @@ export function angebotAnnehmen(id, name) {
     ? { ...x, status: 'angenommen', signatur: { name: sauber, angenommenAm: now }, aktualisiertAm: now }
     : x);
   persist('angebote', { ...cur, angebote: neu });
+  // Verknüpften Lead automatisch auf „gewonnen" setzen (falls noch offen).
+  if (a.anfrageId) leadGewonnen(a.anfrageId, a.nummer);
   return { status: 200, payload: { ok: true } };
+}
+
+/** Setzt den verknüpften Lead auf „gewonnen" (nur wenn noch offen). */
+function leadGewonnen(anfrageId, angebotNummer) {
+  const cur = load('sales').data;
+  const liste = Array.isArray(cur?.anfragen) ? cur.anfragen : [];
+  const idx = liste.findIndex(x => x.id === anfrageId && !x.deleted);
+  if (idx < 0) return;
+  const lead = liste[idx];
+  if (lead.status === 'gewonnen' || lead.status === 'verloren') return;
+  const now = new Date().toISOString();
+  const akt = { id: randomUUID(), typ: 'statuswechsel', text: `Status → Gewonnen (Angebot ${angebotNummer} angenommen)`, datum: now };
+  const neu = [...liste];
+  neu[idx] = { ...lead, status: 'gewonnen', aktivitaeten: [akt, ...(Array.isArray(lead.aktivitaeten) ? lead.aktivitaeten : [])], aktualisiertAm: now };
+  persist('sales', { ...cur, anfragen: neu });
 }
 
 /** Nicht-sensible Anzeigefelder eines Benutzers (für eingeschränkte Rollen). */

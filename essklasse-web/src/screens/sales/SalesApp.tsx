@@ -77,6 +77,7 @@ export function SalesApp() {
           anfrageId={detailId}
           onClose={() => setDetailId(null)}
           onAngebotErstellen={(vorlage) => { setDetailId(null); setEditor({ open: true, angebotId: null, vorlage }); }}
+          onAngebotOeffnen={(id) => { setDetailId(null); setAngebotDetailId(id); }}
         />
       </div>
     );

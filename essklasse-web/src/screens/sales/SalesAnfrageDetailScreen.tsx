@@ -9,14 +9,21 @@ import { euroFull, statusColor, segmentLabel } from './salesUtils';
 import s from './SalesAnfrageDetailScreen.module.css';
 
 import type { AngebotVorlage } from './AngebotEditorScreen';
+import { useAngeboteStore } from '../../store/angeboteStore';
 
-interface Props { anfrageId: string; onClose: () => void; onAngebotErstellen?: (vorlage: AngebotVorlage) => void; }
+interface Props {
+  anfrageId: string;
+  onClose: () => void;
+  onAngebotErstellen?: (vorlage: AngebotVorlage) => void;
+  onAngebotOeffnen?: (angebotId: string) => void;
+}
 
 const AKT_ICON: Record<SalesAktivitaetTyp, string> = {
   anruf: '📞', email: '✉️', termin: '📅', notiz: '📝', angebot: '📄', statuswechsel: '🔁',
 };
 
-export function SalesAnfrageDetailScreen({ anfrageId, onClose, onAngebotErstellen }: Props) {
+export function SalesAnfrageDetailScreen({ anfrageId, onClose, onAngebotErstellen, onAngebotOeffnen }: Props) {
+  const vorhandenesAngebot = useAngeboteStore(st => st.angebote.find(a => a.anfrageId === anfrageId && !a.deleted));
   const anfrage    = useSalesStore(st => st.anfragen.find(a => a.id === anfrageId));
   const setStatus  = useSalesStore(st => st.setStatus);
   const addAkt     = useSalesStore(st => st.addAktivitaet);
@@ -106,23 +113,33 @@ export function SalesAnfrageDetailScreen({ anfrageId, onClose, onAngebotErstelle
           <div className={s.verlustInfo}>Verlustgrund: {anfrage.verlustgrund}</div>
         )}
 
-        {onAngebotErstellen && (
-          <button
-            type="button"
-            style={{ width: '100%', marginTop: 4, padding: 13, borderRadius: 10, border: 'none', background: 'linear-gradient(135deg, #b9770e, #e8a020)', color: '#fff', fontSize: 14, fontWeight: 800, cursor: 'pointer' }}
-            onClick={() => onAngebotErstellen({
-              objektId: anfrage.objektId,
-              anfrageId: anfrage.id,
-              kundeFirma: anfrage.kundeFirma,
-              ansprechpartner: anfrage.ansprechpartner,
-              email: anfrage.email,
-              telefon: anfrage.telefon,
-              betreff: anfrage.veranstaltung,
-            })}
-          >
-            📄 Angebot erstellen
-          </button>
-        )}
+        {vorhandenesAngebot
+          ? onAngebotOeffnen && (
+              <button
+                type="button"
+                style={{ width: '100%', marginTop: 4, padding: 13, borderRadius: 10, border: '1.5px solid #b9770e', background: '#fffbf0', color: '#b9770e', fontSize: 14, fontWeight: 800, cursor: 'pointer' }}
+                onClick={() => onAngebotOeffnen(vorhandenesAngebot.id)}
+              >
+                📄 Angebot öffnen ({vorhandenesAngebot.nummer})
+              </button>
+            )
+          : onAngebotErstellen && (
+              <button
+                type="button"
+                style={{ width: '100%', marginTop: 4, padding: 13, borderRadius: 10, border: 'none', background: 'linear-gradient(135deg, #b9770e, #e8a020)', color: '#fff', fontSize: 14, fontWeight: 800, cursor: 'pointer' }}
+                onClick={() => onAngebotErstellen({
+                  objektId: anfrage.objektId,
+                  anfrageId: anfrage.id,
+                  kundeFirma: anfrage.kundeFirma,
+                  ansprechpartner: anfrage.ansprechpartner,
+                  email: anfrage.email,
+                  telefon: anfrage.telefon,
+                  betreff: anfrage.veranstaltung,
+                })}
+              >
+                📄 Angebot erstellen
+              </button>
+            )}
 
         {/* Kontakt & Eckdaten */}
         <div className={s.sectionLabel}>Kontakt</div>

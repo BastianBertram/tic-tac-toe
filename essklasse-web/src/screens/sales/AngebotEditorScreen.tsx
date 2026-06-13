@@ -3,6 +3,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { EINHEITEN } from '../../types';
 import type { AngebotPosition } from '../../types';
 import { useAngeboteStore, posGesamt } from '../../store/angeboteStore';
+import { useSalesStore } from '../../store/salesStore';
+import { useAuthStore } from '../../store/authStore';
 import { useSettingsStore } from '../../store/settingsStore';
 import { useSichtbareObjekte, useObjektStore } from '../../store/objektStore';
 import { naechsteNummer } from '../../services/dataService';
@@ -34,6 +36,9 @@ type PosEntwurf = Omit<AngebotPosition, 'gesamt'>;
 export function AngebotEditorScreen({ angebotId, vorlage, onClose, onSaved }: Props) {
   const addAngebot    = useAngeboteStore(st => st.addAngebot);
   const updateAngebot = useAngeboteStore(st => st.updateAngebot);
+  const setAnfrageStatus = useSalesStore(st => st.setStatus);
+  const addAnfrageAkt    = useSalesStore(st => st.addAktivitaet);
+  const userName         = useAuthStore(st => st.user?.name);
   const bestehend     = useAngeboteStore(st => angebotId ? st.angebote.find(a => a.id === angebotId) : undefined);
   const limit         = useSettingsStore(st => st.rabattLimitProzent);
   const katalog       = useAktiveProdukte();
@@ -114,6 +119,15 @@ export function AngebotEditorScreen({ angebotId, vorlage, onClose, onSaved }: Pr
       const year = (gueltigBis || new Date().toISOString().slice(0, 10)).slice(2, 4);
       const serverNummer = await naechsteNummer('angebot', year);
       const id = addAngebot(felder, serverNummer ?? undefined);
+      // Aus einem Lead erstellt → Lead auf Pipeline-Stufe „Angebot" rücken (falls noch offen).
+      if (felder.anfrageId) {
+        const lead = useSalesStore.getState().anfragen.find(x => x.id === felder.anfrageId);
+        if (lead && !['angebot', 'verhandlung', 'gewonnen', 'verloren'].includes(lead.status)) {
+          setAnfrageStatus(felder.anfrageId, 'angebot', userName);
+        }
+        const nummer = useAngeboteStore.getState().angebote.find(x => x.id === id)?.nummer;
+        if (lead) addAnfrageAkt(felder.anfrageId, 'angebot', `Angebot ${nummer ?? ''} erstellt`.trim(), userName);
+      }
       onSaved(id);
     }
   }
