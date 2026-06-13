@@ -425,9 +425,33 @@ const server = createServer(async (req, res) => {
   }
 });
 
+// ── Produktions-Konfigurationsprüfung (fail-fast) ────────────────────────────
+// In Produktion MÜSSEN die sicherheitskritischen Variablen gesetzt sein. Lieber
+// gar nicht starten als unsicher/fehlerhaft laufen.
+if (IS_PROD) {
+  const fehler = [];
+  if (!process.env.EK_AUTH_SECRET || process.env.EK_AUTH_SECRET.length < 32) {
+    fehler.push('EK_AUTH_SECRET fehlt oder ist < 32 Zeichen (signiert die Sitzungstoken).');
+  }
+  if (!ALLOWED_ORIGIN) {
+    fehler.push('ALLOWED_ORIGIN fehlt (CORS-Origin des Frontends, z.B. https://app.example.de).');
+  }
+  if (!API_KEY) {
+    // AI-Funktionen wären deaktiviert (503) — Warnung, kein harter Abbruch.
+    console.warn('[config] WARN: ANTHROPIC_API_KEY nicht gesetzt — AI-Funktionen sind deaktiviert.');
+  }
+  if (fehler.length) {
+    console.error('[config] FATAL: Produktionsstart abgebrochen — fehlende/ungültige Konfiguration:');
+    for (const f of fehler) console.error('  • ' + f);
+    console.error('  Siehe .env.example. Start z.B.: NODE_ENV=production EK_AUTH_SECRET=… ALLOWED_ORIGIN=… npm start');
+    process.exit(1);
+  }
+}
+
 ensureSeeded(); // Stammdaten anlegen, damit kein öffentlicher Bootstrap nötig ist
 server.listen(PORT, () => {
   console.log(`EssKlasse AI proxy listening on http://localhost:${PORT}`);
-  console.log(`  allowed origin: ${ALLOWED_ORIGIN}`);
+  console.log(`  mode:           ${IS_PROD ? 'production' : 'development'}`);
+  console.log(`  allowed origin: ${ALLOWED_ORIGIN || '(none)'}`);
   console.log(`  AI configured:  ${Boolean(API_KEY)}`);
 });
