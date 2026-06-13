@@ -40,7 +40,12 @@ const aiHits = new Map();              // key → { count, resetAt }
 function aiRateLimited(key) {
   const now = Date.now();
   const e = aiHits.get(key);
-  if (!e || e.resetAt < now) { aiHits.set(key, { count: 1, resetAt: now + AI_RL_WINDOW_MS }); return false; }
+  if (!e || e.resetAt < now) {
+    // Abgelaufene Einträge aufräumen, damit die Map nicht unbegrenzt wächst.
+    if (aiHits.size > 200) for (const [k, v] of aiHits) if (v.resetAt < now) aiHits.delete(k);
+    aiHits.set(key, { count: 1, resetAt: now + AI_RL_WINDOW_MS });
+    return false;
+  }
   e.count += 1;
   return e.count > AI_RL_MAX;
 }
@@ -130,13 +135,23 @@ JSON-Schema:
 }`;
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
+const AI_IMAGE_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/gif']);
 function contentBlockFromDataUrl(dataUrl) {
   const isPdf = String(dataUrl).startsWith('data:application/pdf');
   const base64 = String(dataUrl).split(',')[1] ?? '';
-  const mediaType = String(dataUrl).split(';')[0].split(':')[1] ?? 'image/jpeg';
-  return isPdf
-    ? { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: base64 } }
-    : { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } };
+  let mediaType = String(dataUrl).split(';')[0].split(':')[1] ?? 'image/jpeg';
+  if (isPdf) return { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: base64 } };
+  // media_type gegen Allowlist prüfen (nicht ungeprüft vom Client an Anthropic durchreichen).
+  if (!AI_IMAGE_TYPES.has(mediaType)) {
+    const e = new Error('Nicht unterstützter Medientyp.'); e.status = 400; throw e;
+  }
+  return { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } };
+}
+
+/** Parst die (Regex-extrahierte) JSON-Antwort des Modells; ungültiges JSON → 422. */
+function parseAiJson(str) {
+  try { return JSON.parse(str); }
+  catch { const e = new Error('Antwort konnte nicht verarbeitet werden.'); e.status = 422; throw e; }
 }
 
 async function callClaude({ model, max_tokens, system, messages }) {
@@ -212,7 +227,7 @@ async function ocrBeleg(body) {
   });
   const match = text.match(/\{[\s\S]*\}/);
   if (!match) return { status: 422, payload: { error: 'Kein JSON in der Antwort gefunden.' } };
-  return { status: 200, payload: { data: JSON.parse(match[0]) } };
+  return { status: 200, payload: { data: parseAiJson(match[0]) } };
 }
 
 async function ocrAbschluss(body) {
@@ -240,7 +255,7 @@ Antworte NUR mit einem JSON-Array:
     messages: [{ role: 'user', content: [contentBlockFromDataUrl(body.dataUrl), { type: 'text', text: prompt }] }],
   });
   const match = text.match(/\[[\s\S]*\]/);
-  return { status: 200, payload: { data: match ? JSON.parse(match[0]) : [] } };
+  return { status: 200, payload: { data: match ? parseAiJson(match[0]) : [] } };
 }
 
 async function duplikat(body) {
@@ -278,7 +293,7 @@ Kriterien (eines davon reicht): gleiches Datum + ähnlicher Veranstaltungsname, 
     messages: [{ role: 'user', content: prompt }],
   });
   const match = text.match(/\[[\s\S]*\]/);
-  const ids = match ? JSON.parse(match[0]) : [];
+  const ids = match ? parseAiJson(match[0]) : [];
   return { status: 200, payload: { ids } };
 }
 

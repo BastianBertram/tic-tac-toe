@@ -191,20 +191,24 @@ export function handleData(method, url, body, ctx = {}) {
     // ausschließlich Kollegen, mit denen sie sich mindestens ein Objekt teilen
     // (plus sich selbst) — keine app-weite Offenlegung aller Stammdaten.
     if (name === 'users') {
-      const scope = userScope(ctx);
-      if (scope.restricted) {
-        const ids = new Set(scope.objektIds);
-        const ich = resolveIdentity(ctx);
+      const ich = resolveIdentity(ctx);
+      // Vollständige Personen-Records NUR für Admin/Geschäftsführung. Die Feld-
+      // Whitelist ist ROLLEN-basiert (nicht restricted-basiert): auch Rollen mit
+      // `__alle__`-Vollzugriff (z.B. Buchhaltung) erhalten keine E-Mail/Telefon/
+      // objektIds/erstelltAm der Kollegen — Datensparsamkeit/DSGVO.
+      if (ich?.rolle !== 'admin' && ich?.rolle !== 'geschaeftsfuehrung') {
+        const scope = userScope(ctx);
         const alle = Array.isArray(env.data?.users) ? env.data.users : [];
-        const sichtbar = alle
-          .filter(u =>
-            (ich && (u.id === ich.id ||
-              String(u.email ?? '').toLowerCase() === String(ich.email ?? '').toLowerCase())) ||
-            (Array.isArray(u.objektIds) && u.objektIds.some(oid => ids.has(oid))))
-          // Datensparsamkeit: eingeschränkte Rollen erhalten nur nicht-sensible
-          // Anzeigefelder — KEINE E-Mail/Telefon/Objektzuordnung/erstelltAm der
-          // Kollegen. Vollständige Records nur für Admin/GF (unrestricted).
-          .map(projektUser);
+        // restricted → nur Kollegen mit gemeinsamem Objekt + sich selbst;
+        // `__alle__`-Vollzugriff → alle Nutzer, aber ebenfalls reduzierte Felder.
+        const ids = new Set(scope.objektIds);
+        const sichtbar = (scope.restricted
+          ? alle.filter(u =>
+              (ich && (u.id === ich.id ||
+                String(u.email ?? '').toLowerCase() === String(ich.email ?? '').toLowerCase())) ||
+              (Array.isArray(u.objektIds) && u.objektIds.some(oid => ids.has(oid))))
+          : alle
+        ).map(projektUser);
         return { status: 200, payload: {
           initialized: env.initialized,
           data: { ...env.data, users: sichtbar },
