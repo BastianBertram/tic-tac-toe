@@ -7,6 +7,7 @@ export interface SettingsData {
   customColor: string | null;
   logoDataUrl: string | null;
   impressum: Impressum;
+  rabattLimitProzent?: number;
 }
 
 /** Lädt die app-weiten Einstellungen vom Server (öffentlich). */

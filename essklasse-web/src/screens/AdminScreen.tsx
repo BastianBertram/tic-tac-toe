@@ -19,6 +19,7 @@ const ROLLE_LABELS: Record<UserRolle, string> = {
   buchhaltung: 'Buchhaltung',
   bereichsleitung: 'Bereichsleitung',
   geschaeftsfuehrung: 'Geschäftsführung',
+  sales: 'Sales',
 };
 
 const ROLLE_COLORS: Record<UserRolle, string> = {
@@ -27,6 +28,7 @@ const ROLLE_COLORS: Record<UserRolle, string> = {
   buchhaltung: '#1a5276',
   bereichsleitung: '#6c3483',
   geschaeftsfuehrung: '#1e6b4a',
+  sales: '#b9770e',
 };
 
 /* ─── Zweistufiges Bestätigungs-Modal ─── */

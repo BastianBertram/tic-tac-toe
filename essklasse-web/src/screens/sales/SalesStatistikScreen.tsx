@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { format, parseISO, subMonths, startOfMonth, isWithinInterval, endOfMonth } from 'date-fns';
 import { de } from 'date-fns/locale';
-import { SALES_PIPELINE, SALES_STATUS_LABEL } from '../../types';
+import { SALES_STATUS_LABEL } from '../../types';
 import type { SalesStatus } from '../../types';
 import { euro, euroFull, statusColor, isOffen, useSichtbareAnfragen } from './salesUtils';
 import s from './SalesStatistikScreen.module.css';

@@ -144,6 +144,129 @@ export interface SalesAnfrage {
   deleted?: boolean;
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Angebote (Quotes) — aus qualifizierten Leads erstellt, versioniert, versendet
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Status-Pipeline eines Angebots */
+export type AngebotStatus =
+  | 'entwurf'      // in Bearbeitung
+  | 'genehmigung'  // Rabatt über Limit → wartet auf Freigabe (admin/GF)
+  | 'versendet'    // an Kunden geschickt
+  | 'angenommen'   // Kunde hat angenommen (E-Signatur)
+  | 'abgelehnt'    // Kunde/Intern abgelehnt
+  | 'abgelaufen';  // Gültigkeit überschritten
+
+export const ANGEBOT_PIPELINE: AngebotStatus[] = ['entwurf', 'genehmigung', 'versendet', 'angenommen', 'abgelehnt', 'abgelaufen'];
+
+export const ANGEBOT_STATUS_LABEL: Record<AngebotStatus, string> = {
+  entwurf:     'Entwurf',
+  genehmigung: 'Genehmigung',
+  versendet:   'Versendet',
+  angenommen:  'Angenommen',
+  abgelehnt:   'Abgelehnt',
+  abgelaufen:  'Abgelaufen',
+};
+
+/** Eine Angebotsposition (aus dem Produktkatalog oder Freitext) */
+export interface AngebotPosition {
+  id: string;
+  produktId?: string;        // Referenz auf Katalogprodukt; fehlt bei Freitext
+  bezeichnung: string;
+  einheit: string;           // wie EINHEITEN
+  menge: number;
+  einzelpreis: number;       // netto €
+  rabattProzent?: number;    // Positionsrabatt
+  gesamt: number;            // berechnet: menge * einzelpreis * (1 - rabattProzent/100)
+  /** Soft-Delete je Position → bleibt in alten Versions-Snapshots sichtbar. */
+  geloescht?: boolean;
+}
+
+/** Immutabler Snapshot der versionierten Angebotsfelder */
+export interface AngebotVersionSnapshot {
+  positionen: AngebotPosition[];
+  betreff: string;
+  einleitung: string;
+  zahlungsbedingungen: string;
+  lieferbedingungen: string;
+  gesamtsumme: number;
+  rabattGesamtProzent?: number;
+}
+
+/** Ein Versionseintrag im Verlauf eines Angebots */
+export interface AngebotVersion {
+  version: string;           // "1.0", "1.1", "2.0"
+  erstelltAm: string;
+  erstelltVon?: string;
+  aenderung?: string;        // Änderungszusammenfassung
+  snapshot: AngebotVersionSnapshot;
+}
+
+/** Kunden-Signatur (leichtgewichtige E-Signatur über das Portal) */
+export interface AngebotSignatur {
+  name: string;
+  angenommenAm: string;      // ISO
+}
+
+/** Ein Angebot */
+export interface Angebot {
+  id: string;
+  nummer: string;            // z.B. "AN260001" (server-atomar vergeben)
+  objektId: string;          // Mandant/Objekt — bestimmt Sichtbarkeit (wie SalesAnfrage)
+  anfrageId?: string;        // optionaler Link zum zugrundeliegenden Lead
+  status: AngebotStatus;
+
+  // Kunde / Kontakt
+  kundeFirma: string;
+  ansprechpartner: string;
+  email: string;
+  telefon: string;
+
+  // Inhalt (aktueller Stand; Versionen halten Snapshots)
+  betreff: string;
+  einleitung: string;
+  zahlungsbedingungen: string;
+  lieferbedingungen: string;
+  positionen: AngebotPosition[];
+  rabattGesamtProzent?: number;
+  gueltigBis?: string;       // yyyy-MM-dd
+  gesamtsumme: number;
+
+  // Genehmigung (Rabatt über Limit)
+  genehmigungErforderlich: boolean;
+  genehmigtVon?: string;
+  genehmigtAm?: string;
+
+  // Versand / Portal / E-Signatur
+  versendetAm?: string;
+  versendetVon?: string;
+  /** Unguessbarer Lese-Token fürs Kundenportal (serverseitig nur als Hash gespeichert). */
+  portalToken?: string;
+  signatur?: AngebotSignatur;
+
+  // Versionen + Meta
+  versionen: AngebotVersion[];
+  erstelltAm: string;
+  aktualisiertAm: string;
+  /** Soft-Delete: bleibt als Tombstone erhalten, wird aus Anzeigen gefiltert. */
+  deleted?: boolean;
+}
+
+/** Ein Katalogprodukt / eine Leistung (admin-gepflegt, für alle lesbar) */
+export interface Produkt {
+  id: string;
+  kategorie: string;
+  bezeichnung: string;
+  einheit: string;           // wie EINHEITEN
+  basispreis: number;        // netto €
+  beschreibung?: string;
+  aktiv: boolean;
+  erstelltAm: string;
+  aktualisiertAm: string;
+  /** Soft-Delete: bleibt als Tombstone erhalten, wird aus Anzeigen gefiltert. */
+  deleted?: boolean;
+}
+
 export type Anrede = 'Herr' | 'Frau';
 
 /** Ein App-User (für Admin-Verwaltung) */

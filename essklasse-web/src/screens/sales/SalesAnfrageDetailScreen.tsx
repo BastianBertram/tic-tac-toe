@@ -4,7 +4,7 @@ import { de } from 'date-fns/locale';
 import { useSalesStore } from '../../store/salesStore';
 import { useAuthStore } from '../../store/authStore';
 import { SALES_PIPELINE, SALES_STATUS_LABEL, SALES_QUELLEN } from '../../types';
-import type { SalesAktivitaetTyp } from '../../types';
+import type { SalesAktivitaetTyp, SalesStatus } from '../../types';
 import { euroFull, statusColor, segmentLabel } from './salesUtils';
 import s from './SalesAnfrageDetailScreen.module.css';
 
@@ -41,7 +41,7 @@ export function SalesAnfrageDetailScreen({ anfrageId, onClose }: Props) {
     : null;
   const istOffen = anfrage.status !== 'gewonnen' && anfrage.status !== 'verloren';
 
-  function advance(to: typeof anfrage.status) {
+  function advance(to: SalesStatus) {
     setStatus(anfrage!.id, to, userName);
   }
   function gewinnen() { setStatus(anfrage!.id, 'gewonnen', userName); }

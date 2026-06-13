@@ -23,6 +23,7 @@ const DEFAULT_SETTINGS = {
   themeId: 'tomatenrot',
   customColor: null,
   logoDataUrl: null,
+  rabattLimitProzent: 15,
   impressum: {
     strasse: '',
     hausnummer: '',
@@ -96,6 +97,9 @@ function sanitize(body, base = DEFAULT_SETTINGS) {
     customColor: 'customColor' in src ? (typeof src.customColor === 'string' ? src.customColor : null) : base.customColor,
     logoDataUrl: 'logoDataUrl' in src ? sanitizeLogo(src.logoDataUrl) : base.logoDataUrl,
     impressum: 'impressum' in src ? sanitizeImpressum(src.impressum) : base.impressum,
+    rabattLimitProzent: 'rabattLimitProzent' in src
+      ? Math.max(0, Math.min(100, Number(src.rabattLimitProzent) || 0))
+      : (base.rabattLimitProzent ?? DEFAULT_SETTINGS.rabattLimitProzent),
   };
 }
 

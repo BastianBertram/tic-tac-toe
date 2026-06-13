@@ -17,6 +17,9 @@ export interface Impressum {
   umsatzsteuerId: string;
 }
 
+/** Standard-Rabattlimit (%) für die sales-Rolle ohne Freigabe. */
+export const DEFAULT_RABATT_LIMIT = 15;
+
 export const EMPTY_IMPRESSUM: Impressum = {
   strasse: '',
   hausnummer: '',
@@ -37,6 +40,8 @@ interface SettingsStore {
   logoDataUrl: string | null;
   /** Impressums-Angaben */
   impressum: Impressum;
+  /** Maximaler Rabatt (%), den die sales-Rolle ohne Freigabe vergeben darf. */
+  rabattLimitProzent: number;
 
   /** Preset-Theme wählen */
   setTheme: (id: string) => void;
@@ -45,6 +50,8 @@ interface SettingsStore {
   setLogo: (dataUrl: string | null) => void;
   /** Impressum (teilweise) aktualisieren */
   setImpressum: (partial: Partial<Impressum>) => void;
+  /** Rabatt-Limit (%) für die sales-Rolle setzen */
+  setRabattLimit: (prozent: number) => void;
   /** Einstellungen vom Server laden (Server ist Quelle der Wahrheit) */
   hydrateFromServer: () => Promise<void>;
 }
@@ -54,8 +61,8 @@ let pushTimer: ReturnType<typeof setTimeout> | null = null;
 function schedulePush(get: () => SettingsStore) {
   if (pushTimer) clearTimeout(pushTimer);
   pushTimer = setTimeout(() => {
-    const { themeId, customColor, logoDataUrl, impressum } = get();
-    void saveSettings({ themeId, customColor, logoDataUrl, impressum });
+    const { themeId, customColor, logoDataUrl, impressum, rabattLimitProzent } = get();
+    void saveSettings({ themeId, customColor, logoDataUrl, impressum, rabattLimitProzent });
   }, 400);
 }
 
@@ -66,11 +73,13 @@ export const useSettingsStore = create<SettingsStore>()(
       customColor: null,
       logoDataUrl: null,
       impressum: EMPTY_IMPRESSUM,
+      rabattLimitProzent: DEFAULT_RABATT_LIMIT,
 
       setTheme: (id) => { applyTheme(id, get().customColor); set({ themeId: id }); schedulePush(get); },
       setCustomColor: (hex) => { applyTheme(CUSTOM_THEME_ID, hex); set({ themeId: CUSTOM_THEME_ID, customColor: hex }); schedulePush(get); },
       setLogo: (logoDataUrl) => { set({ logoDataUrl }); schedulePush(get); },
       setImpressum: (partial) => { set(s => ({ impressum: { ...s.impressum, ...partial } })); schedulePush(get); },
+      setRabattLimit: (prozent) => { set({ rabattLimitProzent: Math.max(0, Math.min(100, prozent)) }); schedulePush(get); },
 
       hydrateFromServer: async () => {
         const data = await fetchSettings();
@@ -80,6 +89,7 @@ export const useSettingsStore = create<SettingsStore>()(
           customColor: data.customColor ?? null,
           logoDataUrl: data.logoDataUrl ?? null,
           impressum: { ...EMPTY_IMPRESSUM, ...data.impressum },
+          rabattLimitProzent: typeof data.rabattLimitProzent === 'number' ? data.rabattLimitProzent : DEFAULT_RABATT_LIMIT,
         });
         applyTheme(data.themeId ?? DEFAULT_THEME_ID, data.customColor);
       },
@@ -87,7 +97,7 @@ export const useSettingsStore = create<SettingsStore>()(
     {
       name: 'essklasse-settings',
       // Lokaler Cache nur fürs sofortige Anwenden beim Start; Server ist führend.
-      partialize: (s) => ({ themeId: s.themeId, customColor: s.customColor, logoDataUrl: s.logoDataUrl, impressum: s.impressum }),
+      partialize: (s) => ({ themeId: s.themeId, customColor: s.customColor, logoDataUrl: s.logoDataUrl, impressum: s.impressum, rabattLimitProzent: s.rabattLimitProzent }),
       onRehydrateStorage: () => (state) => {
         // Gecachtes Theme sofort anwenden; Server-Abgleich erfolgt beim App-Start.
         if (state?.themeId) applyTheme(state.themeId, state.customColor);
