@@ -23,7 +23,7 @@ export function getDeviceId(): string {
  * Session-Cookie maßgeblich; der E-Mail-Header dient als Dev-Fallback (Rollen-
  * Switcher). X-Device-Id erzwingt „nur ein Gerät gleichzeitig".
  */
-function identityHeaders(): Record<string, string> {
+export function identityHeaders(): Record<string, string> {
   const email = useAuthStore.getState().user?.email;
   return { 'X-Device-Id': getDeviceId(), ...(email ? { 'X-User-Email': email } : {}) };
 }

@@ -15,7 +15,11 @@ import { handleSettings } from './settings.mjs';
 import { handleData, allocateNummer, accountStatus, ensureSeeded } from './data.mjs';
 
 const PORT           = Number(process.env.PORT ?? 3001);
-const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN ?? 'http://localhost:5173';
+// ALLOWED_ORIGIN ist in Produktion Pflicht (kein localhost-Fallback) — sonst
+// würde eine Fehlkonfiguration Cookie-getragene Cross-Origin-Requests von
+// localhost erlauben. In Dev bleibt der bequeme Vite-Default.
+const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN ??
+  (process.env.NODE_ENV === 'production' ? '' : 'http://localhost:5173');
 const API_KEY        = process.env.ANTHROPIC_API_KEY ?? '';
 const MAX_BODY_BYTES = 25 * 1024 * 1024; // 25 MB — data URLs of photos/PDFs
 const IS_PROD        = process.env.NODE_ENV === 'production';
@@ -26,6 +30,20 @@ const IS_PROD        = process.env.NODE_ENV === 'production';
 const DEV_HEADERS    = !IS_PROD && process.env.EK_DEV_HEADERS === '1';
 
 const ANTHROPIC_URL = 'https://api.anthropic.com/v1/messages';
+
+// ── Rate-Limit für die (kostenpflichtigen) AI-Routen ─────────────────────────
+// Einfaches Fenster-Zählwerk pro Identität (E-Mail) bzw. IP. Schützt den
+// Anthropic-Key vor Kosten-Abuse („Denial of Wallet").
+const AI_RL_WINDOW_MS = 60_000;
+const AI_RL_MAX       = 20;            // max. AI-Calls pro Fenster und Identität
+const aiHits = new Map();              // key → { count, resetAt }
+function aiRateLimited(key) {
+  const now = Date.now();
+  const e = aiHits.get(key);
+  if (!e || e.resetAt < now) { aiHits.set(key, { count: 1, resetAt: now + AI_RL_WINDOW_MS }); return false; }
+  e.count += 1;
+  return e.count > AI_RL_MAX;
+}
 
 // ── Single-Device-Sessions ───────────────────────────────────────────────────
 // Pro Nutzer ist nur EIN Gerät gleichzeitig aktiv. Ein neuer Login/Claim auf
@@ -289,7 +307,7 @@ const server = createServer(async (req, res) => {
   const url = (req.url ?? '').split('?')[0];
 
   if (req.method === 'GET' && url === '/health') {
-    return send(res, 200, { ok: true, aiConfigured: Boolean(API_KEY) });
+    return send(res, 200, { ok: true });
   }
 
   // ── Single-Device: dieses Gerät als aktives beanspruchen (Login) ──
@@ -378,6 +396,20 @@ const server = createServer(async (req, res) => {
     return send(res, 404, { error: 'Not found' });
   }
 
+  // Authentifizierung wie bei /api/data: nur eingeloggte Nutzer (Prod: Session,
+  // Dev: gültiger Header) dürfen die kostenpflichtigen AI-Endpunkte auslösen.
+  if (!accountStatus({ user: getSessionUser(req), devEmail: devEmailHeader(req) }).authenticated) {
+    return send(res, 401, { error: 'Anmeldung erforderlich.' });
+  }
+  if (!isCurrentDevice(req)) {
+    return send(res, 401, { error: 'SESSION_SUPERSEDED' });
+  }
+  // Kosten-Schutz: Rate-Limit pro Identität (sonst IP).
+  const rlKey = emailOf(req) ?? (req.socket?.remoteAddress ?? 'unknown');
+  if (aiRateLimited(rlKey)) {
+    return send(res, 429, { error: 'Zu viele Anfragen. Bitte kurz warten.' });
+  }
+
   if (!API_KEY) {
     return send(res, 503, { error: 'AI_NOT_CONFIGURED' });
   }
@@ -387,8 +419,9 @@ const server = createServer(async (req, res) => {
     const { status, payload } = await handler(body);
     return send(res, status, payload);
   } catch (e) {
-    const status = e?.status ?? 502;
-    return send(res, status, { error: e?.message ?? 'Upstream error' });
+    // Upstream-Detail nur serverseitig (Dev) loggen — generische Meldung an den Client.
+    if (!IS_PROD) console.error('[ai] Upstream-Fehler:', e?.message);
+    return send(res, e?.status ?? 502, { error: 'Verarbeitung fehlgeschlagen.' });
   }
 });
 

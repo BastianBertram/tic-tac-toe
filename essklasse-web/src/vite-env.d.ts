@@ -2,7 +2,8 @@
 
 interface ImportMetaEnv {
   readonly VITE_API_URL?: string;
-  readonly VITE_ANTHROPIC_API_KEY?: string;
+  // Kein VITE_ANTHROPIC_API_KEY: der Anthropic-Key darf NIE über VITE_* in den
+  // Client gelangen — er bleibt serverseitig (server/index.mjs Proxy).
 }
 
 interface ImportMeta {

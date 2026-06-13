@@ -76,12 +76,20 @@ function sanitizeImpressum(imp) {
   };
 }
 
+// Nur echte Bild-DataURLs zulassen (kein javascript:/beliebige URLs) und Größe
+// begrenzen. base64-Bild ~ 4/3 der Rohgröße → 3 MB Limit ist großzügig.
+const LOGO_RE = /^data:image\/(png|jpe?g|webp|gif|svg\+xml);base64,[A-Za-z0-9+/=]+$/;
+const LOGO_MAX = 3 * 1024 * 1024;
+function sanitizeLogo(v) {
+  return typeof v === 'string' && v.length <= LOGO_MAX && LOGO_RE.test(v) ? v : null;
+}
+
 function sanitize(body) {
   const src = body && typeof body === 'object' ? body : {};
   return {
     themeId: typeof src.themeId === 'string' ? src.themeId : DEFAULT_SETTINGS.themeId,
     customColor: typeof src.customColor === 'string' ? src.customColor : null,
-    logoDataUrl: typeof src.logoDataUrl === 'string' ? src.logoDataUrl : null,
+    logoDataUrl: sanitizeLogo(src.logoDataUrl),
     impressum: sanitizeImpressum(src.impressum),
   };
 }

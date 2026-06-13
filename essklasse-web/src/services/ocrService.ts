@@ -6,6 +6,8 @@
  * niemals an den Browser ausgeliefert. Der Browser sendet nur die Bilddaten.
  */
 
+import { identityHeaders } from './dataService';
+
 const BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:3001';
 
 export interface ExtractedPosition {
@@ -55,7 +57,8 @@ async function postJson<T>(path: string, body: unknown): Promise<T> {
   try {
     res = await fetch(`${BASE}${path}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json', ...identityHeaders() },
       body: JSON.stringify(body),
     });
   } catch {

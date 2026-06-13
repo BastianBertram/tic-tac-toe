@@ -1,4 +1,5 @@
 import type { Bewirtungsbeleg } from '../types';
+import { identityHeaders } from './dataService';
 
 const BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:3001';
 
@@ -28,7 +29,8 @@ export async function checkDuplikate(
   try {
     const res = await fetch(`${BASE}/api/ai/duplikat`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json', ...identityHeaders() },
       body: JSON.stringify({ beleg, candidates }),
     });
     if (!res.ok) return [];
