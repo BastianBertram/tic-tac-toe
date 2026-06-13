@@ -81,7 +81,9 @@ export function ensureSeeded() {
  * Identität kommt aus der Session (Cookie) oder – als Dev-Fallback – aus dem
  * Header `X-User-Email`.
  * @returns { restricted: boolean, objektIds: string[] }
- *   restricted=true nur für die Rollen `user`/`bereichsleitung`.
+ *   Unrestricted (Vollzugriff) nur für `admin`/`geschaeftsfuehrung` ODER wenn der
+ *   Admin den Marker `__alle__` zugewiesen hat (z.B. Buchhaltung „Alle Objekte").
+ *   Alle übrigen Rollen sind restricted; leere `objektIds` = keine Objekte.
  */
 /** Ermittelt den persistierten Benutzer-Datensatz (users.json) des Anfragenden. */
 function resolveIdentity(ctx) {
@@ -215,6 +217,15 @@ export function handleData(method, url, body, ctx = {}) {
       const users = Array.isArray(body.users)
         ? body.users.map(u => inaktiv.has(u.id) ? inaktiv.get(u.id) : u)
         : body.users;
+      // Aussperr-Schutz: es muss immer mindestens ein aktiver Admin übrig bleiben,
+      // sonst könnten die Stammdaten danach von niemandem mehr verwaltet werden.
+      const aktiveAdminsVorher = vorher.filter(u => u.rolle === 'admin' && u.aktiv !== false).length;
+      const aktiveAdminsNachher = Array.isArray(users)
+        ? users.filter(u => u.rolle === 'admin' && u.aktiv !== false).length
+        : 0;
+      if (aktiveAdminsVorher > 0 && aktiveAdminsNachher === 0) {
+        return { status: 400, payload: { error: 'Mindestens ein aktiver Administrator muss erhalten bleiben.' } };
+      }
       const merged = { ...body, users };
       persist(name, merged);
       return { status: 200, payload: { initialized: true, data: merged } };
@@ -248,7 +259,12 @@ export function handleData(method, url, body, ctx = {}) {
         const ids = new Set(scope.objektIds);
         const fremde    = bestehend.filter(b => !ids.has(b.objektId));   // andere Objekte: unangetastet
         const eigenAlt  = bestehend.filter(b => ids.has(b.objektId));
-        const eingehend = Array.isArray(body.belege) ? body.belege.filter(b => ids.has(b.objektId)) : [];
+        // IDs, die bereits einem Fremdobjekt gehören, dürfen NICHT vom
+        // eingeschränkten Nutzer (um)geschrieben werden – sonst entstünde ein
+        // ID-Duplikat, das eine spätere id-erhaltende Operation kollidieren ließe.
+        const fremdeIds = new Set(fremde.map(b => b.id));
+        const eingehend = (Array.isArray(body.belege) ? body.belege : [])
+          .filter(b => ids.has(b.objektId) && !fremdeIds.has(b.id));
         const eigenNeu  = mergeById(eigenAlt, eingehend);               // eigene Objekte: nur ergänzen/aktualisieren
         const merged = { ...cur, ...body, belege: [...fremde, ...eigenNeu], bestellungZaehler: mergedZaehler };
         persist(name, merged);
