@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { format, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { ANGEBOT_STATUS_LABEL } from '../../types';
@@ -5,6 +6,7 @@ import { useAngeboteStore } from '../../store/angeboteStore';
 import { useAuthStore } from '../../store/authStore';
 import { euroFull } from './salesUtils';
 import { angebotStatusColor } from './angebotUtils';
+import { AngebotVersionenTab } from './AngebotVersionenTab';
 import s from './AngeboteScreen.module.css';
 
 interface Props { angebotId: string; onClose: () => void; onEdit?: (id: string) => void; }
@@ -17,6 +19,7 @@ export function AngebotDetailScreen({ angebotId, onClose, onEdit }: Props) {
   const ablehnen    = useAngeboteStore(st => st.ablehnen);
   const userName    = useAuthStore(st => st.user?.name);
   const darfFreigeben = useAuthStore(st => st.isAdmin() || st.isGeschaeftsfuehrung());
+  const [tab, setTab] = useState<'uebersicht' | 'versionen'>('uebersicht');
 
   if (!angebot) {
     return (
@@ -47,6 +50,14 @@ export function AngebotDetailScreen({ angebotId, onClose, onEdit }: Props) {
           <div className={s.summe}>{euroFull(angebot.gesamtsumme)}</div>
         </div>
 
+        <div className={s.detailTabs}>
+          <button type="button" className={`${s.detailTab} ${tab === 'uebersicht' ? s.detailTabActive : ''}`} onClick={() => setTab('uebersicht')}>Übersicht</button>
+          <button type="button" className={`${s.detailTab} ${tab === 'versionen' ? s.detailTabActive : ''}`} onClick={() => setTab('versionen')}>Versionen ({angebot.versionen.length})</button>
+        </div>
+
+        {tab === 'versionen' && <AngebotVersionenTab angebot={angebot} />}
+
+        {tab === 'uebersicht' && <>
         {wartetFreigabe && (
           <div className={s.warnBox}>
             ⚠ Wartet auf Freigabe (Rabatt über Limit). {darfFreigeben ? 'Bitte freigeben oder ablehnen.' : 'Versand erst nach Freigabe durch die Geschäftsführung möglich.'}
@@ -117,6 +128,7 @@ export function AngebotDetailScreen({ angebotId, onClose, onEdit }: Props) {
             <Row label="Am" value={angebot.genehmigtAm ? format(parseISO(angebot.genehmigtAm), 'dd.MM.yyyy HH:mm', { locale: de }) : '—'} />
           </div>
         )}
+        </>}
       </div>
     </div>
   );
