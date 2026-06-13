@@ -4,13 +4,14 @@ import { v4 as uuidv4 } from 'uuid';
 import { useUserStore } from '../store/userStore';
 import { useObjektStore, ALLE_OBJEKTE_MARKER } from '../store/objektStore';
 import { HamburgerDrawer } from '../components/HamburgerDrawer';
+import { AngebotFreigabenScreen } from './sales/AngebotFreigabenScreen';
 import type { UserRolle, Anrede } from '../types';
 import { isValidEmail } from '../utils/email';
 import { useSettingsStore, type Impressum } from '../store/settingsStore';
 import { THEMES, CUSTOM_THEME_ID, isValidHex, normalizeHex, deriveMood } from '../theme';
 import s from './AdminScreen.module.css';
 
-type AdminTab = 'user' | 'objekte' | 'einstellungen';
+type AdminTab = 'user' | 'objekte' | 'einstellungen' | 'freigaben';
 type FilterStatus = 'aktiv' | 'inaktiv' | 'alle';
 
 const ROLLE_LABELS: Record<UserRolle, string> = {
@@ -80,7 +81,7 @@ export function AdminScreen() {
       <div className={s.header}>
         <BrandLogo className={s.logo} />
         <span className={s.headerSection}>
-          {tab === 'user' ? '👤 Benutzer' : tab === 'objekte' ? '🏢 Objekte' : '⚙️ Einstellungen'}
+          {tab === 'user' ? '👤 Benutzer' : tab === 'objekte' ? '🏢 Objekte' : tab === 'freigaben' ? '✓ Freigaben' : '⚙️ Einstellungen'}
         </span>
         <div className={s.headerRight}>
           <span className={s.rolleChip}>Admin</span>
@@ -89,6 +90,7 @@ export function AdminScreen() {
 
       {tab === 'user'          && <UserTab />}
       {tab === 'objekte'       && <ObjekteTab />}
+      {tab === 'freigaben'     && <AngebotFreigabenScreen />}
       {tab === 'einstellungen' && <EinstellungenTab />}
 
       <nav className={s.nav}>
@@ -103,6 +105,10 @@ export function AdminScreen() {
         <button type="button" className={`${s.navTab} ${tab === 'objekte' ? s.navTabActive : ''}`} onClick={() => setTab('objekte')}>
           <span className={s.navTabIcon}>🏢</span>
           <span className={s.navTabLabel}>Objekte</span>
+        </button>
+        <button type="button" className={`${s.navTab} ${tab === 'freigaben' ? s.navTabActive : ''}`} onClick={() => setTab('freigaben')}>
+          <span className={s.navTabIcon}>✓</span>
+          <span className={s.navTabLabel}>Freigaben</span>
         </button>
         <button type="button" className={`${s.navTab} ${tab === 'einstellungen' ? s.navTabActive : ''}`} onClick={() => setTab('einstellungen')}>
           <span className={s.navTabIcon}>⚙️</span>

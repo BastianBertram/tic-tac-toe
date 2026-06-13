@@ -28,6 +28,7 @@ import { DuplikatCheckModal } from './components/DuplikatCheckModal';
 import { seedAll } from './dev/seedData';
 import { seedSales } from './dev/seedSales';
 import { SalesApp } from './screens/sales/SalesApp';
+import { AngebotFreigabenScreen } from './screens/sales/AngebotFreigabenScreen';
 import type { Bewirtungsbeleg } from './types';
 import s from './App.module.css';
 
@@ -295,13 +296,13 @@ export default function App() {
 }
 
 function GFApp() {
-  const [gfTab, setGfTab]               = useState<'gf-home' | 'gf-statistik'>('gf-home');
+  const [gfTab, setGfTab]               = useState<'gf-home' | 'gf-statistik' | 'gf-freigaben'>('gf-home');
   const [kategorie, setKategorie]       = useState<GFKategorie | null>(null);
   const [detailBeleg, setDetailBeleg]   = useState<Bewirtungsbeleg | null>(null);
   const [statDetail, setStatDetail]     = useState<StatKategorie | null>(null);
 
   function handleTab(t: Tab) {
-    if (t === 'gf-home' || t === 'gf-statistik') {
+    if (t === 'gf-home' || t === 'gf-statistik' || t === 'gf-freigaben') {
       setGfTab(t);
       setKategorie(null);
       setDetailBeleg(null);
@@ -328,11 +329,13 @@ function GFApp() {
   return (
     <div className={s.app}>
       <div className={s.content}>
-        {gfTab === 'gf-statistik'
-          ? <GFStatistikScreen onKachelClick={setStatDetail} />
-          : kategorie
-            ? <GFBewirtungsListScreen kategorie={kategorie} onClose={() => setKategorie(null)} onOpenBeleg={setDetailBeleg} />
-            : <GFHomeScreen onKachelClick={setKategorie} />
+        {gfTab === 'gf-freigaben'
+          ? <AngebotFreigabenScreen />
+          : gfTab === 'gf-statistik'
+            ? <GFStatistikScreen onKachelClick={setStatDetail} />
+            : kategorie
+              ? <GFBewirtungsListScreen kategorie={kategorie} onClose={() => setKategorie(null)} onOpenBeleg={setDetailBeleg} />
+              : <GFHomeScreen onKachelClick={setKategorie} />
         }
       </div>
       <BottomNav

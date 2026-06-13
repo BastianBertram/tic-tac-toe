@@ -1,12 +1,13 @@
 import React, { useMemo, useState } from 'react';
 import { useBelegStore } from '../store/belegStore';
+import { useAngeboteStore } from '../store/angeboteStore';
 import { useObjektFilter } from '../store/objektStore';
 import { useAuthStore } from '../store/authStore';
 import { format } from 'date-fns';
 import s from './BottomNav.module.css';
 import { HamburgerDrawer } from './HamburgerDrawer';
 
-export type Tab = 'bewirtungen' | 'abschluss' | 'admin' | 'gf-home' | 'gf-statistik';
+export type Tab = 'bewirtungen' | 'abschluss' | 'admin' | 'gf-home' | 'gf-statistik' | 'gf-freigaben';
 interface Props { active: Tab; onTab: (t: Tab) => void; onNew: () => void; onAbgeschlossene: () => void; }
 
 export function BottomNav({ active, onTab, onNew, onAbgeschlossene }: Props) {
@@ -28,6 +29,11 @@ export function BottomNav({ active, onTab, onNew, onAbgeschlossene }: Props) {
   }, [belege, matchObjekt]);
 
   const isGf = rolle === 'geschaeftsfuehrung';
+  const angebote = useAngeboteStore(st => st.angebote);
+  const freigaben = useMemo(
+    () => angebote.filter(a => !a.deleted && a.genehmigungErforderlich && !a.genehmigtVon).length,
+    [angebote]
+  );
 
   return (
     <>
@@ -63,7 +69,9 @@ export function BottomNav({ active, onTab, onNew, onAbgeschlossene }: Props) {
         {isGf && (
           <TabBtn icon="📊" label="Statistik" active={active === 'gf-statistik'} onClick={() => onTab('gf-statistik')} />
         )}
-        {rolle === 'admin' ? (
+        {isGf ? (
+          <TabBtn icon="📄" label={<>Angebote<br />Freigeben</>} active={active === 'gf-freigaben'} onClick={() => onTab('gf-freigaben')} badge={freigaben} urgent={freigaben > 0} />
+        ) : rolle === 'admin' ? (
           <TabBtn icon="⚙️" label={<>Admin<br />Verwaltung</>} active={active === 'admin'} onClick={() => onTab('admin')} hidden={isGf} compact={!isGf} />
         ) : (
           <TabBtn icon="✓" label={<>Bewirtung<br />Abschließen</>} active={active === 'abschluss'} onClick={() => onTab('abschluss')} badge={offene} urgent={offene > 0} hidden={isGf} compact={!isGf} />

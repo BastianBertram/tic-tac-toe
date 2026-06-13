@@ -7,7 +7,7 @@ import { euroFull } from './salesUtils';
 import { angebotStatusColor } from './angebotUtils';
 import s from './AngeboteScreen.module.css';
 
-interface Props { angebotId: string; onClose: () => void; onEdit: (id: string) => void; }
+interface Props { angebotId: string; onClose: () => void; onEdit?: (id: string) => void; }
 
 export function AngebotDetailScreen({ angebotId, onClose, onEdit }: Props) {
   const angebot     = useAngeboteStore(st => st.angebote.find(a => a.id === angebotId));
@@ -55,7 +55,7 @@ export function AngebotDetailScreen({ angebotId, onClose, onEdit }: Props) {
 
         {/* Aktionen */}
         <div className={s.actions}>
-          <button type="button" className={s.btnSecondary} onClick={() => onEdit(angebot.id)}>✎ Bearbeiten</button>
+          {onEdit && <button type="button" className={s.btnSecondary} onClick={() => onEdit(angebot.id)}>✎ Bearbeiten</button>}
           <button type="button" className={s.btnSecondary} onClick={() => neueVersion(angebot.id, undefined, userName)}>
             + Version ({angebot.versionen.length})
           </button>
