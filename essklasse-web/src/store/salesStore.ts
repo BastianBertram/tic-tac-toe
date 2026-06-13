@@ -9,7 +9,7 @@ interface SalesStore {
   /** Laufender Zähler für Lead-Nummern, pro Kalenderjahr */
   leadZaehler: Record<string, number>;
 
-  addAnfrage: (a: Omit<SalesAnfrage, 'id' | 'nummer' | 'erstelltAm' | 'aktualisiertAm' | 'aktivitaeten' | 'status'> & { status?: SalesStatus }) => string;
+  addAnfrage: (a: Omit<SalesAnfrage, 'id' | 'nummer' | 'erstelltAm' | 'aktualisiertAm' | 'aktivitaeten' | 'status'> & { status?: SalesStatus }, vorgabeNummer?: string) => string;
   updateAnfrage: (id: string, partial: Partial<SalesAnfrage>) => void;
   deleteAnfrage: (id: string) => void;
   setStatus: (id: string, status: SalesStatus, von?: string, verlustgrund?: string) => void;
@@ -22,14 +22,16 @@ export const useSalesStore = create<SalesStore>()(
       anfragen: [],
       leadZaehler: {},
 
-      addAnfrage: (a) => {
+      addAnfrage: (a, vorgabeNummer) => {
         const id = uuidv4();
         const year = (a.datum ?? new Date().toISOString().slice(0, 10)).slice(2, 4);
-        const naechste = (get().leadZaehler[year] ?? 0) + 1;
-        const nummer = `L${year}${String(naechste).padStart(4, '0')}`;
+        // Bevorzugt die serverseitig atomar vergebene Nummer (eindeutig über alle
+        // Geräte); nur bei nicht erreichbarem Server lokale Vergabe (Offline-Notbetrieb).
+        const lokalNaechste = (get().leadZaehler[year] ?? 0) + 1;
+        const nummer = vorgabeNummer ?? `L${year}${String(lokalNaechste).padStart(4, '0')}`;
         const now = new Date().toISOString();
         set(s => ({
-          leadZaehler: { ...s.leadZaehler, [year]: naechste },
+          leadZaehler: vorgabeNummer ? s.leadZaehler : { ...s.leadZaehler, [year]: lokalNaechste },
           anfragen: [{
             ...a,
             id,

@@ -8,7 +8,7 @@ interface BelegStore {
   belege: Bewirtungsbeleg[];
   /** Laufender Zähler für Bestellungsnummern, pro Kalenderjahr */
   bestellungZaehler: Record<string, number>;  // key = "26", "27", …
-  addBeleg: (b: Omit<Bewirtungsbeleg, 'id' | 'erstelltAm' | 'abgeschlossen' | 'bestellungsnummer'>, erstelltVon?: string) => string;
+  addBeleg: (b: Omit<Bewirtungsbeleg, 'id' | 'erstelltAm' | 'abgeschlossen' | 'bestellungsnummer'>, erstelltVon?: string, vorgabeNummer?: string) => string;
   updateBeleg: (id: string, partial: Partial<Bewirtungsbeleg>) => void;
   deleteBeleg: (id: string) => void;
   markDoppelt: (id: string) => void;
@@ -23,14 +23,18 @@ export const useBelegStore = create<BelegStore>()(
       belege: [],
       bestellungZaehler: {},
 
-      addBeleg: (b, erstelltVon) => {
+      addBeleg: (b, erstelltVon, vorgabeNummer) => {
         const id = uuidv4();
         const year = (b.cateringDatumVon ?? new Date().toISOString().slice(0, 10)).slice(2, 4); // "26" aus "2026-06-09"
-        const zaehler = get().bestellungZaehler;
-        const naechste = (zaehler[year] ?? 0) + 1;
-        const bestellungsnummer = `A${year}${String(naechste).padStart(7, '0')}`;
+        // Bevorzugt die serverseitig atomar vergebene Nummer (eindeutig über alle
+        // Geräte). Nur falls der Server nicht erreichbar war (vorgabeNummer leer),
+        // wird lokal vergeben (Offline-Notbetrieb) — dann ist der lokale Zähler maßgeblich.
+        const lokalNaechste = (get().bestellungZaehler[year] ?? 0) + 1;
+        const bestellungsnummer = vorgabeNummer ?? `A${year}${String(lokalNaechste).padStart(7, '0')}`;
         set(s => ({
-          bestellungZaehler: { ...s.bestellungZaehler, [year]: naechste },
+          // Lokalen Zähler nur bei lokaler Vergabe fortschreiben; bei Servernummer
+          // bleibt der Server maßgeblich (wird beim Sync hydriert).
+          bestellungZaehler: vorgabeNummer ? s.bestellungZaehler : { ...s.bestellungZaehler, [year]: lokalNaechste },
           belege: [{
             ...b, id, bestellungsnummer,
             belegVersion: 1,

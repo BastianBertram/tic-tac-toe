@@ -6,6 +6,7 @@ import { useBelegStore } from '../store/belegStore';
 import { useObjektStore, useSichtbareObjekte } from '../store/objektStore';
 import { useAuthStore } from '../store/authStore';
 import { useSettingsStore } from '../store/settingsStore';
+import { naechsteNummer } from '../services/dataService';
 import { PhotoCapture } from '../components/PhotoCapture';
 import { PositionEditor } from '../components/PositionEditor';
 import type { BelegPosition, Bewirtungsbeleg, Kategorie } from '../types';
@@ -217,8 +218,10 @@ export function NewBelegScreen({ onClose, editBeleg }: Props) {
       return;
     }
 
-    // Neuer Beleg: erst anlegen (Auftragsnummer wird vergeben), dann ggf. das
-    // Ersatz-PDF mit der Nummer erzeugen und nachtragen.
+    // Neuer Beleg: serverseitig atomar vergebene Auftragsnummer holen (eindeutig
+    // über alle Geräte); null → lokaler Fallback im Store (Offline-Notbetrieb).
+    const year = (f.cateringDatumVon || new Date().toISOString().slice(0, 10)).slice(2, 4);
+    const serverNummer = await naechsteNummer('bestellung', year);
     const neuId = addBeleg({
       objektId:   gewaehltes?.id   ?? '',
       objektName: gewaehltes?.name ?? '',
@@ -245,7 +248,7 @@ export function NewBelegScreen({ onClose, editBeleg }: Props) {
       rechnungsanschriftAnlass: f.rechnungsanschriftAnlass,
       rechnungsanschriftTeilnehmer: f.rechnungsanschriftTeilnehmer,
       rechnungsanschriftTelefon: f.rechnungsanschriftTelefon,
-    }, currentUser?.name ?? currentUser?.email);
+    }, currentUser?.name ?? currentUser?.email, serverNummer ?? undefined);
 
     // Kein Upload → Ersatz-PDF mit der frisch vergebenen Auftragsnummer erzeugen.
     if (!hatDokument) {

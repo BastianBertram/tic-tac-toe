@@ -56,6 +56,28 @@ export async function claimSession(): Promise<boolean> {
   }
 }
 
+/**
+ * Holt serverseitig eine atomar vergebene, eindeutige Nummer (Bestell-/Lead-Nr.).
+ * Verhindert Doppelnummern bei gleichzeitiger Erstellung auf mehreren Geräten.
+ * Gibt null zurück, wenn der Server nicht erreichbar ist → Aufrufer fällt dann
+ * auf die lokale Vergabe zurück (offline-Notbetrieb).
+ */
+export async function naechsteNummer(typ: 'bestellung' | 'lead', jahr: string): Promise<string | null> {
+  try {
+    const res = await fetch(`${BASE}/api/nummer`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json', ...identityHeaders() },
+      body: JSON.stringify({ typ, jahr }),
+    });
+    if (!res.ok) { await checkAuthError(res); return null; }
+    const j = await res.json();
+    return typeof j?.nummer === 'string' ? j.nummer : null;
+  } catch {
+    return null;
+  }
+}
+
 /** Lädt eine Kollektion vom Server. null bei Netzwerkfehler (Server offline). */
 export async function fetchData<T = unknown>(name: string): Promise<DataEnvelope<T> | null> {
   try {

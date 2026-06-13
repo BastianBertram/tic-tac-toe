@@ -137,6 +137,33 @@ function userScope(ctx) {
   return { restricted: true, objektIds };
 }
 
+/**
+ * Server-seitige, atomare Nummernvergabe (verhindert Doppelnummern bei
+ * gleichzeitiger Erstellung auf mehreren Geräten). Node ist single-threaded:
+ * Lesen→+1→Schreiben innerhalb dieses Handlers (ohne await) ist atomar.
+ * Zähler sind pro Jahr (zweistellig), nicht pro Objekt — eine gemeinsame Sequenz.
+ */
+const NUMMERN = {
+  bestellung: { collection: 'belege', zaehlerKey: 'bestellungZaehler', prefix: 'A', pad: 7 },
+  lead:       { collection: 'sales',  zaehlerKey: 'leadZaehler',       prefix: 'L', pad: 4 },
+};
+
+export function allocateNummer(ctx, typ, jahr) {
+  const cfg = NUMMERN[typ];
+  if (!cfg) return { status: 400, payload: { error: 'Unbekannter Nummerntyp.' } };
+  if (!/^\d{2}$/.test(String(jahr ?? ''))) return { status: 400, payload: { error: 'Ungültiges Jahr (erwartet zweistellig, z.B. "26").' } };
+  const status = accountStatus(ctx);
+  if (status.authenticated && !status.active) return { status: 403, payload: { error: 'ACCOUNT_DEACTIVATED' } };
+
+  const data = load(cfg.collection).data ?? COLLECTIONS[cfg.collection].default;
+  const zaehler = { ...(data[cfg.zaehlerKey] ?? {}) };
+  const naechste = (Number(zaehler[jahr]) || 0) + 1;
+  zaehler[jahr] = naechste;
+  persist(cfg.collection, { ...data, [cfg.zaehlerKey]: zaehler });
+  const nummer = `${cfg.prefix}${jahr}${String(naechste).padStart(cfg.pad, '0')}`;
+  return { status: 200, payload: { nummer, wert: naechste, jahr, typ } };
+}
+
 export function handleData(method, url, body, ctx = {}) {
   const m = url.match(/^\/api\/data\/([a-z]+)$/);
   if (!m) return null;

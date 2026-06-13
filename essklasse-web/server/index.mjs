@@ -12,7 +12,7 @@
 import { createServer } from 'node:http';
 import { handleAuth, getSessionUser, sessionDeviceState, claimSessionDevice } from './auth.mjs';
 import { handleSettings } from './settings.mjs';
-import { handleData, accountStatus, ensureSeeded } from './data.mjs';
+import { handleData, allocateNummer, accountStatus, ensureSeeded } from './data.mjs';
 
 const PORT           = Number(process.env.PORT ?? 3001);
 const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN ?? 'http://localhost:5173';
@@ -313,6 +313,20 @@ const server = createServer(async (req, res) => {
       const body = req.method === 'PUT' ? await readJsonBody(req) : null;
       const user = getSessionUser(req);
       const result = handleSettings(req.method, url, body, { user });
+      return send(res, result.status, result.payload);
+    } catch (e) {
+      return send(res, e?.status ?? 400, { error: e?.message ?? 'Bad request' });
+    }
+  }
+
+  // ── Atomare Nummernvergabe (Bestell-/Lead-Nummern) ──
+  if (req.method === 'POST' && url === '/api/nummer') {
+    const user = getSessionUser(req);
+    if (!DEV_HEADERS && !user) return send(res, 401, { error: 'Anmeldung erforderlich.' });
+    if (!isCurrentDevice(req)) return send(res, 401, { error: 'SESSION_SUPERSEDED' });
+    try {
+      const body = await readJsonBody(req);
+      const result = allocateNummer({ user, devEmail: devEmailHeader(req) }, body?.typ, body?.jahr);
       return send(res, result.status, result.payload);
     } catch (e) {
       return send(res, e?.status ?? 400, { error: e?.message ?? 'Bad request' });

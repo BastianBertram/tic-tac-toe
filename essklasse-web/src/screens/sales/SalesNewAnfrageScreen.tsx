@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useSalesStore } from '../../store/salesStore';
 import { useAuthStore } from '../../store/authStore';
 import { useObjektStore, useSichtbareObjekte } from '../../store/objektStore';
+import { naechsteNummer } from '../../services/dataService';
 import { SALES_SEGMENTE, SALES_QUELLEN } from '../../types';
 import type { SalesSegment, SalesQuelle } from '../../types';
 import s from './SalesNewAnfrageScreen.module.css';
@@ -32,8 +33,10 @@ export function SalesNewAnfrageScreen({ onClose, onCreated }: Props) {
 
   const canSave = kundeFirma.trim() && veranstaltung.trim() && objektId;
 
-  function save() {
+  async function save() {
     if (!canSave) return;
+    const year = (datum || new Date().toISOString().slice(0, 10)).slice(2, 4);
+    const serverNummer = await naechsteNummer('lead', year); // null → lokaler Fallback
     const id = addAnfrage({
       objektId,
       segment,
@@ -51,7 +54,7 @@ export function SalesNewAnfrageScreen({ onClose, onCreated }: Props) {
       verantwortlich: userName ?? 'Vertrieb',
       wiedervorlage: wiedervorlage || undefined,
       notiz: notiz.trim(),
-    });
+    }, serverNummer ?? undefined);
     onCreated(id);
   }
 
