@@ -17,33 +17,31 @@
  *     (and gate protected /api routes on the access token)
  */
 import { randomBytes } from 'node:crypto';
-import { accountStatus } from './data.mjs';
+import { accountStatus, getUsers, getObjekte } from './data.mjs';
 
 const MAGIC_TTL_MS   = 15 * 60 * 1000;            // 15 min, one-time
 const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;  // 30 days
 const COOKIE_NAME    = 'ek_refresh';
 const IS_PROD        = process.env.NODE_ENV === 'production';
+const ALLE_MARKER    = '__alle__';
 
-// ── Demo data (replace with a real user/objekt store) ────────────────────────
-const OBJEKTE = [
-  { id: 'demo-1', name: 'HWK Hannover Hauptgebäude', kuerzel: 'HWK-01', strasse: 'Berliner Allee 17', plz: '30175', ort: 'Hannover', kostenstellen: ['KST-100'], aktiv: true },
-  { id: 'demo-2', name: 'Berufsschulzentrum Nord',   kuerzel: 'BSZ-N',  strasse: 'Podbielskistr. 22', plz: '30163', ort: 'Hannover', kostenstellen: ['KST-200'], aktiv: true },
-];
-
-const USERS = [
-  { id: 'demo-admin',  name: 'Max Mustermann', email: 'max@hwk-hannover.de',          rolle: 'admin',       objektIds: [] },
-  { id: 'demo-user-1', name: 'Anna Schmidt',   email: 'anna@hwk-hannover.de',         rolle: 'user',        objektIds: ['demo-1'] },
-  { id: 'demo-buch-1', name: 'Klaus Weber',    email: 'buchhaltung@hwk-hannover.de',  rolle: 'buchhaltung', objektIds: [] },
-];
-
+// Authentifizierung und Autorisierung nutzen DIESELBE Benutzer-/Objektquelle
+// (users.json/Seed über data.mjs) — keine zweite, hartcodierte Liste mehr, die
+// auseinanderdriften könnte. Alle vom Admin gepflegten Rollen/objektIds wirken
+// damit unmittelbar auf Login und Session.
 function findUser(email) {
   const norm = String(email ?? '').trim().toLowerCase();
-  return USERS.find(u => u.email.toLowerCase() === norm) ?? null;
+  return getUsers().find(u => String(u.email ?? '').toLowerCase() === norm) ?? null;
 }
 
 function objekteForUser(user) {
-  if (!user.objektIds || user.objektIds.length === 0) return OBJEKTE; // admin/buchhaltung: alle
-  return OBJEKTE.filter(o => user.objektIds.includes(o.id));
+  const objekte = getObjekte();
+  const ids = Array.isArray(user.objektIds) ? user.objektIds : [];
+  // Vollzugriff: admin/Geschäftsführung oder der vom Admin gesetzte „__alle__"-Marker.
+  if (user.rolle === 'admin' || user.rolle === 'geschaeftsfuehrung' || ids.includes(ALLE_MARKER)) {
+    return objekte;
+  }
+  return objekte.filter(o => ids.includes(o.id)); // leere Zuordnung = keine Objekte
 }
 
 // ── In-memory stores (swap for a DB in production) ───────────────────────────

@@ -22,6 +22,10 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const DATA_DIR  = join(__dirname, 'data');
 const IS_PROD   = process.env.NODE_ENV === 'production';
 
+/** Vollzugriffs-Marker in `objektIds` (vom Admin gesetzt). Reservierte ID —
+ *  darf NIE eine echte Objekt-ID sein. */
+const ALLE_OBJEKTE_MARKER = '__alle__';
+
 /** write: 'admin' = nur Admin, 'auth' = jeder eingeloggte Nutzer */
 const COLLECTIONS = {
   users:   { write: 'admin', default: { users: [] } },
@@ -101,6 +105,10 @@ function resolveIdentity(ctx) {
   return null;
 }
 
+/** Stammdaten-Zugriff für die Auth-Schicht — EINE Quelle (users.json/Seed). */
+export function getUsers()   { return load('users').data?.users ?? []; }
+export function getObjekte() { return load('objekte').data?.objekte ?? []; }
+
 /** Status des Kontos: authentifiziert? aktiv? (fail-closed: unbekannt = inaktiv) */
 export function accountStatus(ctx) {
   const idn = resolveIdentity(ctx);
@@ -125,7 +133,7 @@ function userScope(ctx) {
     String(u.email ?? '').toLowerCase() === String(identity.email ?? '').toLowerCase());
   const objektIds = rec?.objektIds ?? identity.objektIds ?? [];
   // Marker „__alle__" = vom Admin allen Objekten zugeordnet → Vollzugriff.
-  if (objektIds.includes('__alle__')) return { restricted: false, objektIds: [] };
+  if (objektIds.includes(ALLE_OBJEKTE_MARKER)) return { restricted: false, objektIds: [] };
   return { restricted: true, objektIds };
 }
 
@@ -210,6 +218,13 @@ export function handleData(method, url, body, ctx = {}) {
         return { status: 400, payload: { error: 'Ungültige oder leere Stammdatenliste.' } };
       }
     }
+    // Die ID „__alle__" ist als Vollzugriffs-Marker in objektIds reserviert und
+    // darf NIE als echte Objekt-ID existieren — sonst kollabierte die Trennung
+    // zwischen „ein Objekt" und „alle Objekte" (siehe userScope/objekteForUser).
+    if (name === 'objekte' && Array.isArray(body.objekte) &&
+        body.objekte.some(o => o?.id === ALLE_OBJEKTE_MARKER)) {
+      return { status: 400, payload: { error: `Die Objekt-ID „${ALLE_OBJEKTE_MARKER}" ist reserviert.` } };
+    }
 
     // Deaktivierung ist endgültig: ein einmal deaktivierter Benutzer ist
     // eingefroren — weder reaktivierbar noch anderweitig bearbeitbar (auch
@@ -256,7 +271,6 @@ export function handleData(method, url, body, ctx = {}) {
     if (name === 'belege') {
       const cur = load(name).data ?? COLLECTIONS.belege.default;
       const bestehend = Array.isArray(cur.belege) ? cur.belege : [];
-      const mergedZaehler = mergeZaehler(cur.bestellungZaehler, body.bestellungZaehler);
       const scope = userScope(ctx);
       if (scope.restricted) {
         const ids = new Set(scope.objektIds);
@@ -269,22 +283,31 @@ export function handleData(method, url, body, ctx = {}) {
         const eingehend = (Array.isArray(body.belege) ? body.belege : [])
           .filter(b => ids.has(b.objektId) && !fremdeIds.has(b.id));
         const eigenNeu  = mergeById(eigenAlt, eingehend);               // eigene Objekte: nur ergänzen/aktualisieren
-        const merged = { ...cur, ...body, belege: [...fremde, ...eigenNeu], bestellungZaehler: mergedZaehler };
+        // Zähler nur für die eigenen Objekte übernehmen (kein Hochsetzen fremder).
+        const eingehendZaehler = scopeZaehler(body.bestellungZaehler, ids);
+        const zaehler = mergeZaehler(cur.bestellungZaehler, eingehendZaehler);
+        // Nur whitelistete Top-Level-Felder persistieren — KEIN ...body-Spread,
+        // damit ein eingeschränkter Nutzer keine beliebigen Keys in die geteilte
+        // Kollektion schreiben kann.
+        const merged = { ...cur, belege: [...fremde, ...eigenNeu], bestellungZaehler: zaehler };
         persist(name, merged);
         return { status: 200, payload: { initialized: true, data: { ...merged, belege: eigenNeu } } };
       }
-      // Admin/GF: voller Zugriff, aber ebenfalls id-erhaltend (kein Hard-Delete).
-      const merged = { ...cur, ...body, belege: mergeById(bestehend, Array.isArray(body.belege) ? body.belege : []), bestellungZaehler: mergedZaehler };
+      // Admin/GF: voller Zugriff, aber ebenfalls id-erhaltend (kein Hard-Delete);
+      // ebenfalls nur whitelistete Felder.
+      const zaehler = mergeZaehler(cur.bestellungZaehler, body.bestellungZaehler);
+      const merged = { ...cur, belege: mergeById(bestehend, Array.isArray(body.belege) ? body.belege : []), bestellungZaehler: zaehler };
       persist(name, merged);
       return { status: 200, payload: { initialized: true, data: merged } };
     }
 
-    // Sales-Anfragen werden ebenfalls nie physisch gelöscht (id-erhaltend).
+    // Sales-Anfragen werden ebenfalls nie physisch gelöscht (id-erhaltend);
+    // nur whitelistete Felder (kein ...body-Spread).
     if (name === 'sales') {
       const cur = load(name).data ?? COLLECTIONS.sales.default;
       const bestehend = Array.isArray(cur.anfragen) ? cur.anfragen : [];
       const merged = {
-        ...cur, ...body,
+        ...cur,
         anfragen: mergeById(bestehend, Array.isArray(body.anfragen) ? body.anfragen : []),
         leadZaehler: mergeZaehler(cur.leadZaehler, body.leadZaehler),
       };
@@ -312,6 +335,15 @@ function mergeZaehler(a = {}, b = {}) {
   const out = { ...a };
   for (const [k, v] of Object.entries(b ?? {})) {
     out[k] = Math.max(Number(out[k] ?? 0), Number(v ?? 0));
+  }
+  return out;
+}
+
+/** Behält nur Zähler-Einträge für Objekte im erlaubten Scope (Set von IDs). */
+function scopeZaehler(zaehler = {}, ids) {
+  const out = {};
+  for (const [k, v] of Object.entries(zaehler ?? {})) {
+    if (ids.has(k)) out[k] = v;
   }
   return out;
 }

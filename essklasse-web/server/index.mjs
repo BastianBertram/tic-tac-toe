@@ -19,6 +19,11 @@ const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN ?? 'http://localhost:5173';
 const API_KEY        = process.env.ANTHROPIC_API_KEY ?? '';
 const MAX_BODY_BYTES = 25 * 1024 * 1024; // 25 MB — data URLs of photos/PDFs
 const IS_PROD        = process.env.NODE_ENV === 'production';
+// Client-Header-Identität (X-User-Email, Rollen-Switcher) wird NUR vertraut,
+// wenn sie EXPLIZIT per EK_DEV_HEADERS=1 freigeschaltet ist — und niemals in
+// Produktion. Fail-closed: ein Deployment, das versehentlich NODE_ENV nicht auf
+// „production" setzt, vertraut dem Header trotzdem nicht (das Flag fehlt dort).
+const DEV_HEADERS    = !IS_PROD && process.env.EK_DEV_HEADERS === '1';
 
 const ANTHROPIC_URL = 'https://api.anthropic.com/v1/messages';
 
@@ -31,7 +36,7 @@ const activeDevice = new Map(); // email(lower) → deviceId
 /** Client-Header-Identität NUR im Dev-Modus (Rollen-Switcher). In Produktion
  *  ist ausschließlich die authentifizierte Cookie-Session maßgeblich. */
 function devEmailHeader(req) {
-  return IS_PROD ? null : (req.headers['x-user-email'] ?? null);
+  return DEV_HEADERS ? (req.headers['x-user-email'] ?? null) : null;
 }
 
 function emailOf(req) {
@@ -306,8 +311,10 @@ const server = createServer(async (req, res) => {
   // ── App-Daten (Benutzer, Objekte, Belege, Sales) ──
   if (url.startsWith('/api/data/') && (req.method === 'GET' || req.method === 'PUT')) {
     const user = getSessionUser(req);
-    // In Produktion ist eine authentifizierte Sitzung zwingend (kein Header-Trust).
-    if (IS_PROD && !user) {
+    // Außerhalb des expliziten Dev-Header-Modus ist eine authentifizierte
+    // Sitzung zwingend (fail-closed, gilt auch bei versehentlich fehlendem
+    // NODE_ENV=production).
+    if (!DEV_HEADERS && !user) {
       return send(res, 401, { error: 'Anmeldung erforderlich.' });
     }
     // Verdrängte Sitzung (anderes Gerät) → Zugriff verweigern.

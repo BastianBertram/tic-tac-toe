@@ -90,8 +90,10 @@ async function apiSmoke(port) {
 }
 
 function startBackend(port) {
+  // EK_DEV_HEADERS=1 enables X-User-Email identity (the dev role switcher) so the
+  // smoke test can drive different roles without a real session. Never set in prod.
   const p = spawn('node', ['--env-file-if-exists=.env', 'server/index.mjs'],
-    { cwd: ROOT, env: { ...process.env, PORT: String(port) }, stdio: 'inherit' });
+    { cwd: ROOT, env: { ...process.env, PORT: String(port), EK_DEV_HEADERS: '1' }, stdio: 'inherit' });
   return p;
 }
 function startVite(port) {

@@ -91,30 +91,36 @@ Then **look at the PNG** — a blank/error page means the SPA didn't hydrate
 
 ### Driving the backend directly with curl
 
-The dev backend trusts an `X-User-Email` header for identity (Dev-only — in
-`NODE_ENV=production` it is ignored and a session cookie is required). Handy
-for testing scoping without the UI:
+The backend trusts an `X-User-Email` header for identity **only when started
+with `EK_DEV_HEADERS=1`** (the dev role-switcher path). Without that flag — and
+always in `NODE_ENV=production` — every `/api/data` request needs a real session
+cookie and returns **401** otherwise (fail-closed). Use `npm run dev:api` (which
+sets the flag) for local UI/curl work; plain `npm run server` is the fail-closed
+entry. Handy for testing scoping without the UI:
 
 ```bash
-# start backend alone
-PORT=3010 node --env-file-if-exists=.env server/index.mjs &
+# start backend with the dev header flag
+EK_DEV_HEADERS=1 PORT=3010 node --env-file-if-exists=.env server/index.mjs &
 curl -s -H "X-User-Email: anna@hwk-hannover.de" -H "X-Device-Id: x" \
   http://localhost:3010/api/data/objekte        # → only demo-1, demo-2
 curl -s -H "X-User-Email: max@hwk-hannover.de" -H "X-Device-Id: x" \
   http://localhost:3010/api/data/objekte        # → all objekte
+# without EK_DEV_HEADERS the same call returns 401 (no session)
 ```
 
 ## Run — human path
 
 ```bash
 npm run dev            # Vite on http://localhost:5173 (Ctrl-C to stop)
-npm run server         # backend on http://localhost:3001 (separate terminal)
+npm run dev:api        # backend on :3001 WITH X-User-Email trust (role switcher)
+# (use `npm run server` instead for the fail-closed backend — no header trust)
 ```
 
 Open `http://localhost:5173/` in a browser. In dev a **role switcher**
 (floating chips: User / Admin / Buchhaltung / Bereichsltg. / GF / Sales)
-lets you impersonate roles. Headless, this path shows nothing — use the
-driver.
+lets you impersonate roles — this only works against `npm run dev:api`
+(the role switcher sends `X-User-Email`, which plain `npm run server`
+ignores). Headless, this path shows nothing — use the driver.
 
 ## Test / lint
 
