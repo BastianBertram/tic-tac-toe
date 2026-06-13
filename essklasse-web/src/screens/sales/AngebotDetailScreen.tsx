@@ -4,9 +4,13 @@ import { de } from 'date-fns/locale';
 import { ANGEBOT_STATUS_LABEL } from '../../types';
 import { useAngeboteStore } from '../../store/angeboteStore';
 import { useAuthStore } from '../../store/authStore';
+import { useSettingsStore } from '../../store/settingsStore';
 import { euroFull } from './salesUtils';
 import { angebotStatusColor } from './angebotUtils';
 import { AngebotVersionenTab } from './AngebotVersionenTab';
+import { generateAngebotPdf } from '../../services/angebotPdf';
+import { angebotPdfInput, downloadDataUrl } from './angebotPdfUtils';
+import { PdfViewer } from '../../components/PdfViewer';
 import s from './AngeboteScreen.module.css';
 
 interface Props { angebotId: string; onClose: () => void; onEdit?: (id: string) => void; }
@@ -19,7 +23,16 @@ export function AngebotDetailScreen({ angebotId, onClose, onEdit }: Props) {
   const ablehnen    = useAngeboteStore(st => st.ablehnen);
   const userName    = useAuthStore(st => st.user?.name);
   const darfFreigeben = useAuthStore(st => st.isAdmin() || st.isGeschaeftsfuehrung());
+  const logoDataUrl = useSettingsStore(st => st.logoDataUrl);
+  const impressum   = useSettingsStore(st => st.impressum);
   const [tab, setTab] = useState<'uebersicht' | 'versionen'>('uebersicht');
+  const [pdf, setPdf] = useState<{ url: string; name: string } | null>(null);
+
+  async function pdfErstellen() {
+    if (!angebot) return;
+    const url = await generateAngebotPdf(angebotPdfInput(angebot, logoDataUrl, impressum));
+    setPdf({ url, name: `Angebot_${angebot.nummer}.pdf` });
+  }
 
   if (!angebot) {
     return (
@@ -70,6 +83,7 @@ export function AngebotDetailScreen({ angebotId, onClose, onEdit }: Props) {
           <button type="button" className={s.btnSecondary} onClick={() => neueVersion(angebot.id, undefined, userName)}>
             + Version ({angebot.versionen.length})
           </button>
+          <button type="button" className={s.btnSecondary} onClick={pdfErstellen}>📄 PDF</button>
           {angebot.status !== 'versendet' && angebot.status !== 'angenommen' && (
             <button type="button" className={s.btnPrimary} disabled={wartetFreigabe} onClick={() => setStatus(angebot.id, 'versendet')}>
               ✉ Als versendet markieren
@@ -130,6 +144,15 @@ export function AngebotDetailScreen({ angebotId, onClose, onEdit }: Props) {
         )}
         </>}
       </div>
+
+      {pdf && (
+        <PdfViewer
+          dataUrl={pdf.url}
+          filename={pdf.name}
+          onClose={() => setPdf(null)}
+          onDownload={() => downloadDataUrl(pdf.url, pdf.name)}
+        />
+      )}
     </div>
   );
 }

@@ -4,8 +4,12 @@ import { de } from 'date-fns/locale';
 import type { Angebot } from '../../types';
 import { useAngeboteStore } from '../../store/angeboteStore';
 import { useAuthStore } from '../../store/authStore';
+import { useSettingsStore } from '../../store/settingsStore';
 import { euroFull } from './salesUtils';
 import { diffSnapshots, aktuellerSnapshot } from '../../services/angebotDiff';
+import { generateAngebotPdf } from '../../services/angebotPdf';
+import { angebotPdfInput, downloadDataUrl } from './angebotPdfUtils';
+import { PdfViewer } from '../../components/PdfViewer';
 import s from './AngeboteScreen.module.css';
 
 interface Props { angebot: Angebot; }
@@ -15,6 +19,16 @@ const AKTUELL = '__aktuell__';
 export function AngebotVersionenTab({ angebot }: Props) {
   const wiederherstellen = useAngeboteStore(st => st.wiederherstellen);
   const darfWiederherstellen = useAuthStore(st => st.isAdmin() || st.isGeschaeftsfuehrung());
+  const logoDataUrl = useSettingsStore(st => st.logoDataUrl);
+  const impressum   = useSettingsStore(st => st.impressum);
+  const [pdf, setPdf] = useState<{ url: string; name: string } | null>(null);
+
+  async function pdfFuerVersion(version: string) {
+    const v = angebot.versionen.find(x => x.version === version);
+    if (!v) return;
+    const url = await generateAngebotPdf(angebotPdfInput(angebot, logoDataUrl, impressum, v.snapshot, `v${version}`));
+    setPdf({ url, name: `Angebot_${angebot.nummer}_v${version}.pdf` });
+  }
 
   // Auswahlmöglichkeiten: alle Versionen + der aktuelle (ungespeicherte) Stand.
   const optionen = useMemo(() => {
@@ -57,8 +71,9 @@ export function AngebotVersionenTab({ angebot }: Props) {
                   {format(parseISO(v.erstelltAm), 'dd.MM.yyyy HH:mm', { locale: de })}{v.erstelltVon ? ` · ${v.erstelltVon}` : ''}
                 </div>
               </div>
+              <button type="button" className={s.versRestore} onClick={() => pdfFuerVersion(v.version)}>📄 PDF</button>
               {darfWiederherstellen && (
-                <button type="button" className={s.versRestore} onClick={() => restore(v.version)}>↺ Wiederherstellen</button>
+                <button type="button" className={s.versRestore} onClick={() => restore(v.version)}>↺</button>
               )}
             </div>
           ))}
@@ -110,6 +125,15 @@ export function AngebotVersionenTab({ angebot }: Props) {
             </div>
           ))}
         </div>
+      )}
+
+      {pdf && (
+        <PdfViewer
+          dataUrl={pdf.url}
+          filename={pdf.name}
+          onClose={() => setPdf(null)}
+          onDownload={() => downloadDataUrl(pdf.url, pdf.name)}
+        />
       )}
     </div>
   );

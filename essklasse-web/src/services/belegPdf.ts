@@ -45,10 +45,10 @@ export interface ErsatzBelegInput {
 }
 
 // ── Seiten-Geometrie (A4 in PDF-Punkten) ──
-const PAGE_W = 595.28;
-const PAGE_H = 841.89;
-const MARGIN = 50;
-const BOTTOM = 70;
+export const PAGE_W = 595.28;
+export const PAGE_H = 841.89;
+export const MARGIN = 50;
+export const BOTTOM = 70;
 
 // Typografische Sonderzeichen → WinAnsi (CP1252) Code-Punkte.
 const WINANSI_SPECIAL: Record<number, number> = {
@@ -57,7 +57,7 @@ const WINANSI_SPECIAL: Record<number, number> = {
 };
 
 /** Escaped Text für PDF-Literale: ( ) \ schützen, Umlaute als WinAnsi-Oktal. */
-function esc(input: string): string {
+export function esc(input: string): string {
   let out = '';
   for (const ch of input) {
     const code = ch.codePointAt(0) ?? 0;
@@ -71,16 +71,16 @@ function esc(input: string): string {
 }
 
 /** Grobe Helvetica-Textbreite zur Zentrierung kurzer Texte. */
-function textWidth(s: string, size: number, bold: boolean): number {
+export function textWidth(s: string, size: number, bold: boolean): number {
   return s.length * size * (bold ? 0.56 : 0.52);
 }
 
-function trunc(text: string, max: number): string {
+export function trunc(text: string, max: number): string {
   return text.length > max ? text.slice(0, max - 1) + '…' : text;
 }
 
 /** Bricht langen Text in Zeilen fester Zeichenbreite um. */
-function wrap(text: string, max: number): string[] {
+export function wrap(text: string, max: number): string[] {
   const words = text.split(/\s+/);
   const out: string[] = [];
   let cur = '';
@@ -92,10 +92,10 @@ function wrap(text: string, max: number): string[] {
   return out;
 }
 
-interface LogoImg { base64: string; w: number; h: number; }
+export interface LogoImg { base64: string; w: number; h: number; }
 
 /** Lädt das Logo, legt es auf weißen Grund und konvertiert nach JPEG. */
-async function prepareLogo(dataUrl: string): Promise<LogoImg | null> {
+export async function prepareLogo(dataUrl: string): Promise<LogoImg | null> {
   try {
     const img = await new Promise<HTMLImageElement>((res, rej) => {
       const i = new Image();
@@ -357,7 +357,7 @@ export async function generateErsatzBelegPdf(b: ErsatzBelegInput): Promise<strin
 }
 
 /** Baut aus den Seiten-Streams ein PDF (optional mit eingebettetem Logo). */
-function buildPdf(pages: string[], logo: LogoImg | null): string {
+export function buildPdf(pages: string[], logo: LogoImg | null): string {
   const objects: string[] = [];
   const CATALOG = 1, PAGES = 2, F1 = 3, F2 = 4;
   const IMG = logo ? 5 : 0;
