@@ -280,7 +280,7 @@ function UserTab() {
         <input className={s.input} type="tel" disabled={readOnly} value={form.telefon} onChange={e => setForm(f => ({...f, telefon: e.target.value}))} placeholder="+49 511 123456" />
 
         <label className={s.label}>Rolle *</label>
-        <select className={s.select} disabled={readOnly} value={form.rolle} onChange={e => {
+        <select className={s.select} disabled={readOnly || istLetzterAdmin} value={form.rolle} onChange={e => {
           const rolle = e.target.value as UserRolle;
           setForm(f => ({ ...f, rolle, objektIds: defaultObjektIds(rolle) }));
         }}>
@@ -290,6 +290,12 @@ function UserTab() {
           <option value="geschaeftsfuehrung">Geschäftsführung</option>
           <option value="admin">Admin</option>
         </select>
+        {istLetzterAdmin && (
+          <p className={s.lastAdminHint}>
+            ⚠️ Die Rolle des letzten aktiven Administrators kann nicht geändert werden. Lege zuerst
+            einen weiteren Administrator an, damit der Zugang zur Verwaltung erhalten bleibt.
+          </p>
+        )}
 
         {(form.rolle === 'user' || form.rolle === 'buchhaltung' || form.rolle === 'bereichsleitung') && objekte.length > 0 && (() => {
           const q = objektSuche.trim().toLowerCase();
