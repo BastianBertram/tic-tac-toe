@@ -28,3 +28,6 @@ dist-ssr
 
 # Server-persisted settings
 server/data/
+
+# run-essklasse-web driver screenshots
+tmp/

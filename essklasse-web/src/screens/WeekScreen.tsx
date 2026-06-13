@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { BrandLogo } from '../components/BrandLogo';
 import {
   format, addWeeks, startOfWeek, endOfWeek, eachDayOfInterval,
-  isToday, isSameWeek, getISOWeek,
+  isToday, getISOWeek,
 } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { useBelegStore } from '../store/belegStore';
@@ -88,7 +88,6 @@ export function WeekScreen({ onOpenBeleg, onTabAbschluss }: Props) {
   const weekStart  = startOfWeek(base, { weekStartsOn: 1 }); // Montag
   const weekEnd    = endOfWeek(base,   { weekStartsOn: 1 }); // Sonntag
   const days       = eachDayOfInterval({ start: weekStart, end: weekEnd });
-  const istDieseWoche = isSameWeek(base, new Date(), { weekStartsOn: 1 });
 
   // Sichtbar nur Belege der dem Nutzer zugeordneten Objekte.
   const belegeForObjekt = belege.filter(b => !b.deleted && matchObjekt(b.objektId));
