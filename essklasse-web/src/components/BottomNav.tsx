@@ -6,7 +6,7 @@ import { format } from 'date-fns';
 import s from './BottomNav.module.css';
 import { HamburgerDrawer } from './HamburgerDrawer';
 
-export type Tab = 'today' | 'week' | 'calendar' | 'abschluss' | 'admin' | 'gf-home' | 'gf-statistik';
+export type Tab = 'bewirtungen' | 'abschluss' | 'admin' | 'gf-home' | 'gf-statistik';
 interface Props { active: Tab; onTab: (t: Tab) => void; onNew: () => void; onAbgeschlossene: () => void; }
 
 export function BottomNav({ active, onTab, onNew, onAbgeschlossene }: Props) {
@@ -38,8 +38,8 @@ export function BottomNav({ active, onTab, onNew, onAbgeschlossene }: Props) {
           </span>
           <span className={s.tabLabel}>Menü</span>
         </button>
-        <TabBtn icon="📋" label="Heute" active={active === 'today'} onClick={() => onTab('today')} hidden={isGf} />
-        <TabBtn icon="🗓️" label="Woche" active={active === 'week'} onClick={() => onTab('week')} hidden={isGf} />
+        {/* Heute/Woche/Kalender sind unter „Bewirtungen" zusammengefasst (Zeit-Zoom). */}
+        <TabBtn icon="📋" label="Bewirtungen" active={active === 'bewirtungen'} onClick={() => onTab('bewirtungen')} hidden={isGf} />
 
         {isGf ? (
           <button
@@ -56,10 +56,9 @@ export function BottomNav({ active, onTab, onNew, onAbgeschlossene }: Props) {
           </button>
         )}
 
-        {isGf
-          ? <TabBtn icon="📊" label="Statistik" active={active === 'gf-statistik'} onClick={() => onTab('gf-statistik')} />
-          : <TabBtn icon="📅" label="Kalender" active={active === 'calendar'} onClick={() => onTab('calendar')} />
-        }
+        {isGf && (
+          <TabBtn icon="📊" label="Statistik" active={active === 'gf-statistik'} onClick={() => onTab('gf-statistik')} />
+        )}
         {rolle === 'admin' ? (
           <TabBtn icon="⚙️" label={<>Admin<br />Verwaltung</>} active={active === 'admin'} onClick={() => onTab('admin')} hidden={isGf} />
         ) : (

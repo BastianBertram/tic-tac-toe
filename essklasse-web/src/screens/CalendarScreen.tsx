@@ -19,11 +19,11 @@ function byUhrzeit(a: Bewirtungsbeleg, b: Bewirtungsbeleg): number {
 }
 import s from './CalendarScreen.module.css';
 
-interface Props { onOpenBeleg: (b: Bewirtungsbeleg) => void; onTabAbschluss: () => void; }
+interface Props { onOpenBeleg: (b: Bewirtungsbeleg) => void; onTabAbschluss: () => void; embedded?: boolean; }
 
 const WEEKDAYS = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
 
-export function CalendarScreen({ onOpenBeleg, onTabAbschluss }: Props) {
+export function CalendarScreen({ onOpenBeleg, onTabAbschluss, embedded }: Props) {
   const [viewDate, setViewDate] = useState(new Date());
   const [selected, setSelected] = useState(format(new Date(), 'yyyy-MM-dd'));
   const belege        = useBelegStore(st => st.belege);
@@ -51,16 +51,18 @@ export function CalendarScreen({ onOpenBeleg, onTabAbschluss }: Props) {
 
   return (
     <div className={s.screen}>
-      {/* Header mit Logo + Switcher + Profil */}
-      <div className={s.header}>
-        <BrandLogo className={s.logo} />
-        <span className={s.headerSection}>📅 Kalender</span>
-        <div className={s.headerRight}>
-          <ObjektSwitcherButton />
+      {/* Header (entfällt eingebettet) */}
+      {!embedded && (
+        <div className={s.header}>
+          <BrandLogo className={s.logo} />
+          <span className={s.headerSection}>📅 Kalender</span>
+          <div className={s.headerRight}>
+            <ObjektSwitcherButton />
+          </div>
         </div>
-      </div>
+      )}
 
-      <OffeneBanner onTabSwitch={onTabAbschluss} />
+      {!embedded && <OffeneBanner onTabSwitch={onTabAbschluss} />}
 
       {/* Monatsnavigation */}
       <div className={s.monthNav}>

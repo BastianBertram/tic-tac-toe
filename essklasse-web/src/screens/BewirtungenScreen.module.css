@@ -1,0 +1,38 @@
+.screen { display: flex; flex-direction: column; height: 100%; background: var(--ek-bg); }
+
+/* ── Header ── */
+.header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 14px 10px;
+  background: var(--ek-surface);
+  border-bottom: 1px solid var(--ek-border);
+  box-shadow: 0 1px 4px rgba(0,0,0,.06);
+  gap: 10px;
+}
+.logo { height: 36px; width: auto; object-fit: contain; flex-shrink: 0; }
+.headerSection { flex: 1; font-size: 16px; font-weight: 800; color: var(--ek-charcoal); text-align: center; }
+.headerRight { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+/* ── Zeit-Zoom Umschalter ── */
+.zoomWrap { padding: 12px 14px 6px; }
+.zoomLabel {
+  display: block; margin-bottom: 8px;
+  font-size: 11px; font-weight: 700; letter-spacing: .8px; text-transform: uppercase;
+  color: var(--ek-muted);
+}
+.zoomToggle {
+  display: flex; gap: 4px;
+  background: var(--ek-surface2); border: 1px solid var(--ek-border);
+  border-radius: 14px; padding: 5px;
+}
+.zoomBtn {
+  flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 11px 6px; border: none; background: transparent; border-radius: 10px;
+  font-size: 15px; font-weight: 700; color: var(--ek-muted);
+  cursor: pointer; transition: background .12s, color .12s;
+}
+.zoomActive { background: var(--ek-surface); color: var(--ek-red); box-shadow: 0 2px 8px rgba(0,0,0,.1); }
+.zoomIcon { font-size: 14px; line-height: 1; }
+
+/* ── Eingebettete Ansicht ── */
+.body { flex: 1; min-height: 0; display: flex; flex-direction: column; }

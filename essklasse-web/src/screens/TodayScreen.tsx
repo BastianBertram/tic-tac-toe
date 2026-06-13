@@ -15,6 +15,8 @@ interface Props {
   onOpenBeleg: (b: Bewirtungsbeleg) => void;
   onAbschliessen: (b: Bewirtungsbeleg) => void;
   onTabAbschluss: () => void;
+  /** eingebettet im „Bewirtungen"-Screen → eigener Header/Banner werden ausgeblendet */
+  embedded?: boolean;
 }
 
 /** Sortierung: aufsteigend nach uhrzeitVon, leere Uhrzeiten ans Ende */
@@ -34,7 +36,7 @@ function isFuture(beleg: Bewirtungsbeleg, now: string): boolean {
   return beleg.uhrzeitVon > now;
 }
 
-export function TodayScreen({ onOpenBeleg, onAbschliessen, onTabAbschluss }: Props) {
+export function TodayScreen({ onOpenBeleg, onAbschliessen, onTabAbschluss, embedded }: Props) {
   const belege        = useBelegStore(st => st.belege);
   const { matchObjekt } = useObjektFilter();
   const rolle = useAuthStore(st => st.user?.rolle);
@@ -90,18 +92,20 @@ export function TodayScreen({ onOpenBeleg, onAbschliessen, onTabAbschluss }: Pro
 
   return (
     <div className={s.screen}>
-      {/* ── Header ── */}
-      <div className={s.header}>
-        <BrandLogo className={s.logo} />
-        <span className={s.headerSection}>📋 Heute</span>
-        {rolle !== 'geschaeftsfuehrung' && (
-          <div className={s.headerRight}>
-            <ObjektSwitcherButton />
-          </div>
-        )}
-      </div>
+      {/* ── Header (entfällt eingebettet, der Container liefert ihn) ── */}
+      {!embedded && (
+        <div className={s.header}>
+          <BrandLogo className={s.logo} />
+          <span className={s.headerSection}>📋 Heute</span>
+          {rolle !== 'geschaeftsfuehrung' && (
+            <div className={s.headerRight}>
+              <ObjektSwitcherButton />
+            </div>
+          )}
+        </div>
+      )}
 
-      <OffeneBanner onTabSwitch={onTabAbschluss} />
+      {!embedded && <OffeneBanner onTabSwitch={onTabAbschluss} />}
 
       {/* ── Datums-Navigator ── */}
       <div className={s.navigator}>

@@ -2,9 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { BottomNav } from './components/BottomNav';
 import type { Tab } from './components/BottomNav';
 import { AuthGuard } from './components/AuthGuard';
-import { TodayScreen } from './screens/TodayScreen';
-import { CalendarScreen } from './screens/CalendarScreen';
-import { WeekScreen } from './screens/WeekScreen';
+import { BewirtungenScreen } from './screens/BewirtungenScreen';
 import { NewBelegScreen } from './screens/NewBelegScreen';
 import { DetailScreen } from './screens/DetailScreen';
 import { AbschlussScreen } from './screens/AbschlussScreen';
@@ -42,7 +40,7 @@ type View =
   | { type: 'edit'; beleg: Bewirtungsbeleg };
 
 export default function App() {
-  const [tab, setTab]   = useState<Tab>('today');
+  const [tab, setTab]   = useState<Tab>('bewirtungen');
   const [view, setView] = useState<View>({ type: 'main' });
   const rolle = useAuthStore(st => st.user?.rolle);
   const user = useAuthStore(st => st.user);
@@ -282,9 +280,7 @@ export default function App() {
     <AuthGuard>
       <div className={s.app}>
         <div className={s.content}>
-          {tab === 'today'     && <TodayScreen     onOpenBeleg={openBeleg} onAbschliessen={openAbschluss} onTabAbschluss={() => setTab('abschluss')} />}
-          {tab === 'week'      && <WeekScreen      onOpenBeleg={openBeleg} onTabAbschluss={() => setTab('abschluss')} />}
-          {tab === 'calendar'  && <CalendarScreen  onOpenBeleg={openBeleg} onTabAbschluss={() => setTab('abschluss')} />}
+          {tab === 'bewirtungen' && <BewirtungenScreen onOpenBeleg={openBeleg} onAbschliessen={openAbschluss} onTabAbschluss={() => setTab('abschluss')} />}
           {tab === 'abschluss' && <AbschlussListScreen onOpenBeleg={openBeleg} />}
           {tab === 'admin'     && <AdminScreen />}
         </div>

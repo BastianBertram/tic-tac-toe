@@ -13,7 +13,7 @@ import { OffeneBanner } from '../components/OffeneBanner';
 import type { Bewirtungsbeleg } from '../types';
 import s from './WeekScreen.module.css';
 
-interface Props { onOpenBeleg: (b: Bewirtungsbeleg) => void; onTabAbschluss: () => void; }
+interface Props { onOpenBeleg: (b: Bewirtungsbeleg) => void; onTabAbschluss: () => void; embedded?: boolean; }
 
 /** Sortierung: aufsteigend nach uhrzeitVon, leere Uhrzeiten ans Ende */
 function byUhrzeit(a: Bewirtungsbeleg, b: Bewirtungsbeleg): number {
@@ -77,7 +77,7 @@ function platziere(dayBelege: Bewirtungsbeleg[]): Platzierung[] {
   return result;
 }
 
-export function WeekScreen({ onOpenBeleg, onTabAbschluss }: Props) {
+export function WeekScreen({ onOpenBeleg, onTabAbschluss, embedded }: Props) {
   const belege          = useBelegStore(st => st.belege);
   const { matchObjekt } = useObjektFilter();
   const rolle           = useAuthStore(st => st.user?.rolle);
@@ -115,18 +115,20 @@ export function WeekScreen({ onOpenBeleg, onTabAbschluss }: Props) {
 
   return (
     <div className={s.screen}>
-      {/* ── Header ── */}
-      <div className={s.header}>
-        <BrandLogo className={s.logo} />
-        <span className={s.headerSection}>🗓️ Woche</span>
-        {rolle !== 'geschaeftsfuehrung' && (
-          <div className={s.headerRight}>
-            <ObjektSwitcherButton />
-          </div>
-        )}
-      </div>
+      {/* ── Header (entfällt eingebettet) ── */}
+      {!embedded && (
+        <div className={s.header}>
+          <BrandLogo className={s.logo} />
+          <span className={s.headerSection}>🗓️ Woche</span>
+          {rolle !== 'geschaeftsfuehrung' && (
+            <div className={s.headerRight}>
+              <ObjektSwitcherButton />
+            </div>
+          )}
+        </div>
+      )}
 
-      <OffeneBanner onTabSwitch={onTabAbschluss} />
+      {!embedded && <OffeneBanner onTabSwitch={onTabAbschluss} />}
 
       {/* ── Wochen-Navigator ── */}
       <div className={s.weekNav}>
