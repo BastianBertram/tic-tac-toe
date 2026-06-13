@@ -86,7 +86,7 @@ export function SalesApp() {
   return (
     <div className={s.app}>
       <div className={s.content}>
-        {tab === 'home'      && <SalesHomeScreen      onKachelClick={goPipeline} />}
+        {tab === 'home'      && <SalesHomeScreen      onKachelClick={goPipeline} onAngebote={() => setTab('angebote')} />}
         {tab === 'pipeline'  && <SalesPipelineScreen  initialFilter={pipelineFilter} onOpen={openDetail} />}
         {tab === 'angebote'  && <SalesAngeboteScreen  onOpen={openAngebot} />}
         {tab === 'kunden'    && <SalesKundenScreen    onOpen={openDetail} />}

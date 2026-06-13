@@ -6,7 +6,7 @@ import { useAngeboteStore } from '../../store/angeboteStore';
 import { useAuthStore } from '../../store/authStore';
 import { useSettingsStore } from '../../store/settingsStore';
 import { euroFull } from './salesUtils';
-import { angebotStatusColor } from './angebotUtils';
+import { angebotStatusColor, effektiverStatus } from './angebotUtils';
 import { AngebotVersionenTab } from './AngebotVersionenTab';
 import { generateAngebotPdf } from '../../services/angebotPdf';
 import { versendeAngebot } from '../../services/dataService';
@@ -82,8 +82,8 @@ export function AngebotDetailScreen({ angebotId, onClose, onEdit }: Props) {
 
       <div className={s.scroll}>
         <div className={s.titleBlock}>
-          <span className={s.statusBadge} style={{ background: angebotStatusColor(angebot.status) }}>
-            {ANGEBOT_STATUS_LABEL[angebot.status]}
+          <span className={s.statusBadge} style={{ background: angebotStatusColor(effektiverStatus(angebot)) }}>
+            {ANGEBOT_STATUS_LABEL[effektiverStatus(angebot)]}
           </span>
           <h2 className={s.firma}>{angebot.kundeFirma}</h2>
           <div className={s.betreff}>{angebot.betreff}</div>

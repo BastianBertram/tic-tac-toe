@@ -4,7 +4,7 @@ import { de } from 'date-fns/locale';
 import { ANGEBOT_PIPELINE, ANGEBOT_STATUS_LABEL } from '../../types';
 import type { Angebot, AngebotStatus } from '../../types';
 import { euroFull } from './salesUtils';
-import { useSichtbareAngebote, angebotStatusColor } from './angebotUtils';
+import { useSichtbareAngebote, angebotStatusColor, effektiverStatus } from './angebotUtils';
 import s from './AngeboteScreen.module.css';
 
 type Filter = AngebotStatus | 'alle';
@@ -18,7 +18,7 @@ export function SalesAngeboteScreen({ onOpen }: Props) {
 
   const gefiltert = useMemo(() => {
     let liste = [...angebote];
-    if (filter !== 'alle') liste = liste.filter(a => a.status === filter);
+    if (filter !== 'alle') liste = liste.filter(a => effektiverStatus(a) === filter);
     const q = suche.trim().toLowerCase();
     if (q) {
       liste = liste.filter(a =>
@@ -32,7 +32,7 @@ export function SalesAngeboteScreen({ onOpen }: Props) {
 
   const gruppen = useMemo(() =>
     ANGEBOT_PIPELINE
-      .map(st => ({ status: st, items: gefiltert.filter(a => a.status === st) }))
+      .map(st => ({ status: st, items: gefiltert.filter(a => effektiverStatus(a) === st) }))
       .filter(g => g.items.length > 0)
   , [gefiltert]);
 
@@ -89,8 +89,8 @@ export function SalesAngeboteScreen({ onOpen }: Props) {
                     <div className={s.cardFirma}>{a.kundeFirma}</div>
                     {a.betreff && <div className={s.cardBetreff}>{a.betreff}</div>}
                     <div className={s.cardMeta}>
-                      <span className={s.tag ?? ''} style={{ color: angebotStatusColor(a.status), fontWeight: 800 }}>
-                        {ANGEBOT_STATUS_LABEL[a.status]}
+                      <span className={s.tag ?? ''} style={{ color: angebotStatusColor(effektiverStatus(a)), fontWeight: 800 }}>
+                        {ANGEBOT_STATUS_LABEL[effektiverStatus(a)]}
                       </span>
                       {a.gueltigBis && <span>⏳ {format(parseISO(a.gueltigBis), 'dd.MM.yy', { locale: de })}</span>}
                       {a.versionen.length > 0 && <span>v{a.versionen[a.versionen.length - 1].version}</span>}

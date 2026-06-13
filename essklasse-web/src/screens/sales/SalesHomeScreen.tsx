@@ -3,12 +3,17 @@ import { BrandLogo } from '../../components/BrandLogo';
 import { format, startOfMonth, endOfMonth, isWithinInterval, parseISO } from 'date-fns';
 import type { SalesStatus } from '../../types';
 import { euro, isOffen, useSichtbareAnfragen } from './salesUtils';
+import { useSichtbareAngebote, effektiverStatus } from './angebotUtils';
 import s from './SalesHomeScreen.module.css';
 
-interface Props { onKachelClick: (filter: SalesStatus | 'alle' | 'wiedervorlage') => void; }
+interface Props {
+  onKachelClick: (filter: SalesStatus | 'alle' | 'wiedervorlage') => void;
+  onAngebote: () => void;
+}
 
-export function SalesHomeScreen({ onKachelClick }: Props) {
+export function SalesHomeScreen({ onKachelClick, onAngebote }: Props) {
   const anfragen = useSichtbareAnfragen();
+  const angebote = useSichtbareAngebote();
 
   const k = useMemo(() => {
     const now    = new Date();
@@ -20,7 +25,9 @@ export function SalesHomeScreen({ onKachelClick }: Props) {
     const offeneAnzahl = offen.length;
     const pipelineWert = offen.reduce((sum, a) => sum + (a.geschaetzterWert || 0), 0);
 
-    const angebote = anfragen.filter(a => a.status === 'angebot' || a.status === 'verhandlung');
+    // Echte versendete Angebote, die noch auf Kundenentscheidung warten (nicht abgelaufen).
+    const angeboteOffen = angebote.filter(a => effektiverStatus(a) === 'versendet');
+    const angeboteWert  = angeboteOffen.reduce((sum, a) => sum + (a.gesamtsumme || 0), 0);
 
     const gewonnen = anfragen.filter(a => a.status === 'gewonnen');
     const verloren = anfragen.filter(a => a.status === 'verloren');
@@ -39,8 +46,8 @@ export function SalesHomeScreen({ onKachelClick }: Props) {
 
     const wiedervorlageFaellig = offen.filter(a => a.wiedervorlage && a.wiedervorlage <= today).length;
 
-    return { offeneAnzahl, pipelineWert, angeboteAnzahl: angebote.length, conversion, umsatzMonat, gewonnenWert, wiedervorlageFaellig };
-  }, [anfragen]);
+    return { offeneAnzahl, pipelineWert, angeboteOffen: angeboteOffen.length, angeboteWert, conversion, umsatzMonat, gewonnenWert, wiedervorlageFaellig };
+  }, [anfragen, angebote]);
 
   return (
     <div className={s.screen}>
@@ -58,9 +65,9 @@ export function SalesHomeScreen({ onKachelClick }: Props) {
           <Kachel icon="💰" value={euro(k.pipelineWert)} label="Pipeline-Wert" accent="blue"
             info="Summe der geschätzten Auftragswerte aller offenen Anfragen — das gewichtete Potenzial."
             onClick={() => onKachelClick('alle')} />
-          <Kachel icon="📄" value={String(k.angeboteAnzahl)} label="Angebote offen" accent="orange"
-            info="Anfragen im Status Angebot oder Verhandlung — warten auf Kundenentscheidung."
-            onClick={() => onKachelClick('angebot')} />
+          <Kachel icon="📄" value={String(k.angeboteOffen)} label="Angebote offen" accent="orange"
+            info={`Versendete Angebote, die noch auf Kundenentscheidung warten (offenes Volumen ${euro(k.angeboteWert)}). Abgelaufene zählen nicht.`}
+            onClick={onAngebote} />
           <Kachel icon="⏰" value={String(k.wiedervorlageFaellig)} label="Wiedervorlagen fällig"
             accent={k.wiedervorlageFaellig > 0 ? 'urgent' : undefined}
             info="Offene Anfragen, deren Follow-up-Datum heute oder früher liegt — jetzt nachfassen."

@@ -20,6 +20,19 @@ export function useAktiveProdukte(): Produkt[] {
   return produkte.filter(p => !p.deleted && p.aktiv);
 }
 
+/** Ist ein versendetes Angebot über sein Gültigkeitsdatum hinaus? */
+export function istAbgelaufen(a: Pick<Angebot, 'status' | 'gueltigBis'>): boolean {
+  return a.status === 'versendet' && !!a.gueltigBis && a.gueltigBis < new Date().toISOString().slice(0, 10);
+}
+
+/**
+ * Anzeige-Status: leitet „abgelaufen" aus gueltigBis ab, ohne den gespeicherten
+ * Status zu ändern (kein Sync-Schreibzugriff). Für Listen/Detail/KPIs.
+ */
+export function effektiverStatus(a: Pick<Angebot, 'status' | 'gueltigBis'>): AngebotStatus {
+  return istAbgelaufen(a) ? 'abgelaufen' : a.status;
+}
+
 export function angebotStatusColor(st: AngebotStatus): string {
   switch (st) {
     case 'entwurf':     return '#5b8def';
