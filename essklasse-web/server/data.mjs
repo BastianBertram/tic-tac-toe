@@ -110,7 +110,10 @@ export function accountStatus(ctx) {
 function userScope(ctx) {
   const users = load('users').data?.users ?? [];
   let identity = resolveIdentity(ctx);
-  if (!identity) return { restricted: false, objektIds: [] };
+  // Fail-closed: unbekannte/fehlende Identität erhält KEINEN Zugriff (restricted,
+  // keine Objekte) — konsistent mit accountStatus. In Produktion werden solche
+  // Anfragen ohnehin vorher per 401 abgewiesen; dies ist Defense-in-Depth.
+  if (!identity) return { restricted: true, objektIds: [] };
   // Admin & Geschäftsführung: voller, objektübergreifender Zugriff.
   if (identity.rolle === 'admin' || identity.rolle === 'geschaeftsfuehrung') {
     return { restricted: false, objektIds: [] };
