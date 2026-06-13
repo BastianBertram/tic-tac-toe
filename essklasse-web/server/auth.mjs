@@ -20,18 +20,21 @@
  * Verbleibend für echten Betrieb: One-Time-Magic-Tokens noch im RAM (kurzlebig,
  * 15 min) und der Versand per `console.log` statt echtem Mailprovider.
  */
-import { randomBytes, createHmac, timingSafeEqual } from 'node:crypto';
+import { randomBytes, createHmac, timingSafeEqual, createHash } from 'node:crypto';
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { accountStatus, getUsers, getObjekte } from './data.mjs';
+import { sendMagicLink } from './mail.mjs';
 
 const MAGIC_TTL_MS   = 15 * 60 * 1000;            // 15 min, one-time
 const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;  // 30 days
 const COOKIE_NAME    = 'ek_refresh';
 const IS_PROD        = process.env.NODE_ENV === 'production';
 const ALLE_MARKER    = '__alle__';
-const STORE_FILE     = join(dirname(fileURLToPath(import.meta.url)), 'data', 'sessions.json');
+const DATA_DIR       = join(dirname(fileURLToPath(import.meta.url)), 'data');
+const STORE_FILE     = join(DATA_DIR, 'sessions.json');
+const MAGIC_FILE     = join(DATA_DIR, 'magic.json');
 
 // ── Signier-Geheimnis ────────────────────────────────────────────────────────
 // In Produktion ZWINGEND per EK_AUTH_SECRET (>=32 Zeichen) gesetzt; fehlt es,
@@ -133,8 +136,28 @@ function objekteForUser(user) {
   return objekte.filter(o => ids.includes(o.id)); // leere Zuordnung = keine Objekte
 }
 
-// ── Magic-Token-Store (kurzlebig, in-memory ist hier ausreichend) ────────────
-const magicTokens = new Map(); // token → { email, expiresAt }
+// ── Magic-Token-Store (persistent, gehasht) ─────────────────────────────────
+// Es wird NUR der SHA-256-Hash des One-Time-Tokens gespeichert — bei einem Leak
+// der Datei sind keine gültigen Links rekonstruierbar. Persistenz überlebt
+// Server-Neustarts (ein angeforderter Link bleibt 15 min gültig).
+const magicHash = token => createHash('sha256').update(String(token)).digest('hex');
+
+let magic = (() => {
+  try {
+    const m = JSON.parse(readFileSync(MAGIC_FILE, 'utf8'));
+    const byHash = m.byHash ?? {};
+    const now = Date.now();
+    for (const [h, rec] of Object.entries(byHash)) if (!rec || rec.expiresAt < now) delete byHash[h];
+    return { byHash };
+  } catch { return { byHash: {} }; }
+})();
+
+function saveMagic() {
+  try {
+    mkdirSync(DATA_DIR, { recursive: true });
+    writeFileSync(MAGIC_FILE, JSON.stringify(magic), 'utf8');
+  } catch (e) { console.error('[auth] Magic-Token-Store konnte nicht gespeichert werden:', e?.message); }
+}
 
 function sessionPayload(user, token) {
   return {
@@ -171,27 +194,32 @@ function buildSetCookie(value, { clear = false } = {}) {
 const deviceIdOf = req => String(req.headers['x-device-id'] ?? '') || null;
 
 // ── Handlers ──────────────────────────────────────────────────────────────────
-function login(body, _req, { allowedOrigin }) {
+async function login(body, _req, { allowedOrigin }) {
   const user = findUser(body?.email);
+  // Immer 200, damit der Endpunkt nicht verrät, welche Adressen existieren.
   if (!user) {
     console.log(`[auth] login requested for unknown email: ${body?.email}`);
     return { status: 200, payload: { ok: true } };
   }
   const token = newId();
-  magicTokens.set(token, { email: user.email, expiresAt: Date.now() + MAGIC_TTL_MS });
+  magic.byHash[magicHash(token)] = { email: user.email, expiresAt: Date.now() + MAGIC_TTL_MS };
+  saveMagic();
   const link = `${allowedOrigin}/?token=${token}`;
-  if (!IS_PROD) console.log(`[auth] magic link for ${user.email}:\n  ${link}`);
+  // Zustellung über den konfigurierbaren Mail-Adapter (Webhook in Prod, Log in Dev).
+  await sendMagicLink({ to: user.email, link });
+  // In Dev den Link zusätzlich zurückgeben, damit er ohne Mailprovider testbar ist.
   return { status: 200, payload: IS_PROD ? { ok: true } : { ok: true, devLink: link } };
 }
 
 function verify(body, req) {
   if (!SECRET) return { status: 500, payload: { error: 'Server-Authentifizierung nicht konfiguriert.' } };
-  const entry = magicTokens.get(body?.token);
+  const h = body?.token ? magicHash(body.token) : null;
+  const entry = h ? magic.byHash[h] : null;
   if (!entry || entry.expiresAt < Date.now()) {
-    magicTokens.delete(body?.token);
+    if (h && magic.byHash[h]) { delete magic.byHash[h]; saveMagic(); }
     return { status: 401, payload: { error: 'Link ungültig oder abgelaufen.' } };
   }
-  magicTokens.delete(body.token); // one-time use
+  delete magic.byHash[h]; saveMagic(); // one-time use
   const user = findUser(entry.email);
   if (!user) return { status: 401, payload: { error: 'Konto nicht gefunden.' } };
   const st = accountStatus({ devEmail: user.email });
@@ -266,8 +294,8 @@ export function claimSessionDevice(req) {
 }
 
 /** Returns { status, payload, setCookie? } or null if `url` is not an auth route. */
-export function handleAuth(url, body, req, ctx) {
+export async function handleAuth(url, body, req, ctx) {
   const handler = HANDLERS[url];
   if (!handler) return null;
-  return handler(body, req, ctx) ?? { status: 500, payload: { error: 'auth handler error' } };
+  return (await handler(body, req, ctx)) ?? { status: 500, payload: { error: 'auth handler error' } };
 }

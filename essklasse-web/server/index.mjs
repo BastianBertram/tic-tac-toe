@@ -346,7 +346,7 @@ const server = createServer(async (req, res) => {
   if (req.method === 'POST' && url.startsWith('/auth/')) {
     try {
       const body = await readJsonBody(req);
-      const result = handleAuth(url, body, req, { allowedOrigin: ALLOWED_ORIGIN });
+      const result = await handleAuth(url, body, req, { allowedOrigin: ALLOWED_ORIGIN });
       if (!result) return send(res, 404, { error: 'Not found' });
       const headers = result.setCookie ? { 'Set-Cookie': result.setCookie } : {};
       return send(res, result.status, result.payload, headers);

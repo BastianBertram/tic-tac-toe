@@ -39,7 +39,13 @@ npm install
   it signs the session tokens. With `NODE_ENV=production` and no secret the
   server logs a FATAL line and refuses to issue sessions (verify → 500,
   fail-closed). In dev an ephemeral secret is generated (sessions reset on
-  restart). Sessions persist to `server/data/sessions.json` (gitignored).
+  restart). Sessions and pending magic tokens persist (hashed) to
+  `server/data/{sessions,magic}.json` (gitignored).
+- **Magic-link email** is delivered via a webhook adapter: set
+  `EK_MAIL_WEBHOOK_URL` (and optionally `EK_MAIL_WEBHOOK_AUTH`, `EK_MAIL_FROM`)
+  to POST `{to,from,subject,text,link}` JSON to your transactional provider.
+  Without it, dev logs the link to the console; in prod it logs a delivery
+  failure (and never logs the raw token).
 
 ## Build
 
