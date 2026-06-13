@@ -18,7 +18,7 @@
 /* Menü als Ecke links aus dem Fluss nehmen, damit Bewirtungen + Abschließen
    die Leiste füllen und symmetrisch um den mittigen FAB liegen. */
 .menuCorner {
-  position: absolute; left: 12px; top: 10px; bottom: 24px;
+  position: absolute; left: 40px; top: 10px; bottom: 24px;
   flex: none; width: auto; justify-content: center;
 }
 .tabActive  { color: var(--ek-red); }
