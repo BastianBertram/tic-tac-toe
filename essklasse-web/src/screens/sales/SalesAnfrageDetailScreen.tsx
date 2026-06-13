@@ -8,13 +8,15 @@ import type { SalesAktivitaetTyp, SalesStatus } from '../../types';
 import { euroFull, statusColor, segmentLabel } from './salesUtils';
 import s from './SalesAnfrageDetailScreen.module.css';
 
-interface Props { anfrageId: string; onClose: () => void; }
+import type { AngebotVorlage } from './AngebotEditorScreen';
+
+interface Props { anfrageId: string; onClose: () => void; onAngebotErstellen?: (vorlage: AngebotVorlage) => void; }
 
 const AKT_ICON: Record<SalesAktivitaetTyp, string> = {
   anruf: '📞', email: '✉️', termin: '📅', notiz: '📝', angebot: '📄', statuswechsel: '🔁',
 };
 
-export function SalesAnfrageDetailScreen({ anfrageId, onClose }: Props) {
+export function SalesAnfrageDetailScreen({ anfrageId, onClose, onAngebotErstellen }: Props) {
   const anfrage    = useSalesStore(st => st.anfragen.find(a => a.id === anfrageId));
   const setStatus  = useSalesStore(st => st.setStatus);
   const addAkt     = useSalesStore(st => st.addAktivitaet);
@@ -102,6 +104,24 @@ export function SalesAnfrageDetailScreen({ anfrageId, onClose }: Props) {
         )}
         {anfrage.status === 'verloren' && anfrage.verlustgrund && (
           <div className={s.verlustInfo}>Verlustgrund: {anfrage.verlustgrund}</div>
+        )}
+
+        {onAngebotErstellen && (
+          <button
+            type="button"
+            style={{ width: '100%', marginTop: 4, padding: 13, borderRadius: 10, border: 'none', background: 'linear-gradient(135deg, #b9770e, #e8a020)', color: '#fff', fontSize: 14, fontWeight: 800, cursor: 'pointer' }}
+            onClick={() => onAngebotErstellen({
+              objektId: anfrage.objektId,
+              anfrageId: anfrage.id,
+              kundeFirma: anfrage.kundeFirma,
+              ansprechpartner: anfrage.ansprechpartner,
+              email: anfrage.email,
+              telefon: anfrage.telefon,
+              betreff: anfrage.veranstaltung,
+            })}
+          >
+            📄 Angebot erstellen
+          </button>
         )}
 
         {/* Kontakt & Eckdaten */}

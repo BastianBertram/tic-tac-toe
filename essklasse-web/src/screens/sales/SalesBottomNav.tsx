@@ -1,7 +1,7 @@
 import React from 'react';
 import s from '../../components/BottomNav.module.css';
 
-export type SalesTab = 'home' | 'pipeline' | 'kunden' | 'statistik';
+export type SalesTab = 'home' | 'pipeline' | 'angebote' | 'kunden' | 'statistik';
 
 interface Props {
   active: SalesTab;
@@ -10,12 +10,15 @@ interface Props {
 }
 
 export function SalesBottomNav({ active, onTab, onNew }: Props) {
+  // FAB legt kontextabhängig an: auf dem Angebote-Tab ein Angebot, sonst eine Anfrage.
+  const fabLabel = active === 'angebote' ? 'Neues Angebot' : 'Neue Anfrage';
   return (
     <nav className={s.nav}>
       <TabBtn icon="🏠" label="Home"     active={active === 'home'}     onClick={() => onTab('home')} />
       <TabBtn icon="📈" label="Pipeline" active={active === 'pipeline'} onClick={() => onTab('pipeline')} />
+      <TabBtn icon="📄" label="Angebote" active={active === 'angebote'} onClick={() => onTab('angebote')} />
 
-      <button className={s.fab} onClick={onNew} type="button" aria-label="Neue Anfrage">
+      <button className={s.fab} onClick={onNew} type="button" aria-label={fabLabel}>
         <span className={s.fabPlus}>+</span>
       </button>
 
