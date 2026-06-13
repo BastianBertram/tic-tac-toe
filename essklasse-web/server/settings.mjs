@@ -86,13 +86,16 @@ function sanitizeLogo(v) {
   return typeof v === 'string' && v.length <= LOGO_MAX && LOGO_RE.test(v) ? v : null;
 }
 
-function sanitize(body) {
+// Feld-Merge über den BESTEHENDEN Stand (base): nur tatsächlich gesendete Felder
+// werden geändert. Ein Teil-PUT (z.B. nur themeId) setzt damit NICHT versehentlich
+// Logo/Impressum/customColor zurück (kein ungewollter Inhaltsverlust).
+function sanitize(body, base = DEFAULT_SETTINGS) {
   const src = body && typeof body === 'object' ? body : {};
   return {
-    themeId: typeof src.themeId === 'string' ? src.themeId : DEFAULT_SETTINGS.themeId,
-    customColor: typeof src.customColor === 'string' ? src.customColor : null,
-    logoDataUrl: sanitizeLogo(src.logoDataUrl),
-    impressum: sanitizeImpressum(src.impressum),
+    themeId: typeof src.themeId === 'string' ? src.themeId : base.themeId,
+    customColor: 'customColor' in src ? (typeof src.customColor === 'string' ? src.customColor : null) : base.customColor,
+    logoDataUrl: 'logoDataUrl' in src ? sanitizeLogo(src.logoDataUrl) : base.logoDataUrl,
+    impressum: 'impressum' in src ? sanitizeImpressum(src.impressum) : base.impressum,
   };
 }
 
@@ -114,7 +117,7 @@ export function handleSettings(method, url, body, ctx = {}) {
     if (IS_PROD && ctx.user?.rolle !== 'admin') {
       return { status: 403, payload: { error: 'Nur Admins dürfen Einstellungen ändern.' } };
     }
-    const next = sanitize(body);
+    const next = sanitize(body, load());   // über bestehenden Stand mergen
     persist(next);
     return { status: 200, payload: next };
   }

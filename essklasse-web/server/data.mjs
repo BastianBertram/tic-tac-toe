@@ -323,19 +323,25 @@ export function handleData(method, url, body, ctx = {}) {
       return { status: 200, payload: { initialized: true, data: merged } };
     }
 
-    // Eingeschränkte Nutzer dürfen Objekte nicht verändern → Stand bewahren,
-    // Antwort auf den eigenen Geltungsbereich beschränken.
+    // Objekte: eingeschränkte Nutzer dürfen nicht verändern → Stand bewahren.
+    // Admin/GF: id-erhaltend mergen statt Whole-Replace — ein unvollständiger
+    // oder veralteter PUT darf bestehende Objekte NICHT hart löschen (sonst
+    // stiller Stammdatenverlust + verwaiste Belege). „Entfernen" gibt es im
+    // Modell nicht, nur Deaktivieren (aktiv:false).
     if (name === 'objekte') {
       const scope = userScope(ctx);
+      const existing = load(name).data ?? COLLECTIONS.objekte.default;
+      const alle = Array.isArray(existing.objekte) ? existing.objekte : [];
       if (scope.restricted) {
         const ids = new Set(scope.objektIds);
-        const existing = load(name).data ?? COLLECTIONS.objekte.default;
-        const alle = Array.isArray(existing.objekte) ? existing.objekte : [];
         return { status: 200, payload: {
           initialized: true,
           data: { ...existing, objekte: alle.filter(o => ids.has(o.id)) },
         } };
       }
+      const merged = { ...existing, ...body, objekte: mergeById(alle, Array.isArray(body.objekte) ? body.objekte : []) };
+      persist(name, merged);
+      return { status: 200, payload: { initialized: true, data: merged } };
     }
 
     // Belege werden NIE physisch gelöscht (auch nicht die eines deaktivierten
