@@ -1,22 +1,29 @@
 /**
- * Magic-link auth — SCAFFOLD / DEV-GRADE.
+ * Magic-link auth — produktionsgehärtet (zero-dependency).
  *
- * Implements the contract the frontend already speaks:
- *   POST /auth/login   { email }            → emails a one-time link, 200
- *   POST /auth/verify  { token }            → sets refresh cookie, returns session
- *   POST /auth/refresh (cookie)             → returns a fresh session
- *   POST /auth/logout  (cookie)             → clears the refresh cookie
+ * Vertrag, den das Frontend spricht:
+ *   POST /auth/login   { email }            → verschickt einen One-Time-Link, 200
+ *   POST /auth/verify  { token } + X-Device-Id → setzt signiertes Sitzungs-Cookie
+ *   POST /auth/refresh (cookie)             → rotiert/erneuert die Sitzung
+ *   POST /auth/logout  (cookie)             → widerruft die Sitzung
  *
- * NOT production-ready. Before shipping real auth, replace:
- *   - the in-memory `users` table        → your real user store / DB
- *   - the in-memory token/session Maps    → a persistent store (Redis/DB)
- *   - the console.log "email"             → a real transactional email provider
- *   - accessToken (random string)         → a signed, short-lived JWT that
- *                                            protected routes actually verify
- *   - SameSite=Lax cookie                 → SameSite=None; Secure over HTTPS
- *     (and gate protected /api routes on the access token)
+ * Härtung gegenüber dem früheren Scaffold:
+ *   - Sitzungs-/Access-Token ist ein HMAC-SHA256-signiertes Token (kein
+ *     ungeprüfter Zufallsstring) und wird auf jeder Route verifiziert.
+ *   - Sitzungen liegen in einem persistenten Store (server/data/sessions.json)
+ *     statt nur im RAM → überleben Neustarts, sind serverseitig widerrufbar.
+ *   - Die Geräte-ID (`did`) ist KRYPTOGRAFISCH an die Sitzung gebunden: sie
+ *     steckt in der signierten Payload und im Session-Datensatz. Ein Client kann
+ *     sie nicht fälschen; „nur ein Gerät gleichzeitig" wird über die aktive sid
+ *     je Konto erzwungen.
+ *
+ * Verbleibend für echten Betrieb: One-Time-Magic-Tokens noch im RAM (kurzlebig,
+ * 15 min) und der Versand per `console.log` statt echtem Mailprovider.
  */
-import { randomBytes } from 'node:crypto';
+import { randomBytes, createHmac, timingSafeEqual } from 'node:crypto';
+import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { accountStatus, getUsers, getObjekte } from './data.mjs';
 
 const MAGIC_TTL_MS   = 15 * 60 * 1000;            // 15 min, one-time
@@ -24,11 +31,94 @@ const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;  // 30 days
 const COOKIE_NAME    = 'ek_refresh';
 const IS_PROD        = process.env.NODE_ENV === 'production';
 const ALLE_MARKER    = '__alle__';
+const STORE_FILE     = join(dirname(fileURLToPath(import.meta.url)), 'data', 'sessions.json');
 
-// Authentifizierung und Autorisierung nutzen DIESELBE Benutzer-/Objektquelle
-// (users.json/Seed über data.mjs) — keine zweite, hartcodierte Liste mehr, die
-// auseinanderdriften könnte. Alle vom Admin gepflegten Rollen/objektIds wirken
-// damit unmittelbar auf Login und Session.
+// ── Signier-Geheimnis ────────────────────────────────────────────────────────
+// In Produktion ZWINGEND per EK_AUTH_SECRET (>=32 Zeichen) gesetzt; fehlt es,
+// werden keine Sitzungen ausgestellt (fail-closed). In Dev ephemerer Schlüssel.
+const SECRET = (() => {
+  const s = process.env.EK_AUTH_SECRET;
+  if (typeof s === 'string' && s.length >= 32) return s;
+  if (IS_PROD) {
+    console.error('[auth] FATAL: EK_AUTH_SECRET (>=32 Zeichen) ist in Produktion erforderlich — Sitzungen sind deaktiviert.');
+    return null;
+  }
+  console.warn('[auth] EK_AUTH_SECRET nicht gesetzt — ephemeres Dev-Geheimnis (Sitzungen werden bei Server-Neustart ungültig).');
+  return randomBytes(32).toString('hex');
+})();
+
+// ── Token: base64url(payload).base64url(hmac) ────────────────────────────────
+const b64url    = buf => Buffer.from(buf).toString('base64url');
+const fromB64url = str => Buffer.from(str, 'base64url');
+
+function sign(payload) {
+  if (!SECRET) return null;
+  const body = b64url(JSON.stringify(payload));
+  const sig  = createHmac('sha256', SECRET).update(body).digest('base64url');
+  return `${body}.${sig}`;
+}
+
+function verifyToken(token) {
+  if (!SECRET || typeof token !== 'string' || !token.includes('.')) return null;
+  const [body, sig] = token.split('.');
+  if (!body || !sig) return null;
+  const expected = createHmac('sha256', SECRET).update(body).digest();
+  let given;
+  try { given = fromB64url(sig); } catch { return null; }
+  if (given.length !== expected.length || !timingSafeEqual(given, expected)) return null;
+  try {
+    const payload = JSON.parse(fromB64url(body).toString('utf8'));
+    if (!payload || typeof payload.exp !== 'number' || payload.exp < Date.now()) return null;
+    return payload;
+  } catch { return null; }
+}
+
+// ── Persistenter Sitzungs-Store ──────────────────────────────────────────────
+// { byId: { sid: { email, did, exp } }, activeByEmail: { email: sid } }
+let store = (() => {
+  try {
+    const s = JSON.parse(readFileSync(STORE_FILE, 'utf8'));
+    const byId = s.byId ?? {};
+    const now = Date.now();
+    for (const [sid, rec] of Object.entries(byId)) if (!rec || rec.exp < now) delete byId[sid];
+    return { byId, activeByEmail: s.activeByEmail ?? {} };
+  } catch { return { byId: {}, activeByEmail: {} }; }
+})();
+
+function saveStore() {
+  try {
+    mkdirSync(dirname(STORE_FILE), { recursive: true });
+    writeFileSync(STORE_FILE, JSON.stringify(store), 'utf8');
+  } catch (e) { console.error('[auth] Sitzungs-Store konnte nicht gespeichert werden:', e?.message); }
+}
+
+function newId() { return randomBytes(32).toString('hex'); }
+
+/** Erzeugt eine neue Sitzung, bindet das Gerät, supersedet ältere Geräte. */
+function createSession(email, deviceId) {
+  if (!SECRET) return null;
+  const sid = newId();
+  const exp = Date.now() + SESSION_TTL_MS;
+  const did = String(deviceId ?? '') || newId(); // ohne Client-Device-Id: serverseitige ID
+  store.byId[sid] = { email, did, exp };
+  store.activeByEmail[email] = sid;              // „nur ein Gerät": neue Sitzung verdrängt alte
+  saveStore();
+  return sign({ sid, sub: email, did, iat: Date.now(), exp });
+}
+
+/** Liest & validiert die Sitzung aus dem Cookie. Gibt { sid, email, did } oder null. */
+function getSession(req) {
+  const token = parseCookies(req)[COOKIE_NAME];
+  const payload = verifyToken(token);
+  if (!payload) return null;
+  const rec = store.byId[payload.sid];
+  if (!rec || rec.exp < Date.now()) { if (rec) { delete store.byId[payload.sid]; saveStore(); } return null; }
+  // Signierte Werte müssen mit dem Server-Datensatz übereinstimmen (Anti-Tamper).
+  if (rec.email !== payload.sub || rec.did !== payload.did) return null;
+  return { sid: payload.sid, email: rec.email, did: rec.did };
+}
+
+// ── Benutzer-/Objektquelle (dieselbe wie die Autorisierung) ──────────────────
 function findUser(email) {
   const norm = String(email ?? '').trim().toLowerCase();
   return getUsers().find(u => String(u.email ?? '').toLowerCase() === norm) ?? null;
@@ -37,24 +127,18 @@ function findUser(email) {
 function objekteForUser(user) {
   const objekte = getObjekte();
   const ids = Array.isArray(user.objektIds) ? user.objektIds : [];
-  // Vollzugriff: admin/Geschäftsführung oder der vom Admin gesetzte „__alle__"-Marker.
   if (user.rolle === 'admin' || user.rolle === 'geschaeftsfuehrung' || ids.includes(ALLE_MARKER)) {
     return objekte;
   }
   return objekte.filter(o => ids.includes(o.id)); // leere Zuordnung = keine Objekte
 }
 
-// ── In-memory stores (swap for a DB in production) ───────────────────────────
+// ── Magic-Token-Store (kurzlebig, in-memory ist hier ausreichend) ────────────
 const magicTokens = new Map(); // token → { email, expiresAt }
-const sessions    = new Map(); // refreshToken → { email, expiresAt }
 
-function newToken() {
-  return randomBytes(32).toString('hex');
-}
-
-function sessionPayload(user) {
+function sessionPayload(user, token) {
   return {
-    accessToken: newToken(), // scaffold: not yet verified on protected routes
+    accessToken: token, // signiertes, verifiziertes Token (kein Scaffold mehr)
     user: { id: user.id, name: user.name, email: user.email, rolle: user.rolle, objektIds: user.objektIds },
     objekte: objekteForUser(user),
   };
@@ -84,29 +168,24 @@ function buildSetCookie(value, { clear = false } = {}) {
   return attrs.join('; ');
 }
 
+const deviceIdOf = req => String(req.headers['x-device-id'] ?? '') || null;
+
 // ── Handlers ──────────────────────────────────────────────────────────────────
 function login(body, _req, { allowedOrigin }) {
   const user = findUser(body?.email);
-  // Always respond 200 so the endpoint never reveals which emails exist.
   if (!user) {
     console.log(`[auth] login requested for unknown email: ${body?.email}`);
     return { status: 200, payload: { ok: true } };
   }
-  const token = newToken();
+  const token = newId();
   magicTokens.set(token, { email: user.email, expiresAt: Date.now() + MAGIC_TTL_MS });
   const link = `${allowedOrigin}/?token=${token}`;
-
-  // TODO: send `link` via a real email provider.
-  // In Produktion NICHT loggen (enthält ein gültiges One-Time-Token); nur in Dev.
-  if (!IS_PROD) {
-    console.log(`[auth] magic link for ${user.email}:\n  ${link}`);
-  }
-
-  // In dev, also return the link so it's testable without an email provider.
+  if (!IS_PROD) console.log(`[auth] magic link for ${user.email}:\n  ${link}`);
   return { status: 200, payload: IS_PROD ? { ok: true } : { ok: true, devLink: link } };
 }
 
-function verify(body) {
+function verify(body, req) {
+  if (!SECRET) return { status: 500, payload: { error: 'Server-Authentifizierung nicht konfiguriert.' } };
   const entry = magicTokens.get(body?.token);
   if (!entry || entry.expiresAt < Date.now()) {
     magicTokens.delete(body?.token);
@@ -115,38 +194,41 @@ function verify(body) {
   magicTokens.delete(body.token); // one-time use
   const user = findUser(entry.email);
   if (!user) return { status: 401, payload: { error: 'Konto nicht gefunden.' } };
-  // Vom Admin deaktivierte Konten dürfen sich nicht einloggen.
   const st = accountStatus({ devEmail: user.email });
   if (st.authenticated && !st.active) {
     return { status: 403, payload: { error: 'Konto deaktiviert. Bitte wenden Sie sich an Ihren Administrator.' } };
   }
-
-  const refresh = newToken();
-  sessions.set(refresh, { email: user.email, expiresAt: Date.now() + SESSION_TTL_MS });
-  return { status: 200, payload: sessionPayload(user), setCookie: buildSetCookie(refresh) };
+  const token = createSession(user.email, deviceIdOf(req));
+  return { status: 200, payload: sessionPayload(user, token), setCookie: buildSetCookie(token) };
 }
 
 function refresh(_body, req) {
-  const token = parseCookies(req)[COOKIE_NAME];
-  const entry = token && sessions.get(token);
-  if (!entry || entry.expiresAt < Date.now()) {
-    if (token) sessions.delete(token);
-    return { status: 401, payload: { error: 'Keine gültige Sitzung.' } };
-  }
-  const user = findUser(entry.email);
+  const s = getSession(req);
+  if (!s) return { status: 401, payload: { error: 'Keine gültige Sitzung.' } };
+  const user = findUser(s.email);
   if (!user) return { status: 401, payload: { error: 'Konto nicht gefunden.' } };
-  // Während einer laufenden Sitzung deaktiviert → Sitzung beenden.
   const st = accountStatus({ devEmail: user.email });
   if (st.authenticated && !st.active) {
-    sessions.delete(token);
+    delete store.byId[s.sid];
+    if (store.activeByEmail[s.email] === s.sid) delete store.activeByEmail[s.email];
+    saveStore();
     return { status: 403, payload: { error: 'Konto deaktiviert.' }, setCookie: buildSetCookie('', { clear: true }) };
   }
-  return { status: 200, payload: sessionPayload(user) };
+  // Rotieren: neues Token mit verlängerter Gültigkeit, Gerät bleibt gebunden.
+  const exp = Date.now() + SESSION_TTL_MS;
+  store.byId[s.sid] = { email: s.email, did: s.did, exp };
+  saveStore();
+  const token = sign({ sid: s.sid, sub: s.email, did: s.did, iat: Date.now(), exp });
+  return { status: 200, payload: sessionPayload(user, token), setCookie: buildSetCookie(token) };
 }
 
 function logout(_body, req) {
-  const token = parseCookies(req)[COOKIE_NAME];
-  if (token) sessions.delete(token);
+  const s = getSession(req);
+  if (s) {
+    delete store.byId[s.sid];
+    if (store.activeByEmail[s.email] === s.sid) delete store.activeByEmail[s.email];
+    saveStore();
+  }
   return { status: 200, payload: { ok: true }, setCookie: buildSetCookie('', { clear: true }) };
 }
 
@@ -157,12 +239,30 @@ const HANDLERS = {
   '/auth/logout': logout,
 };
 
-/** Resolves the logged-in user from the refresh cookie, or null. */
+/** Eingeloggten Nutzer aus der signierten Cookie-Sitzung auflösen, sonst null. */
 export function getSessionUser(req) {
-  const token = parseCookies(req)[COOKIE_NAME];
-  const entry = token && sessions.get(token);
-  if (!entry || entry.expiresAt < Date.now()) return null;
-  return findUser(entry.email);
+  const s = getSession(req);
+  if (!s) return null;
+  return findUser(s.email);
+}
+
+/**
+ * Geräte-/Sitzungsstatus für die Single-Device-Prüfung.
+ * @returns { hasSession, active, email }
+ */
+export function sessionDeviceState(req) {
+  const s = getSession(req);
+  if (!s) return { hasSession: false, active: false, email: null };
+  return { hasSession: true, active: store.activeByEmail[s.email] === s.sid, email: s.email };
+}
+
+/** Macht die aktuelle (cookie-) Sitzung zum aktiven Gerät; verdrängt andere. */
+export function claimSessionDevice(req) {
+  const s = getSession(req);
+  if (!s) return false;
+  store.activeByEmail[s.email] = s.sid;
+  saveStore();
+  return true;
 }
 
 /** Returns { status, payload, setCookie? } or null if `url` is not an auth route. */

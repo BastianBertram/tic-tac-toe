@@ -10,7 +10,7 @@
  *       ALLOWED_ORIGIN (default http://localhost:5173)
  */
 import { createServer } from 'node:http';
-import { handleAuth, getSessionUser } from './auth.mjs';
+import { handleAuth, getSessionUser, sessionDeviceState, claimSessionDevice } from './auth.mjs';
 import { handleSettings } from './settings.mjs';
 import { handleData, accountStatus, ensureSeeded } from './data.mjs';
 
@@ -43,15 +43,26 @@ function emailOf(req) {
   const u = getSessionUser(req);
   return String(u?.email ?? devEmailHeader(req) ?? '').toLowerCase() || null;
 }
-function claimDevice(email, deviceId) {
+function claimDeviceHeader(email, deviceId) {
   if (!email || !deviceId) return false;
   activeDevice.set(email, deviceId);
   return true;
 }
+/** Beansprucht dieses Gerät als aktive Sitzung — bevorzugt über die signierte
+ *  Cookie-Sitzung (kryptografische Gerätebindung), sonst Dev-Header-Fallback. */
+function claimDevice(req) {
+  if (claimSessionDevice(req)) return true;       // echte Sitzung → sid wird aktiv
+  return claimDeviceHeader(emailOf(req), req.headers['x-device-id'] ?? null);
+}
 /** true, wenn das anfragende Gerät das aktuell aktive ist (oder noch keins gesetzt). */
 function isCurrentDevice(req) {
+  // Echte signierte Sitzung: Single-Device wird über die aktive sid erzwungen
+  // (Geräte-ID ist kryptografisch ans Token gebunden, nicht fälschbar).
+  const st = sessionDeviceState(req);
+  if (st.hasSession) return st.active;
+  // Dev-Header-Modus (kein Cookie): Fallback auf die geräte-Map.
   const email = emailOf(req);
-  if (!email) return true;                       // unbekannt → nicht blockieren
+  if (!email) return true;                        // unbekannt → nicht blockieren
   const cur = activeDevice.get(email);
   if (!cur) return true;                          // noch kein Gerät beansprucht
   return cur === (req.headers['x-device-id'] ?? null);
@@ -283,7 +294,7 @@ const server = createServer(async (req, res) => {
 
   // ── Single-Device: dieses Gerät als aktives beanspruchen (Login) ──
   if (req.method === 'POST' && url === '/api/session/claim') {
-    const ok = claimDevice(emailOf(req), req.headers['x-device-id'] ?? null);
+    const ok = claimDevice(req);
     return send(res, ok ? 200 : 400, { ok });
   }
 

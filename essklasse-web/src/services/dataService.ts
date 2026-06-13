@@ -9,7 +9,7 @@ export interface DataEnvelope<T = unknown> {
 }
 
 /** Stabile, gerätelokale ID (ein „Gerät" pro Browser-Profil). */
-function getDeviceId(): string {
+export function getDeviceId(): string {
   let id = localStorage.getItem('ek-device-id');
   if (!id) {
     id = (crypto.randomUUID?.() ?? `dev-${Date.now()}-${Math.random().toString(36).slice(2)}`);

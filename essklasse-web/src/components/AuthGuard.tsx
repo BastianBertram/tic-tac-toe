@@ -3,6 +3,7 @@ import { BrandLogo } from './BrandLogo';
 import { useAuthStore }  from '../store/authStore';
 import { useObjektStore } from '../store/objektStore';
 import { LoginScreen }   from '../screens/LoginScreen';
+import { getDeviceId }   from '../services/dataService';
 
 interface Props { children: React.ReactNode; }
 
@@ -42,14 +43,16 @@ export function AuthGuard({ children }: Props) {
     }
 
     // Magic-Link aus der E-Mail? → /auth/verify, sonst stille Sitzungs-Erneuerung.
+    // X-Device-Id wird beim Login an die signierte Sitzung gebunden (Single-Device).
+    const deviceHeaders = { 'X-Device-Id': getDeviceId() };
     const token = new URLSearchParams(window.location.search).get('token');
     const request = token
       ? fetch(`${BASE}/auth/verify`, {
           method: 'POST', credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', ...deviceHeaders },
           body: JSON.stringify({ token }),
         })
-      : fetch(`${BASE}/auth/refresh`, { method: 'POST', credentials: 'include' });
+      : fetch(`${BASE}/auth/refresh`, { method: 'POST', credentials: 'include', headers: { ...deviceHeaders } });
 
     request
       .then(r => r.ok ? r.json() : null)

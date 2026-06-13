@@ -35,6 +35,11 @@ npm install
   **never commit it**. The app and backend start fine without it — only the
   AI endpoints fail. Data files in `server/data/` are gitignored and
   auto-seeded on first backend start (`ensureSeeded`).
+- **Production auth** requires `EK_AUTH_SECRET` (≥32 chars) in the environment —
+  it signs the session tokens. With `NODE_ENV=production` and no secret the
+  server logs a FATAL line and refuses to issue sessions (verify → 500,
+  fail-closed). In dev an ephemeral secret is generated (sessions reset on
+  restart). Sessions persist to `server/data/sessions.json` (gitignored).
 
 ## Build
 
