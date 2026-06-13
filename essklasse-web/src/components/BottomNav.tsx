@@ -64,6 +64,9 @@ export function BottomNav({ active, onTab, onNew, onAbgeschlossene }: Props) {
         ) : (
           <TabBtn icon="✓" label={<>Bewirtung<br />Abschließen</>} active={active === 'abschluss'} onClick={() => onTab('abschluss')} badge={offene} urgent={offene > 0} hidden={isGf} />
         )}
+        {/* Platzhalter rechts: balanciert die zwei linken Tabs (Menü + Bewirtungen),
+            damit der FAB exakt mittig sitzt. Bei GF ist die Leiste bereits symmetrisch. */}
+        {!isGf && <div className={s.tab} aria-hidden="true" />}
       </nav>
 
       {drawerOpen && (
